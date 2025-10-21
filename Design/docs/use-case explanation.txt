@@ -1,0 +1,5 @@
+Actor: only one – the Player (through the keyboard)
+Use-Cases: Start Game, Move Character, Collect Reward, Encounter Punishment, Avoid/Encounter Enemy
+System Functions: Track Time & Score, Spawn Bonus Reward
+Outcomes: Win Game / Lose Game
+Optional interactions: Pause / Resume Game
