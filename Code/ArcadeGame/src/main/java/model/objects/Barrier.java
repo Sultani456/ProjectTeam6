@@ -1,14 +1,23 @@
 package model.objects;
 
-public class Barrier {
+import model.boardUtilities.Position;
+
+public class Barrier extends GameObject {
     private boolean isWall;
 
-    public Barrier() {
-        isWall = false;
+    public Barrier(Position position) {
+        super(position);   // calls GameObject constructor to set position
+        this.isWall = true;
     }
 
-    public void makeWall() {
-        isWall = true;
+    public boolean isWall() {
+        return isWall;
     }
 
+    @Override
+    public String toString() {
+        return "Barrier at " + position;
+    }
 }
+
+
