@@ -1,10 +1,10 @@
 package com.project.team6;
+import javax.swing.SwingUtilities;
 
-/**
- * Hello world!
- */
 public class App {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        SwingUtilities.invokeLater(() -> {
+            new GameFrame().setVisible(true);
+        });
     }
 }

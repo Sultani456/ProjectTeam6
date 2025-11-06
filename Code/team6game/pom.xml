@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.project.team6</groupId>
   <artifactId>team6game</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>team6game</name>
-  <!-- FIXME change it to the project's website -->
+  <name>Team6 Maze Game</name>
   <url>http://www.example.com</url>
 
   <properties>
@@ -16,6 +16,7 @@
     <maven.compiler.release>17</maven.compiler.release>
   </properties>
 
+  <!-- JUnit 5 version management -->
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -28,63 +29,112 @@
     </dependencies>
   </dependencyManagement>
 
+  <!-- Dependencies -->
   <dependencies>
+    <!-- JUnit 5 API -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- Optionally: parameterized tests support -->
+
+    <!-- Parameterized tests -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- Engine (so tests actually run) -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
-    <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
+    <!-- Include resources such as maps and images -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*</include>
+        </includes>
+      </resource>
+    </resources>
+
+    <!-- Plugin versions and configurations -->
+    <pluginManagement>
       <plugins>
-        <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
           <version>3.4.0</version>
         </plugin>
-        <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
+
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.3.1</version>
         </plugin>
+
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.13.0</version>
+          <configuration>
+            <release>17</release>
+          </configuration>
         </plugin>
+
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.3.0</version>
         </plugin>
+
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.4.2</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <mainClass>com.project.team6.App</mainClass>
+              </manifest>
+            </archive>
+          </configuration>
         </plugin>
+
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
           <version>3.1.2</version>
         </plugin>
+
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.2</version>
         </plugin>
-        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
+
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
           <version>3.12.1</version>
         </plugin>
+
         <plugin>
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.6.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <!-- Exec plugin to run the game -->
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <mainClass>com.project.team6.App</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
+
 </project>
