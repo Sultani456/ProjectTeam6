@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 
-import com.project.team6.enemy.*; // Enemy, EnemyFactory
+import com.project.team6.enemy.*;
 
 public class GamePanel extends JPanel {
 
