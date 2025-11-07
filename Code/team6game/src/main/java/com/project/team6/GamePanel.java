@@ -15,19 +15,23 @@ import com.project.team6.enemy.*; // Enemy, EnemyFactory
 public class GamePanel extends JPanel {
 
     // ---- Grid setup ----
+    // Columns, rows, and tile size for the board.
     private static final int COLS = 18;
     private static final int ROWS = 11;
     private static final int TILE = 32;
 
+    // HUD width and padding around things.
     private static final int HUD_W = 150;
     private static final int PAD = 12;
 
+    // Calculated sizes for grid and whole panel.
     private static final int GRID_W = COLS * TILE;
     private static final int GRID_H = ROWS * TILE;
     private static final int PANEL_W = HUD_W + PAD + GRID_W + PAD;
     private static final int PANEL_H = PAD + GRID_H + PAD;
 
     // ---- Colors ----
+    // Colors we use for background, frames, lines, and HUD.
     private static final Color GREEN_BG = new Color(180, 220, 80);
     private static final Color GREEN_FRAME = new Color(140, 120, 60);
     private static final Color GRID_LINES = new Color(20, 70, 20);
@@ -35,19 +39,24 @@ public class GamePanel extends JPanel {
     private static final Color HUD_TEXT = new Color(30, 30, 30);
 
     // ---- Minimum counts ----
+    // These are the minimum items we want on the map.
     private static final int MIN_ENEMIES = 4;   // 'B'
     private static final int MIN_PUNISH = 7;    // '*'
     private static final int MIN_REQUIRED = 5;  // '.'
     private static final int MIN_OPTIONAL = 10; // 'o'
 
+    // Random for placing items.
     private final Random rng = new Random();
 
     // ---- Game data ----
+    // The grid stores the map characters.
     private final char[][] grid = new char[ROWS][COLS];
+    // Player and enemy list.
     private Player player;
     private List<Enemy> enemies;
 
     // ---- HUD state ----
+    // Basic game state that we show on the left.
     private int score = 0;
     private int requiredLeft = 0;
     private boolean gameOver = false;
@@ -56,9 +65,11 @@ public class GamePanel extends JPanel {
     private String hudTime = "00:00";
 
     // ---- Images (loaded from classpath) ----
+    // Sprites for everything. They can be null if missing.
     private Image imgPlayer, imgEnemy, imgPunish, imgReq, imgOpt, imgEnd, imgWall;
 
     // ---- Timers ----
+    // This timer updates time every second while the game is running.
     private final Timer clock = new Timer(1000, e -> {
         if (!gameOver && !gameWon) {
             elapsedSeconds++;
@@ -67,6 +78,7 @@ public class GamePanel extends JPanel {
         }
     });
 
+    // This timer makes enemies move every 2 seconds.
     private final Timer enemyTimer = new Timer(2000, e -> {
         if (!gameOver && !gameWon) {
             enemyTurn();
@@ -75,30 +87,38 @@ public class GamePanel extends JPanel {
     });
 
     public GamePanel() {
+        // Set the panel size and basic settings.
         setPreferredSize(new Dimension(PANEL_W, PANEL_H));
         setBackground(Color.WHITE);
         setFocusable(true);
 
         // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
+        // We read a level file and copy it into our grid.
         try {
-            // The MapLoader expects a path; keep your API but ensure the file is in resources/maps.
             MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
             for (int r = 0; r < ROWS; r++) {
                 System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
             }
         } catch (IOException ex) {
+            // If map fails to load, we stop because the game cannot run.
             throw new RuntimeException("Failed to load map file: " + ex.getMessage(), ex);
         }
 
-        // ---- Top-up missing items ----
+        // Make sure start and end cells are clean and not blocked.
+        sanitizeStartEnd();
+
+        // ---- Top-up missing items (never on S/E) ----
+        // We ensure the map has enough items and enemies.
         ensureMinimumCounts();
         requiredLeft = countChar('.');
 
         // ---- Initialize player & enemies ----
+        // The player and enemies are created based on the grid.
         player = Player.fromGrid(grid);
         enemies = EnemyFactory.fromGridAndClear(grid);
 
         // ---- Load images from classpath (/assets/...) ----
+        // We try to load all sprites. If any is missing, we draw a colored box.
         imgPlayer = safeLoad("/assets/player.png");
         imgEnemy  = safeLoad("/assets/enemy.png");
         imgPunish = safeLoad("/assets/punishment.png");
@@ -107,12 +127,14 @@ public class GamePanel extends JPanel {
         imgEnd    = safeLoad("/assets/end.png");
         imgWall   = safeLoad("/assets/wall1.png");
 
+        // Key bindings and timers start here.
         setupKeyBindings();
         clock.start();
         enemyTimer.start();
     }
 
     // ------------------------ Input ------------------------
+    // We bind arrow keys and WASD to the same move actions.
     private void setupKeyBindings() {
         bind("LEFT", -1, 0);
         bind("RIGHT", 1, 0);
@@ -124,6 +146,7 @@ public class GamePanel extends JPanel {
         bind("S", 0, 1);
     }
 
+    // Helper to connect a key to a movement delta.
     private void bind(String key, int dx, int dy) {
         getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), "mv_" + key);
         getActionMap().put("mv_" + key, new AbstractAction() {
@@ -134,6 +157,7 @@ public class GamePanel extends JPanel {
     }
 
     // --------------------- Game Logic ---------------------
+    // This applies one move and updates score/state based on what we stepped on.
     private void doMove(int dx, int dy) {
         Player.MoveResult r = player.tryMove(dx, dy, grid);
         switch (r.type) {
@@ -160,6 +184,7 @@ public class GamePanel extends JPanel {
         repaint();
     }
 
+    // Enemies get their turn here. If one touches the player, it is game over.
     private void enemyTurn() {
         for (Enemy e : enemies) {
             e.tick(grid, player.getX(), player.getY());
@@ -171,15 +196,19 @@ public class GamePanel extends JPanel {
     }
 
     // --------------------- Rendering ---------------------
+    // We draw the HUD, the board, walls, items, enemies, and grid lines.
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        // HUD background box on the left.
         g.setColor(HUD_BG);
         g.fillRect(PAD, PAD, HUD_W, GRID_H);
 
+        // Board top-left corner.
         int boardX = PAD + HUD_W + PAD;
         int boardY = PAD;
 
+        // A frame and the green board background.
         g.setColor(GREEN_FRAME);
         g.fillRect(boardX - 6, boardY - 6, GRID_W + 12, GRID_H + 12);
         g.setColor(GREEN_BG);
@@ -192,6 +221,7 @@ public class GamePanel extends JPanel {
                     int x = boardX + c * TILE, y = boardY + r * TILE;
                     if (imgWall != null) g.drawImage(imgWall, x, y, TILE, TILE, null);
                     else {
+                        // If wall image is missing, we draw a brown block.
                         g.setColor(new Color(90, 70, 60));
                         g.fillRect(x, y, TILE, TILE);
                     }
@@ -216,19 +246,22 @@ public class GamePanel extends JPanel {
 
         // Enemies
         for (Enemy e : enemies) {
+            // Each enemy is drawn as a sprite or a red box if image is missing.
             drawSprite(g, imgEnemy, e.getX(), e.getY(), boardX, boardY, Color.RED);
         }
 
-        // Grid lines
+        // Grid lines to make the tiles visible.
         g.setColor(GRID_LINES);
         for (int c = 0; c <= COLS; c++)
             g.drawLine(boardX + c * TILE, boardY, boardX + c * TILE, boardY + GRID_H);
         for (int r = 0; r <= ROWS; r++)
             g.drawLine(boardX, boardY + r * TILE, boardX + GRID_W, boardY + r * TILE);
 
+        // Finally draw the HUD text.
         drawHud(g, PAD, PAD, HUD_W);
     }
 
+    // Draw one tile sprite. If image is null, we draw a simple colored box.
     private void drawSprite(Graphics g, Image img, int c, int r, int boardX, int boardY, Color fallback) {
         int x = boardX + c * TILE;
         int y = boardY + r * TILE;
@@ -240,6 +273,7 @@ public class GamePanel extends JPanel {
         }
     }
 
+    // Draws the text on the left side: score, required left, and time.
     private void drawHud(Graphics g, int x, int y, int w) {
         g.setColor(HUD_TEXT);
         g.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -248,6 +282,7 @@ public class GamePanel extends JPanel {
         g.drawString("R. Left: " + requiredLeft, x + 10, line); line += 25;
         g.drawString("Time: " + hudTime, x + 10, line);
 
+        // Show end messages.
         if (gameOver) {
             g.setColor(Color.RED);
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
@@ -260,6 +295,21 @@ public class GamePanel extends JPanel {
     }
 
     // ---------------- Utility helpers ----------------
+
+    /** Ensure S/E cells are not carrying '*' or 'B' from the map file. */
+    // This keeps the start and end tiles safe.
+    private void sanitizeStartEnd() {
+        int[] s = findChar('S');
+        int[] e = findChar('E');
+        if (s[0] >= 0) {
+            grid[s[1]][s[0]] = 'S';
+        }
+        if (e[0] >= 0) {
+            grid[e[1]][e[0]] = 'E';
+        }
+    }
+
+    // Count how many times a character appears on the grid.
     private int countChar(char ch) {
         int count = 0;
         for (int r = 0; r < ROWS; r++)
@@ -268,6 +318,7 @@ public class GamePanel extends JPanel {
         return count;
     }
 
+    // Find the first location of a character. Returns -1,-1 if not found.
     private int[] findChar(char target) {
         for (int r = 0; r < ROWS; r++)
             for (int c = 0; c < COLS; c++)
@@ -275,6 +326,7 @@ public class GamePanel extends JPanel {
         return new int[]{-1, -1};
     }
 
+    // Make sure we have the minimum required items and enemies on empty spaces.
     private void ensureMinimumCounts() {
         int[] s = findChar('S');
         int[] e = findChar('E');
@@ -287,6 +339,7 @@ public class GamePanel extends JPanel {
         topUp('B', MIN_ENEMIES, sx, sy, ex, ey);
     }
 
+    // Place more of a given character until we hit the minimum.
     private void topUp(char ch, int minCount, int sx, int sy, int ex, int ey) {
         int have = countChar(ch);
         int need = Math.max(0, minCount - have);
@@ -295,8 +348,8 @@ public class GamePanel extends JPanel {
         while (need > 0 && safety-- > 0) {
             int c = rng.nextInt(COLS);
             int r = rng.nextInt(ROWS);
-            if (grid[r][c] != ' ') continue;
-            if ((c == sx && r == sy) || (c == ex && r == ey)) continue;
+            if (grid[r][c] != ' ') continue;                           // only empty tiles
+            if ((c == sx && r == sy) || (c == ex && r == ey)) continue; // never S/E
             grid[r][c] = ch;
             need--;
         }
@@ -306,6 +359,7 @@ public class GamePanel extends JPanel {
      * Load an image strictly from the classpath (src/main/resources).
      * Pass either "/assets/xyz.png" or "assets/xyz.png".
      */
+    // If it cannot find the image, it returns null and prints a warning.
     private Image safeLoad(String resourcePath) {
         String cp = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
         try (InputStream in = getClass().getResourceAsStream(cp)) {
