@@ -20,4 +20,3 @@ public class BonusReward extends Reward {
     @Override
     public boolean isRequiredToWin() { return false; }
 }
-

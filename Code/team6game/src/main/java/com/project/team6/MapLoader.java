@@ -1,10 +1,15 @@
 package com.project.team6;
 
+import com.project.team6.util.Position; // keep if you use Position elsewhere; safe to remove if unused
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Loads a level from an ASCII .txt file into a char[][] grid.
@@ -14,16 +19,14 @@ import java.util.List;
  *   '.' = required reward
  *   'o' = optional reward
  *   '*' = punishment
- *   'B' = enemy spawn marker (your EnemyFactory will convert to objects)
- *   'S' = player start (optional in file; will be injected if missing)
- *   'E' = exit         (optional in file; will be injected if missing)
+ *   'B' = enemy spawn marker
+ *   'S' = player start (optional; will be injected if missing)
+ *   'E' = exit         (optional; will be injected if missing)
  *
  * Usage in GamePanel:
  *   MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", 18, 11, true);
  *   char[][] grid = L.grid;
- *   // player is where 'S' is; exit where 'E' is
  *   requiredLeft = L.requiredCount;
- *   enemies = EnemyFactory.fromGridAndClear(grid); // converts 'B' to objects
  */
 public final class MapLoader {
 
@@ -51,15 +54,29 @@ public final class MapLoader {
     }
 
     /**
-     * Load a level from a text file.
+     * Load a level from a text file (from the classpath).
      *
-     * @param filePath       path to the ASCII map file (e.g., "maps/level1.txt")
+     * @param filePath       classpath-relative path (e.g., "maps/level1.txt")
      * @param expectedCols   required number of columns (e.g., 18)
      * @param expectedRows   required number of rows (e.g., 11)
-     * @param injectFixedSE  if true and S/E are missing, inject S at (0,6) and E at (17,6)
+     * @param injectFixedSE  if true and S/E are missing, inject S at (0,6) and E at (expectedCols-1,6)
      */
     public static LoadedLevel load(String filePath, int expectedCols, int expectedRows, boolean injectFixedSE) throws IOException {
-        List<String> lines = Files.readAllLines(Path.of(filePath), StandardCharsets.UTF_8);
+        // Normalize to classpath resource (src/main/resources/**)
+        String resourcePath = "/" + filePath.replace('\\', '/');
+
+        List<String> lines = new ArrayList<>();
+        try (InputStream in = MapLoader.class.getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                throw new IOException("Resource not found on classpath: " + resourcePath);
+            }
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    lines.add(line);
+                }
+            }
+        }
 
         // Trim trailing empty lines (common in text editors)
         while (!lines.isEmpty() && lines.get(lines.size() - 1).trim().isEmpty()) {
@@ -97,13 +114,15 @@ public final class MapLoader {
 
                 switch (ch) {
                     case 'S':
-                        if (playerX != -1)
+                        if (playerX != -1) {
                             throw new IllegalArgumentException("Multiple 'S' found; only one start is allowed.");
+                        }
                         playerX = c; playerY = r;
                         break;
                     case 'E':
-                        if (exitX != -1)
+                        if (exitX != -1) {
                             throw new IllegalArgumentException("Multiple 'E' found; only one exit is allowed.");
+                        }
                         exitX = c; exitY = r;
                         break;
                     case '.':
@@ -118,14 +137,12 @@ public final class MapLoader {
 
         // Optionally inject S/E at fixed positions if missing
         if (injectFixedSE) {
-            // fixed coordinates you’re using in your game:
-            int fixedSX = 0,  fixedSY = 6;
+            int fixedSX = 0, fixedSY = 6;
             int fixedEX = expectedCols - 1, fixedEY = 6; // (17,6) for 18x11
 
             if (playerX == -1 || playerY == -1) {
                 // "Punch" doorway if needed
                 if (grid[fixedSY][fixedSX] == 'X') grid[fixedSY][fixedSX] = ' ';
-                // Ensure adjacent interior is open, so player can enter
                 if (fixedSX + 1 < expectedCols && grid[fixedSY][fixedSX + 1] == 'X') grid[fixedSY][fixedSX + 1] = ' ';
                 grid[fixedSY][fixedSX] = 'S';
                 playerX = fixedSX; playerY = fixedSY;
@@ -146,4 +163,3 @@ public final class MapLoader {
         return ch == 'X' || ch == ' ' || ch == '.' || ch == 'o' || ch == '*' || ch == 'B' || ch == 'S' || ch == 'E';
     }
 }
-

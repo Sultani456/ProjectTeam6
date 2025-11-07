@@ -1,4 +1,5 @@
 package com.project.team6;
+
 public class Board {
 
     private final int cols;
@@ -80,3 +81,4 @@ public class Board {
         startX = startY = endX = endY = 0;
     }
 }
+

@@ -24,4 +24,3 @@ public abstract class Item {
     public final int getX() { return x; }
     public final int getY() { return y; }
 }
-

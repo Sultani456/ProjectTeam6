@@ -1,7 +1,6 @@
 package com.project.team6.item;
 
 
-
 /** Punishment (negative score) — your '*' tiles. */
 public class Punishment extends Item {
     private final int penalty;
@@ -17,4 +16,3 @@ public class Punishment extends Item {
     @Override
     public int value() { return -Math.abs(penalty); } // always negative
 }
-

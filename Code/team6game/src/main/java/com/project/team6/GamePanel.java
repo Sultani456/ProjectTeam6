@@ -1,13 +1,16 @@
 package com.project.team6;
 
 import javax.swing.*;
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 
-import com.project.team6.enemy.*;
+import com.project.team6.enemy.*; // Enemy, EnemyFactory
 
 public class GamePanel extends JPanel {
 
@@ -52,7 +55,7 @@ public class GamePanel extends JPanel {
     private int elapsedSeconds = 0;
     private String hudTime = "00:00";
 
-    // ---- Images ----
+    // ---- Images (loaded from classpath) ----
     private Image imgPlayer, imgEnemy, imgPunish, imgReq, imgOpt, imgEnd, imgWall;
 
     // ---- Timers ----
@@ -76,8 +79,9 @@ public class GamePanel extends JPanel {
         setBackground(Color.WHITE);
         setFocusable(true);
 
-        // ---- Load map ----
+        // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
         try {
+            // The MapLoader expects a path; keep your API but ensure the file is in resources/maps.
             MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
             for (int r = 0; r < ROWS; r++) {
                 System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
@@ -94,14 +98,14 @@ public class GamePanel extends JPanel {
         player = Player.fromGrid(grid);
         enemies = EnemyFactory.fromGridAndClear(grid);
 
-        // ---- Load images ----
-        imgPlayer = safeLoad("assets/player.png");
-        imgEnemy = safeLoad("assets/enemy.png");
-        imgPunish = safeLoad("assets/punishment.png");
-        imgReq = safeLoad("assets/reward_required.png");
-        imgOpt = safeLoad("assets/reward_optional.png");
-        imgEnd = safeLoad("assets/end.png");
-        imgWall = safeLoad("assets/wall1.png");
+        // ---- Load images from classpath (/assets/...) ----
+        imgPlayer = safeLoad("/assets/player.png");
+        imgEnemy  = safeLoad("/assets/enemy.png");
+        imgPunish = safeLoad("/assets/punishment.png");
+        imgReq    = safeLoad("/assets/reward_required.png");
+        imgOpt    = safeLoad("/assets/reward_optional.png");
+        imgEnd    = safeLoad("/assets/end.png");
+        imgWall   = safeLoad("/assets/wall1.png");
 
         setupKeyBindings();
         clock.start();
@@ -205,6 +209,7 @@ public class GamePanel extends JPanel {
                     case '*': drawSprite(g, imgPunish, c, r, boardX, boardY, Color.BLACK); break;
                     case '.': drawSprite(g, imgReq, c, r, boardX, boardY, Color.YELLOW); break;
                     case 'o': drawSprite(g, imgOpt, c, r, boardX, boardY, Color.ORANGE); break;
+                    default:  break;
                 }
             }
         }
@@ -240,17 +245,17 @@ public class GamePanel extends JPanel {
         g.setFont(new Font("SansSerif", Font.BOLD, 16));
         int line = y + 30;
         g.drawString("Score: " + score, x + 10, line); line += 25;
-        g.drawString("Required left: " + requiredLeft, x + 10, line); line += 25;
+        g.drawString("R. Left: " + requiredLeft, x + 10, line); line += 25;
         g.drawString("Time: " + hudTime, x + 10, line);
 
         if (gameOver) {
             g.setColor(Color.RED);
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
-            g.drawString("GAME OVER", x + 10, line + 40);
+            g.drawString("GAME OVER!", x + 10, line + 40);
         } else if (gameWon) {
             g.setColor(Color.GREEN.darker());
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
-            g.drawString("YOU WIN!", x + 10, line + 40);
+            g.drawString("You won!", x + 10, line + 40);
         }
     }
 
@@ -297,14 +302,20 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private Image safeLoad(String path) {
-        String cp = path.startsWith("/") ? path : "/" + path;
-        java.net.URL url = getClass().getResource(cp);
-        if (url != null) return new ImageIcon(url).getImage();
-        java.io.File f = new java.io.File(path);
-        if (f.exists()) return new ImageIcon(path).getImage();
-        System.err.println("Warning: missing image " + path);
+    /**
+     * Load an image strictly from the classpath (src/main/resources).
+     * Pass either "/assets/xyz.png" or "assets/xyz.png".
+     */
+    private Image safeLoad(String resourcePath) {
+        String cp = resourcePath.startsWith("/") ? resourcePath : "/" + resourcePath;
+        try (InputStream in = getClass().getResourceAsStream(cp)) {
+            if (in != null) {
+                BufferedImage img = ImageIO.read(in);
+                if (img != null) return img;
+            }
+        } catch (IOException ignored) {
+        }
+        System.err.println("Warning: missing image on classpath: " + cp);
         return null;
     }
 }
-

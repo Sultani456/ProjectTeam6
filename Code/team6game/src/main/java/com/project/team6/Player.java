@@ -1,5 +1,6 @@
 package com.project.team6;
 
+
 public class Player {
 
     public static final char PLAYER_CHAR = 'S';

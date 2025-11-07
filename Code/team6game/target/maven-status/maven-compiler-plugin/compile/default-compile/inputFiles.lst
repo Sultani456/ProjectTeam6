@@ -1,17 +1,15 @@
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\App.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\Board.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\Enemy.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\EnemyFactory.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\MovingEnemy.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\Game.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\GameFrame.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\GamePanel.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\BonusReward.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Item.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Punishment.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\RegularReward.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Reward.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\MapLoader.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\Player.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\util\Direction.java
-d:\University Assignments\Fall 2025\CMPT276\276Assignments\Phase2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\util\Position.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\App.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\Board.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\ChaserEnemy.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\Enemy.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\enemy\EnemyFactory.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\GameFrame.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\GamePanel.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\BonusReward.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Item.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Punishment.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\RegularReward.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\item\Reward.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\MapLoader.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\Player.java
+C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Class Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\util\Position.java
