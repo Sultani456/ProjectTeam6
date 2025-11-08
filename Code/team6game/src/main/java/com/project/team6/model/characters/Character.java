@@ -1,15 +1,14 @@
-package com.project.team6.model.characters.enemies;
+package com.project.team6.model.characters;
 
-// This is the base class for enemies.
-// Other enemies types will extend this class.
-public abstract class Enemy {
-    // Current x position on the grid.
+// This is the base class for all characters.
+// Other Character types will extend this class
+public abstract class Character {
     protected int x;
     // Current y position on the grid.
     protected int y;
 
     // Set the starting position.
-    public Enemy(int x, int y) {
+    public Character(int x, int y) {
         this.x = x;
         this.y = y;
     }

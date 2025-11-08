@@ -1,7 +1,6 @@
 package com.project.team6.model.boardUtilities;
 
 public class Board {
-
     // This class holds the grid for the game.
     // It stores size, blocked cells, and start/end cells.
     private final int cols;
@@ -15,11 +14,11 @@ public class Board {
     private int startX = 0, startY = 0;
     private int endX   = 0, endY   = 0;
 
-    public Board(int cols, int rows) {
+    public Board(int rows, int cols) {
         // We do not allow zero or negative sizes.
-        if (cols <= 0 || rows <= 0) throw new IllegalArgumentException("cols/rows must be > 0");
-        this.cols = cols;
+        if (rows <= 0 || cols <= 0) throw new IllegalArgumentException("cols/rows must be > 0");
         this.rows = rows;
+        this.cols = cols;
         // Each cell can be a wall or a barrier. Both are blocked.
         this.walls    = new boolean[rows][cols];
         this.barriers = new boolean[rows][cols];
@@ -63,7 +62,7 @@ public class Board {
     // Mark or unmark a barrier at (x, y).
     public void setBarrier(int x, int y, boolean value) {
         if (!inBounds(x, y)) throw new IndexOutOfBoundsException();
-        barriers[y][x] = value;
+        barriers[x][y] = value;
     }
 
     // Set the start cell for the player.
