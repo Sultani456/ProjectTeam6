@@ -23,7 +23,7 @@ public class EnemyFactory {
                 // If we see a 'B', that means there should be a chaser enemies here.
                 if (grid[r][c] == 'B') {
                     // Make a new enemies at this column and row.
-                    list.add(new ChaserEnemy(c, r));
+                    list.add(new MovingEnemy(c, r));
 
                     // Remove the marker so the grid is clean after spawning.
                     grid[r][c] = ' '; // clear marker
@@ -41,7 +41,7 @@ public class EnemyFactory {
         List<Enemy> list = new ArrayList<>();
 
         // Each spawn has x at index 0 and y at index 1.
-        for (int[] p : spawns) list.add(new ChaserEnemy(p[0], p[1]));
+        for (int[] p : spawns) list.add(new MovingEnemy(p[0], p[1]));
 
         // Later we can use the level value to pick different enemies types.
         return list;

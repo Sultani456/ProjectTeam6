@@ -4,7 +4,7 @@ package com.project.team6.model;
 // Other item types will extend this class.
 
 /** Base type for anything the player can step on and trigger. */
-public abstract class Item {
+public abstract class GameObject {
     // Grid x position for this item.
     protected final int x;
     // Grid y position for this item.
@@ -23,7 +23,7 @@ public abstract class Item {
     public boolean isRequiredToWin() { return false; }
 
     // Save the position when we make the item.
-    public Item(int x, int y) {
+    public GameObject(int x, int y) {
         this.x = x;
         this.y = y;
     }

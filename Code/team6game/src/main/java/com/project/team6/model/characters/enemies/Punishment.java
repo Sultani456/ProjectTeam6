@@ -1,9 +1,9 @@
 package com.project.team6.model.characters.enemies; // items live in this package
 
-import com.project.team6.model.Item;
+import com.project.team6.model.GameObject;
 
 /** Punishment (negative score) — your '*' tiles. */
-public class Punishment extends Item {
+public class Punishment extends GameObject {
     private final int penalty; // how many points this takes away
 
     public Punishment(int x, int y, int penalty) {

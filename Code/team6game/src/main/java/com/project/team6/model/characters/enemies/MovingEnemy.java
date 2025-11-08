@@ -1,10 +1,10 @@
 package com.project.team6.model.characters.enemies;
 
 // This enemies always tries to move closer to the player.
-public class ChaserEnemy extends Enemy {
+public class MovingEnemy extends Enemy {
 
     // Start position of the enemies.
-    public ChaserEnemy(int x, int y) {
+    public MovingEnemy(int x, int y) {
         super(x, y);
     }
 
