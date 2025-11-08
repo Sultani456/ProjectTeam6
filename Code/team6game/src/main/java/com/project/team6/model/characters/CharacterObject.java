@@ -1,14 +1,14 @@
 package com.project.team6.model.characters;
 
 // This is the base class for all characters.
-// Other Character types will extend this class
-public abstract class Character {
+// Other CharacterObject types will extend this class
+public abstract class CharacterObject {
     protected int x;
     // Current y position on the grid.
     protected int y;
 
     // Set the starting position.
-    public Character(int x, int y) {
+    public CharacterObject(int x, int y) {
         this.x = x;
         this.y = y;
     }
