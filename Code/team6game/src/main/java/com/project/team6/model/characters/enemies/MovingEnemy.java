@@ -1,6 +1,6 @@
 package com.project.team6.model.characters.enemies;
 
-// This enemies always tries to move closer to the player.
+// This enemy always tries to move closer to the player.
 public class MovingEnemy extends Enemy {
 
     // Start position of the enemies.

@@ -18,22 +18,25 @@ public abstract class CharacterObject {
     // Get the y position. It is read-only here.
     public final int getY() { return y; }
 
-    /** Move at most one tile. */
-    // This runs every game tick to decide the next move.
-    // The grid tells where walls are. Player position is given.
-    public abstract void tick(char[][] grid, int playerX, int playerY);
-
-    // Check if this enemy stands on the given grid cell.
+    // Check if this character stands on the given grid cell.
     public final boolean occupies(int gx, int gy) {
         return this.x == gx && this.y == gy;
     }
 
-    // Check if the enemies can step to (nx, ny).
+    // Check if the character can step into (nx, ny).
     // It must be inside the grid and not a wall.
     // Walls are marked with 'X'.
     protected boolean canStep(char[][] grid, int nx, int ny) {
         if (nx < 0 || nx >= grid[0].length) return false;
         if (ny < 0 || ny >= grid.length) return false;
         return grid[ny][nx] != 'X';
+    }
+
+    // Check if (cx, cy) is inside the grid.
+    protected boolean inBounds(int cx, int cy, char[][] grid) {
+        return cy >= 0 &&
+                cy < grid.length &&
+                cx >= 0 &&
+                cx < grid[0].length;
     }
 }

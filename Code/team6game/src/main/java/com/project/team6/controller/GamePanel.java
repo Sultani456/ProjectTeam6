@@ -10,7 +10,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 
-import com.project.team6.model.characters.Player;
+import com.project.team6.model.characters.player.MoveResult;
+import com.project.team6.model.characters.player.Player;
 import com.project.team6.model.characters.enemies.*;
 
 public class GamePanel extends JPanel {
@@ -160,7 +161,7 @@ public class GamePanel extends JPanel {
     // --------------------- Game Logic ---------------------
     // This applies one move and updates score/state based on what we stepped on.
     private void doMove(int dx, int dy) {
-        Player.MoveResult r = player.tryMove(dx, dy, grid);
+        MoveResult r = player.tryMove(dx, dy, grid);
         switch (r.type) {
             case COLLECTED_REQUIRED:
                 requiredLeft = Math.max(0, requiredLeft - 1);
