@@ -1,5 +1,6 @@
 package com.project.team6.ui;
 
+import com.project.team6.controller.GameController;
 import com.project.team6.controller.GamePanel;
 
 import javax.swing.JFrame; // we use JFrame to make the app window
@@ -8,13 +9,13 @@ import javax.swing.JFrame; // we use JFrame to make the app window
 // It puts the game panel inside the window and shows it.
 public class GameFrame extends JFrame {
 
-    public GameFrame() {
+    public GameFrame(GameController controller) {
         super("Maze Game"); // window title
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // close the app when window is closed
         setResizable(false); // keep a fixed window size so tiles line up
 
         // Add the main game panel
-        setContentPane(new GamePanel()); // put the game screen inside this window
+        setContentPane(new GamePanel(controller)); // put the game screen inside this window
 
         pack(); // automatically resize window to fit the panel size
         setLocationRelativeTo(null); // center on screen

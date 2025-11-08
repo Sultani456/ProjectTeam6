@@ -73,7 +73,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <mainClass>com.project.team6.ui.App</mainClass>
+          <mainClass>main.java.com.project.team6.ui.App</mainClass>
         </configuration>
       </plugin>
     </plugins>
