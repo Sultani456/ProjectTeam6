@@ -1,4 +1,4 @@
-package com.project.team6.model.rewards;
+package com.project.team6.model.collectibles.rewards;
 
 /** Regular reward: required for winning (your '.' tiles). */
 // This class is the basic reward in the game.

@@ -231,7 +231,7 @@ public class GamePanel extends JPanel {
             }
         }
 
-        // Static objects
+        // Static collectibles
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
                 char ch = grid[r][c];

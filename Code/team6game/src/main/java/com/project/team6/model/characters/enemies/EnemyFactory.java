@@ -5,10 +5,9 @@ import java.util.List;
 
 public class EnemyFactory {
 
-    // This class makes enemies objects for the game.
+    // This class makes enemy collectibles for the game.
     // It gives us a list of enemies based on the grid or level data.
-
-    /** Convert 'B' markers in the grid to Enemy objects and clear those cells. */
+    /** Convert 'B' markers in the grid to Enemy collectibles and clear those cells. */
     public static List<Enemy> fromGridAndClear(char[][] grid) {
         // We will collect enemies here.
         List<Enemy> list = new ArrayList<>();

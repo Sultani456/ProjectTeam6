@@ -1,4 +1,4 @@
-package com.project.team6.model.rewards;
+package com.project.team6.model.collectibles.rewards;
 
 // This class is for bonus rewards.
 // It gives extra points, but it is not needed to finish the game.

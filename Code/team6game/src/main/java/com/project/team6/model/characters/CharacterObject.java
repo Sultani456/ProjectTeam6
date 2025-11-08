@@ -1,22 +1,14 @@
 package com.project.team6.model.characters;
 
+import com.project.team6.model.GameObject;
+
 // This is the base class for all characters.
 // Other CharacterObject types will extend this class
-public abstract class CharacterObject {
-    protected int x;
-    // Current y position on the grid.
-    protected int y;
-
+public abstract class CharacterObject extends GameObject {
     // Set the starting position.
     public CharacterObject(int x, int y) {
-        this.x = x;
-        this.y = y;
+        super(x, y);
     }
-
-    // Get the x position. It is read-only here.
-    public final int getX() { return x; }
-    // Get the y position. It is read-only here.
-    public final int getY() { return y; }
 
     // Check if this character stands on the given grid cell.
     public final boolean occupies(int gx, int gy) {

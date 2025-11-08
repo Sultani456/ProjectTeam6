@@ -6,21 +6,9 @@ package com.project.team6.model;
 /** Base type for anything the player can step on and trigger. */
 public abstract class GameObject {
     // Grid x position for this item.
-    protected final int x;
+    protected int x;
     // Grid y position for this item.
-    protected final int y;
-
-    // The character we show on the map for this item.
-    /** Display / identity symbol that matches your grid legend. */
-    public abstract char symbol();
-
-    // Points this item gives or takes. Positive adds, negative subtracts.
-    /** Positive values add to score, negative subtract (punishment). */
-    public abstract int value();
-
-    // If true, you must collect this to win the level. Default is false.
-    /** Whether this item is required to win (i.e., regular reward). */
-    public boolean isRequiredToWin() { return false; }
+    protected int y;
 
     // Save the position when we make the item.
     public GameObject(int x, int y) {

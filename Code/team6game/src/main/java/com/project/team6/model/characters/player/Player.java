@@ -3,7 +3,6 @@ package com.project.team6.model.characters.player;
 import com.project.team6.model.characters.CharacterObject;
 
 public class Player extends CharacterObject {
-
     // The symbol we use for the player on the grid.
     public static final char PLAYER_CHAR = 'S';
 
