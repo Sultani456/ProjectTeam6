@@ -7,11 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Random;
 
-import com.project.team6.model.characters.player.MoveResult;
-import com.project.team6.model.characters.player.Player;
 import com.project.team6.model.characters.enemies.*;
 
 public class GamePanel extends JPanel {
@@ -28,18 +24,46 @@ public class GamePanel extends JPanel {
     // Sprites for everything. They can be null if missing.
     private Image imgPlayer, imgEnemy, imgPunish, imgReq, imgOpt, imgEnd, imgWall;
 
-    private final GameController controller;
+    private final GameControls controller;
 
-    public GamePanel(GameController controller) {
-        // Set the panel size and basic settings.
-        setPreferredSize(new Dimension(GameController.PANEL_W, GameController.PANEL_H));
-        setBackground(Color.WHITE);
-        setFocusable(true);
-
+    public GamePanel(GameControls controller) {
         this.controller = controller;
         controller.setOnUpdate(this::repaint);
 
+        int COLS = GameControls.COLS;
+        int ROWS = GameControls.ROWS;
 
+        char[][] grid = controller.getGrid();
+
+        // Set the panel size and basic settings.
+        setPreferredSize(new Dimension(GameControls.PANEL_W, GameControls.PANEL_H));
+        setBackground(Color.WHITE);
+        setFocusable(true);
+
+        // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
+        // We read a level file and copy it into our grid.
+        try {
+            MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
+            for (int r = 0; r < ROWS; r++) {
+                System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
+            }
+        } catch (IOException ex) {
+            // If map fails to load, we stop because the game cannot run.
+            throw new RuntimeException("Failed to load map file: " + ex.getMessage(), ex);
+        }
+
+        // Make sure start and end cells are clean and not blocked.
+        controller.sanitizeStartEnd();
+
+        // ---- Top-up missing items (never on S/E) ----
+        // We ensure the map has enough items and enemies.
+        controller.ensureMinimumCounts();
+        controller.setRequiredLeft();
+
+        // ---- Initialize player & enemies ----
+        // The player and enemies are created based on the grid.
+        controller.setPlayer();
+        controller.setEnemies();
 
         // ---- Load images from classpath (/assets/...) ----
         // We try to load all sprites. If any is missing, we draw a colored box.
@@ -52,24 +76,27 @@ public class GamePanel extends JPanel {
         imgWall   = safeLoad("/assets/wall1.png");
 
         // Key bindings and timers start here.
-        setupKeyBindings(controller);
+        setupKeyBindings();
+
+        controller.startClock();
+        controller.startEnemyTimer();
     }
 
     // ------------------------ Input ------------------------
     // We bind arrow keys and WASD to the same move actions.
-    private void setupKeyBindings(GameController controller) {
-        bind("LEFT", -1, 0, controller);
-        bind("RIGHT", 1, 0, controller);
-        bind("UP", 0, -1, controller);
-        bind("DOWN", 0, 1, controller);
-        bind("A", -1, 0, controller);
-        bind("D", 1, 0, controller);
-        bind("W", 0, -1, controller);
-        bind("S", 0, 1, controller);
+    private void setupKeyBindings() {
+        bind("LEFT", -1, 0);
+        bind("RIGHT", 1, 0);
+        bind("UP", 0, -1);
+        bind("DOWN", 0, 1);
+        bind("A", -1, 0);
+        bind("D", 1, 0);
+        bind("W", 0, -1);
+        bind("S", 0, 1);
     }
 
     // Helper to connect a key to a movement delta.
-    private void bind(String key, int dx, int dy, GameController controller) {
+    private void bind(String key, int dx, int dy) {
         getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), "mv_" + key);
         getActionMap().put("mv_" + key, new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
@@ -80,15 +107,16 @@ public class GamePanel extends JPanel {
 
     // --------------------- Rendering ---------------------
     // We draw the HUD, the board, walls, items, enemies, and grid lines.
-    protected void paintComponent(Graphics g, GameController controller) {
-        int COLS = GameController.COLS;
-        int ROWS = GameController.ROWS;
-        int TILE = GameController.TILE;
+    @Override
+    protected void paintComponent(Graphics g) {
+        int COLS = GameControls.COLS;
+        int ROWS = GameControls.ROWS;
+        int TILE = GameControls.TILE;
 
-        int PAD = GameController.PAD;
-        int HUD_W = GameController.HUD_W;
-        int GRID_H = GameController.GRID_H;
-        int GRID_W = GameController.GRID_W;
+        int PAD = GameControls.PAD;
+        int HUD_W = GameControls.HUD_W;
+        int GRID_H = GameControls.GRID_H;
+        int GRID_W = GameControls.GRID_W;
 
         super.paintComponent(g);
         // HUD background box on the left.
@@ -149,12 +177,12 @@ public class GamePanel extends JPanel {
             g.drawLine(boardX, boardY + r * TILE, boardX + GRID_W, boardY + r * TILE);
 
         // Finally draw the HUD text.
-        drawHud(g, PAD, PAD, HUD_W, controller);
+        drawHud(g, PAD, PAD, HUD_W);
     }
 
     // Draw one tile sprite. If image is null, we draw a simple colored box.
     private void drawSprite(Graphics g, Image img, int c, int r, int boardX, int boardY, Color fallback) {
-        int TILE = GameController.TILE;
+        int TILE = GameControls.TILE;
         int x = boardX + c * TILE;
         int y = boardY + r * TILE;
         if (img == null) {
@@ -166,7 +194,7 @@ public class GamePanel extends JPanel {
     }
 
     // Draws the text on the left side: score, required left, and time.
-    private void drawHud(Graphics g, int x, int y, int w, GameController controller) {
+    private void drawHud(Graphics g, int x, int y, int w) {
         g.setColor(HUD_TEXT);
         g.setFont(new Font("SansSerif", Font.BOLD, 16));
         int line = y + 30;
@@ -204,3 +232,24 @@ public class GamePanel extends JPanel {
         return null;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

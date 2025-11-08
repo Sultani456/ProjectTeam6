@@ -1,12 +1,6 @@
 package com.project.team6.controller;
 
 import javax.swing.*;
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Random;
 
@@ -14,7 +8,7 @@ import com.project.team6.model.characters.player.MoveResult;
 import com.project.team6.model.characters.player.Player;
 import com.project.team6.model.characters.enemies.*;
 
-public class GameController {
+public class GameControls {
 
     // ---- Grid setup ----
     // Columns, rows, and tile size for the board.
@@ -130,7 +124,7 @@ public class GameController {
 
     /** Ensure S/E cells are not carrying '*' or 'B' from the map file. */
     // This keeps the start and end tiles safe.
-    private void sanitizeStartEnd() {
+    public void sanitizeStartEnd() {
         int[] s = findChar('S');
         int[] e = findChar('E');
         if (s[0] >= 0) {
@@ -159,7 +153,7 @@ public class GameController {
     }
 
     // Make sure we have the minimum required items and enemies on empty spaces.
-    private void ensureMinimumCounts() {
+    public void ensureMinimumCounts() {
         int[] s = findChar('S');
         int[] e = findChar('E');
         int sx = s[0], sy = s[1];
@@ -187,34 +181,13 @@ public class GameController {
         }
     }
 
-    public GameController() {
-        // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
-        // We read a level file and copy it into our grid.
-        try {
-            MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
-            for (int r = 0; r < ROWS; r++) {
-                System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
-            }
-        } catch (IOException ex) {
-            // If map fails to load, we stop because the game cannot run.
-            throw new RuntimeException("Failed to load map file: " + ex.getMessage(), ex);
-        }
-
-        // Make sure start and end cells are clean and not blocked.
-        sanitizeStartEnd();
-
-        // ---- Top-up missing items (never on S/E) ----
-        // We ensure the map has enough items and enemies.
-        ensureMinimumCounts();
-        requiredLeft = countChar('.');
-
-        // ---- Initialize player & enemies ----
-        // The player and enemies are created based on the grid.
-        player = Player.fromGrid(grid);
-        enemies = EnemyFactory.fromGridAndClear(grid);
-
-        clock.start();
-        enemyTimer.start();
+    public GameControls() {
+//        requiredLeft = countChar('.');
+//
+//        // ---- Initialize player & enemies ----
+//        // The player and enemies are created based on the grid.
+//        player = Player.fromGrid(grid);
+//        enemies = EnemyFactory.fromGridAndClear(grid);
 
     }
 
@@ -223,13 +196,28 @@ public class GameController {
     public boolean getGameWon() {return gameWon;}
 
     public char getGridElement(int r, int c) {return grid[r][c];}
+    public char[][] getGrid() {return grid;}
 
     public List<Enemy> getEnemies() {return enemies;}
 
     public int getScore() {return score;}
     public int getRequiredLeft() {return requiredLeft;}
     public String getHudTime() {return hudTime;}
+
+    public void setRequiredLeft() {this.requiredLeft = countChar('.');}
+
+    public void startClock() {clock.start();}
+
+    public void startEnemyTimer() {enemyTimer.start();}
+
+    public void setPlayer() {player = Player.fromGrid(grid);}
+    public void setEnemies() {enemies = EnemyFactory.fromGridAndClear(grid);}
 }
+
+
+
+
+
 
 
 
