@@ -64,6 +64,7 @@ public class GamePanel extends JPanel {
         // The player and enemies are created based on the grid.
         controller.setPlayer();
         controller.setEnemies();
+        controller.seedExistingBonuses();
 
         // ---- Load images from classpath (/assets/...) ----
         // We try to load all sprites. If any is missing, we draw a colored box.

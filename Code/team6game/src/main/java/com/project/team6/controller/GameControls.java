@@ -2,6 +2,7 @@ package com.project.team6.controller;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 import com.project.team6.model.characters.player.MoveResult;
@@ -25,6 +26,45 @@ public class GameControls {
     public static final int GRID_H = ROWS * TILE;
     public static final int PANEL_W = HUD_W + PAD + GRID_W + PAD;
     public static final int PANEL_H = PAD + GRID_H + PAD;
+
+    // Lifetime of BonusRewards
+    private static final int BONUS_LIFETIME = 10;
+    private static class BonusSpawn {
+        final int r, c;
+        int age = 0;
+        BonusSpawn(int r, int c) {
+            this.r = r;
+            this.c = c;
+        }
+    }
+    private final List<BonusSpawn> activeBonuses = new ArrayList<>();
+
+    private void ageAndRemoveExpiredBonuses() {
+        var it = activeBonuses.iterator();
+        boolean changed = false;
+        while (it.hasNext()) {
+            BonusSpawn b = it.next();
+            b.age++;
+            if (b.age > BONUS_LIFETIME) {
+                if (grid[b.r][b.c] == 'o') {   // still present and not collected
+                    grid[b.r][b.c] = ' ';      // remove from map
+                    changed = true;
+                }
+                it.remove();
+            }
+        }
+        if (changed) notifyUpdate();  // redraw if something vanished
+    }
+
+
+    public void seedExistingBonuses() {
+        activeBonuses.clear();
+        for (int r = 0; r < ROWS; r++) {
+            for (int c = 0; c < COLS; c++) {
+                if (grid[r][c] == 'o') activeBonuses.add(new BonusSpawn(r, c));
+            }
+        }
+    }
 
     // ---- Minimum counts ----
     // These are the minimum items we want on the map.
@@ -92,6 +132,10 @@ public class GameControls {
                 break;
             case COLLECTED_OPTIONAL:
                 score += 5;
+
+                // player.getX()/getY() are the NEW position (the tile that had 'o')
+                activeBonuses.removeIf(b -> b.r == player.getY() && b.c == player.getX());
+
                 break;
             case HIT_PUNISHMENT:
                 score -= 10;
@@ -177,6 +221,7 @@ public class GameControls {
             if (grid[r][c] != ' ') continue;                           // only empty tiles
             if ((c == sx && r == sy) || (c == ex && r == ey)) continue; // never S/E
             grid[r][c] = ch;
+            if (ch == 'o') activeBonuses.add(new BonusSpawn(r, c));
             need--;
         }
     }
