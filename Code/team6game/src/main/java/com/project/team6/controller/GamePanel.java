@@ -32,37 +32,14 @@ public class GamePanel extends JPanel {
 
     public GamePanel(GameController controller) {
         // Set the panel size and basic settings.
-        this.controller = controller;
-        controller.setOnUpdate(this::repaint);
-
         setPreferredSize(new Dimension(GameController.PANEL_W, GameController.PANEL_H));
         setBackground(Color.WHITE);
         setFocusable(true);
 
-        // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
-        // We read a level file and copy it into our grid.
-        try {
-            MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
-            for (int r = 0; r < ROWS; r++) {
-                System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
-            }
-        } catch (IOException ex) {
-            // If map fails to load, we stop because the game cannot run.
-            throw new RuntimeException("Failed to load map file: " + ex.getMessage(), ex);
-        }
+        this.controller = controller;
+        controller.setOnUpdate(this::repaint);
 
-        // Make sure start and end cells are clean and not blocked.
-        sanitizeStartEnd();
 
-        // ---- Top-up missing items (never on S/E) ----
-        // We ensure the map has enough items and enemies.
-        ensureMinimumCounts();
-        requiredLeft = countChar('.');
-
-        // ---- Initialize player & enemies ----
-        // The player and enemies are created based on the grid.
-        player = Player.fromGrid(grid);
-        enemies = EnemyFactory.fromGridAndClear(grid);
 
         // ---- Load images from classpath (/assets/...) ----
         // We try to load all sprites. If any is missing, we draw a colored box.
@@ -75,38 +52,44 @@ public class GamePanel extends JPanel {
         imgWall   = safeLoad("/assets/wall1.png");
 
         // Key bindings and timers start here.
-        setupKeyBindings();
-        clock.start();
-        enemyTimer.start();
+        setupKeyBindings(controller);
     }
 
     // ------------------------ Input ------------------------
     // We bind arrow keys and WASD to the same move actions.
-    private void setupKeyBindings() {
-        bind("LEFT", -1, 0);
-        bind("RIGHT", 1, 0);
-        bind("UP", 0, -1);
-        bind("DOWN", 0, 1);
-        bind("A", -1, 0);
-        bind("D", 1, 0);
-        bind("W", 0, -1);
-        bind("S", 0, 1);
+    private void setupKeyBindings(GameController controller) {
+        bind("LEFT", -1, 0, controller);
+        bind("RIGHT", 1, 0, controller);
+        bind("UP", 0, -1, controller);
+        bind("DOWN", 0, 1, controller);
+        bind("A", -1, 0, controller);
+        bind("D", 1, 0, controller);
+        bind("W", 0, -1, controller);
+        bind("S", 0, 1, controller);
     }
 
     // Helper to connect a key to a movement delta.
-    private void bind(String key, int dx, int dy) {
+    private void bind(String key, int dx, int dy, GameController controller) {
         getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), "mv_" + key);
         getActionMap().put("mv_" + key, new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
-                if (!gameOver && !gameWon) doMove(dx, dy);
+                if (!controller.getGameOver() && !controller.getGameWon()) controller.doMove(dx, dy);
             }
         });
     }
 
     // --------------------- Rendering ---------------------
     // We draw the HUD, the board, walls, items, enemies, and grid lines.
-    @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g, GameController controller) {
+        int COLS = GameController.COLS;
+        int ROWS = GameController.ROWS;
+        int TILE = GameController.TILE;
+
+        int PAD = GameController.PAD;
+        int HUD_W = GameController.HUD_W;
+        int GRID_H = GameController.GRID_H;
+        int GRID_W = GameController.GRID_W;
+
         super.paintComponent(g);
         // HUD background box on the left.
         g.setColor(HUD_BG);
@@ -125,7 +108,7 @@ public class GamePanel extends JPanel {
         // Walls
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-                if (grid[r][c] == 'X') {
+                if (controller.getGridElement(r,c) == 'X') {
                     int x = boardX + c * TILE, y = boardY + r * TILE;
                     if (imgWall != null) g.drawImage(imgWall, x, y, TILE, TILE, null);
                     else {
@@ -140,7 +123,7 @@ public class GamePanel extends JPanel {
         // Static collectibles
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-                char ch = grid[r][c];
+                char ch = controller.getGridElement(r,c);
                 switch (ch) {
                     case 'S': drawSprite(g, imgPlayer, c, r, boardX, boardY, Color.BLUE); break;
                     case 'E': drawSprite(g, imgEnd, c, r, boardX, boardY, Color.CYAN); break;
@@ -153,7 +136,7 @@ public class GamePanel extends JPanel {
         }
 
         // Enemies
-        for (Enemy e : enemies) {
+        for (Enemy e : controller.getEnemies()) {
             // Each enemy is drawn as a sprite or a red box if image is missing.
             drawSprite(g, imgEnemy, e.getX(), e.getY(), boardX, boardY, Color.RED);
         }
@@ -166,11 +149,12 @@ public class GamePanel extends JPanel {
             g.drawLine(boardX, boardY + r * TILE, boardX + GRID_W, boardY + r * TILE);
 
         // Finally draw the HUD text.
-        drawHud(g, PAD, PAD, HUD_W);
+        drawHud(g, PAD, PAD, HUD_W, controller);
     }
 
     // Draw one tile sprite. If image is null, we draw a simple colored box.
     private void drawSprite(Graphics g, Image img, int c, int r, int boardX, int boardY, Color fallback) {
+        int TILE = GameController.TILE;
         int x = boardX + c * TILE;
         int y = boardY + r * TILE;
         if (img == null) {
@@ -182,20 +166,20 @@ public class GamePanel extends JPanel {
     }
 
     // Draws the text on the left side: score, required left, and time.
-    private void drawHud(Graphics g, int x, int y, int w) {
+    private void drawHud(Graphics g, int x, int y, int w, GameController controller) {
         g.setColor(HUD_TEXT);
         g.setFont(new Font("SansSerif", Font.BOLD, 16));
         int line = y + 30;
-        g.drawString("Score: " + score, x + 10, line); line += 25;
-        g.drawString("R. Left: " + requiredLeft, x + 10, line); line += 25;
-        g.drawString("Time: " + hudTime, x + 10, line);
+        g.drawString("Score: " + controller.getScore(), x + 10, line); line += 25;
+        g.drawString("R. Left: " + controller.getRequiredLeft(), x + 10, line); line += 25;
+        g.drawString("Time: " + controller.getHudTime(), x + 10, line);
 
         // Show end messages.
-        if (gameOver) {
+        if (controller.getGameOver()) {
             g.setColor(Color.RED);
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             g.drawString("GAME OVER!", x + 10, line + 40);
-        } else if (gameWon) {
+        } else if (controller.getGameWon()) {
             g.setColor(Color.GREEN.darker());
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             g.drawString("You won!", x + 10, line + 40);

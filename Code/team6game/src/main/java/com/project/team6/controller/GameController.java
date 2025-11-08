@@ -18,17 +18,17 @@ public class GameController {
 
     // ---- Grid setup ----
     // Columns, rows, and tile size for the board.
-    private static final int COLS = 18;
-    private static final int ROWS = 11;
-    private static final int TILE = 32;
+    public static final int COLS = 18;
+    public static final int ROWS = 11;
+    public static final int TILE = 32;
 
     // HUD width and padding around things.
-    private static final int HUD_W = 150;
-    private static final int PAD = 12;
+    public static final int HUD_W = 150;
+    public static final int PAD = 12;
 
     // Calculated sizes for grid and whole panel.
-    private static final int GRID_W = COLS * TILE;
-    private static final int GRID_H = ROWS * TILE;
+    public static final int GRID_W = COLS * TILE;
+    public static final int GRID_H = ROWS * TILE;
     public static final int PANEL_W = HUD_W + PAD + GRID_W + PAD;
     public static final int PANEL_H = PAD + GRID_H + PAD;
 
@@ -89,7 +89,7 @@ public class GameController {
 
     // --------------------- Game Logic ---------------------
     // This applies one move and updates score/state based on what we stepped on.
-    private void doMove(int dx, int dy) {
+    public void doMove(int dx, int dy) {
         MoveResult r = player.tryMove(dx, dy, grid);
         switch (r.type) {
             case COLLECTED_REQUIRED:
@@ -188,9 +188,47 @@ public class GameController {
     }
 
     public GameController() {
+        // ---- Load map (classpath: src/main/resources/maps/level1.txt) ----
+        // We read a level file and copy it into our grid.
+        try {
+            MapLoader.LoadedLevel L = MapLoader.load("maps/level1.txt", COLS, ROWS, true);
+            for (int r = 0; r < ROWS; r++) {
+                System.arraycopy(L.grid[r], 0, grid[r], 0, COLS);
+            }
+        } catch (IOException ex) {
+            // If map fails to load, we stop because the game cannot run.
+            throw new RuntimeException("Failed to load map file: " + ex.getMessage(), ex);
+        }
+
+        // Make sure start and end cells are clean and not blocked.
+        sanitizeStartEnd();
+
+        // ---- Top-up missing items (never on S/E) ----
+        // We ensure the map has enough items and enemies.
+        ensureMinimumCounts();
+        requiredLeft = countChar('.');
+
+        // ---- Initialize player & enemies ----
+        // The player and enemies are created based on the grid.
+        player = Player.fromGrid(grid);
+        enemies = EnemyFactory.fromGridAndClear(grid);
+
+        clock.start();
+        enemyTimer.start();
 
     }
 
+    public boolean getGameOver() {return gameOver;}
+
+    public boolean getGameWon() {return gameWon;}
+
+    public char getGridElement(int r, int c) {return grid[r][c];}
+
+    public List<Enemy> getEnemies() {return enemies;}
+
+    public int getScore() {return score;}
+    public int getRequiredLeft() {return requiredLeft;}
+    public String getHudTime() {return hudTime;}
 }
 
 
