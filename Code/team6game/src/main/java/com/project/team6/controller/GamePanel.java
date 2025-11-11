@@ -24,16 +24,16 @@ public class GamePanel extends JPanel {
     // Sprites for everything. They can be null if missing.
     private Image imgPlayer, imgEnemy, imgPunish, imgReq, imgOpt, imgEnd, imgWall;
 
-    private final GameControls controller;
+    private final GameControls controls;
 
-    public GamePanel(GameControls controller) {
-        this.controller = controller;
-        controller.setOnUpdate(this::repaint);
+    public GamePanel(GameControls controls) {
+        this.controls = controls;
+        controls.setOnUpdate(this::repaint);
 
         int COLS = GameControls.COLS;
         int ROWS = GameControls.ROWS;
 
-        char[][] grid = controller.getGrid();
+        char[][] grid = controls.getGrid();
 
         // Set the panel size and basic settings.
         setPreferredSize(new Dimension(GameControls.PANEL_W, GameControls.PANEL_H));
@@ -53,18 +53,18 @@ public class GamePanel extends JPanel {
         }
 
         // Make sure start and end cells are clean and not blocked.
-        controller.sanitizeStartEnd();
+        controls.sanitizeStartEnd();
 
         // ---- Top-up missing items (never on S/E) ----
         // We ensure the map has enough items and enemies.
-        controller.ensureMinimumCounts();
-        controller.setRequiredLeft();
+        controls.ensureMinimumCounts();
+        controls.setRequiredLeft();
 
         // ---- Initialize player & enemies ----
         // The player and enemies are created based on the grid.
-        controller.setPlayer();
-        controller.setEnemies();
-        controller.seedExistingBonuses();
+        controls.setPlayer();
+        controls.setEnemies();
+        controls.seedExistingBonuses();
 
         // ---- Load images from classpath (/assets/...) ----
         // We try to load all sprites. If any is missing, we draw a colored box.
@@ -79,8 +79,8 @@ public class GamePanel extends JPanel {
         // Key bindings and timers start here.
         setupKeyBindings();
 
-        controller.startClock();
-        controller.startEnemyTimer();
+        controls.startClock();
+        controls.startEnemyTimer();
     }
 
     // ------------------------ Input ------------------------
@@ -101,7 +101,7 @@ public class GamePanel extends JPanel {
         getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), "mv_" + key);
         getActionMap().put("mv_" + key, new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) {
-                if (!controller.getGameOver() && !controller.getGameWon()) controller.doMove(dx, dy);
+                if (!controls.getGameOver() && !controls.getGameWon()) controls.doMove(dx, dy);
             }
         });
     }
@@ -137,7 +137,7 @@ public class GamePanel extends JPanel {
         // Walls
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-                if (controller.getGridElement(r,c) == 'X') {
+                if (controls.getGridElement(r,c) == 'X') {
                     int x = boardX + c * TILE, y = boardY + r * TILE;
                     if (imgWall != null) g.drawImage(imgWall, x, y, TILE, TILE, null);
                     else {
@@ -152,7 +152,7 @@ public class GamePanel extends JPanel {
         // Static collectibles
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
-                char ch = controller.getGridElement(r,c);
+                char ch = controls.getGridElement(r,c);
                 switch (ch) {
                     case 'S': drawSprite(g, imgPlayer, c, r, boardX, boardY, Color.BLUE); break;
                     case 'E': drawSprite(g, imgEnd, c, r, boardX, boardY, Color.CYAN); break;
@@ -165,7 +165,7 @@ public class GamePanel extends JPanel {
         }
 
         // Enemies
-        for (Enemy e : controller.getEnemies()) {
+        for (Enemy e : controls.getEnemies()) {
             // Each enemy is drawn as a sprite or a red box if image is missing.
             drawSprite(g, imgEnemy, e.getX(), e.getY(), boardX, boardY, Color.RED);
         }
@@ -199,16 +199,16 @@ public class GamePanel extends JPanel {
         g.setColor(HUD_TEXT);
         g.setFont(new Font("SansSerif", Font.BOLD, 16));
         int line = y + 30;
-        g.drawString("Score: " + controller.getScore(), x + 10, line); line += 25;
-        g.drawString("R. Left: " + controller.getRequiredLeft(), x + 10, line); line += 25;
-        g.drawString("Time: " + controller.getHudTime(), x + 10, line);
+        g.drawString("Score: " + controls.getScore(), x + 10, line); line += 25;
+        g.drawString("R. Left: " + controls.getRequiredLeft(), x + 10, line); line += 25;
+        g.drawString("Time: " + controls.getHudTime(), x + 10, line);
 
         // Show end messages.
-        if (controller.getGameOver()) {
+        if (controls.getGameOver()) {
             g.setColor(Color.RED);
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             g.drawString("GAME OVER!", x + 10, line + 40);
-        } else if (controller.getGameWon()) {
+        } else if (controls.getGameWon()) {
             g.setColor(Color.GREEN.darker());
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             g.drawString("You won!", x + 10, line + 40);
