@@ -1,13 +1,12 @@
-package com.project.team6.model.characters.player;
+package com.project.team6.model.characters;
 
-import com.project.team6.model.characters.CharacterObject;
 import com.project.team6.model.boardUtilities.Board;
 import com.project.team6.model.boardUtilities.Direction;
 
 /**
  * Player controlled by input. Movement is still validated by the Board.
  */
-public final class Player extends CharacterObject {
+public class Player extends CharacterObject {
 
     public Player(int x, int y) { super(x, y); }
 

@@ -16,7 +16,7 @@ public final class Position {
     public int y() { return y; }
 
     /** Manhattan distance. */
-    public int manhattanTo(Position o) { return Math.abs(x - o.x) + Math.abs(y - o.y); }
+    public int manhattanTo(Position other) { return Math.abs(x - other.x) + Math.abs(y - other.y); }
 
     /** Return a new position moved by (dx, dy). */
     public Position translate(int dx, int dy) { return new Position(x + dx, y + dy); }

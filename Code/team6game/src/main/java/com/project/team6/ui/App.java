@@ -25,7 +25,7 @@ public final class App {
                     /*rows*/ 17, /*cols*/ 25,
                     new Position(0, 8),              // Start on edge
                     new Position(24, 8),             // Exit on opposite edge
-                    BoardGenerator.InternalBarrierMode.RANDOM_MAZE,
+                    BoardGenerator.InternalBarrierMode.PROVIDED,
                     List.of(),                       // not used in RANDOM_MAZE
                     42L                              // seed for reproducibility
             );

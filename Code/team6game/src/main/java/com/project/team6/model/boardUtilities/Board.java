@@ -1,7 +1,9 @@
 package com.project.team6.model.boardUtilities;
 
 import com.project.team6.model.characters.*;
+import com.project.team6.model.characters.enemies.*;
 import com.project.team6.model.collectibles.*;
+import com.project.team6.model.collectibles.rewards.*;
 import com.project.team6.model.generators.BoardGenerator;
 
 import java.util.*;

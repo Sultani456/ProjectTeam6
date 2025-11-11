@@ -1,5 +1,13 @@
 package com.project.team6.model.boardUtilities;
 
+
+import com.project.team6.model.characters.CharacterObject;
+import com.project.team6.model.characters.enemies.Enemy;
+import com.project.team6.model.characters.Player;
+import com.project.team6.model.collectibles.CollectibleObject;
+
+import java.util.Objects;
+
 public final class Cell {
     public enum Terrain { FLOOR, WALL, BARRIER, START, EXIT }
 
@@ -11,10 +19,10 @@ public final class Cell {
 
     public Terrain terrain()                 { return terrain; }
     public CharacterObject occupant()        { return occupant; }
-    public void setOccupant(CharacterObject o) { this.occupant = o; }
+    public void setOccupant(CharacterObject occupant) { this.occupant = occupant; }
 
     public CollectibleObject item()          { return item; }
-    public void setItem(CollectibleObject it){ this.item = it; }
+    public void setItem(CollectibleObject item){ this.item = item; }
 
     public boolean isWalkableTerrain() {
         return terrain != Terrain.WALL && terrain != Terrain.BARRIER;
@@ -30,11 +38,10 @@ public final class Cell {
         if (terrain == Terrain.START)   return 'S';
         if (terrain == Terrain.EXIT)    return 'E';
         if (occupant != null) {
-            // Prefer polymorphism if you add a display method; until then:
             if (occupant instanceof Player) return 'P';
             if (occupant instanceof Enemy)  return 'B';
         }
-        if (item != null) return item.symbol();  // your CollectibleObject already defines symbol()
+        if (item != null) return item.symbol();  // CollectibleObject already defines symbol()
         return ' ';
     }
 }
