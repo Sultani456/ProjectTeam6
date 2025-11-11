@@ -6,12 +6,10 @@ package com.project.team6.model.collectibles.rewards;
 
 import com.project.team6.model.collectibles.CollectibleObject;
 
-///** Abstract reward; concrete types decide symbol/value/required-flag. */
+/** Positive-score base. */
 public abstract class Reward extends CollectibleObject {
-    // x and y are the grid positions.
-    // The child classes will decide the symbol, the score value, and if it is required.
-    public Reward(int x, int y) {
-        // Send the position to the GameObject parent class.
-        super(x, y);
+    protected Reward(int x, int y, int value, boolean requiredToWin) {
+        super(x, y, value, requiredToWin);
     }
 }
+

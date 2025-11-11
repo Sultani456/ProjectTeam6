@@ -1,47 +1,50 @@
 package com.project.team6.model.characters.enemies;
 
-// This enemy always tries to move closer to the player.
-public class MovingEnemy extends Enemy {
+// This enemy always tries to move closer to the players
 
-    // Start position of the enemies.
-    public MovingEnemy(int x, int y) {
-        super(x, y);
-    }
+import com.project.team6.model.boardUtilities.Board;
+import com.project.team6.model.boardUtilities.Direction;
+import com.project.team6.model.boardUtilities.Position;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Greedy, Manhattan chaser: picks a 4-neighbor step that reduces distance,
+ * preferring horizontal/vertical order that best approaches the player,
+ * skipping illegal cells.
+ */
+public final class MovingEnemy extends Enemy {
+
+    public MovingEnemy(int x, int y) { super(x, y); }
 
     @Override
-    public void tick(char[][] grid, int playerX, int playerY) {
-        // dx and dy show the direction to the player: -1, 0, or 1.
-        int dx = Integer.compare(playerX, this.x); // -1,0,1
-        int dy = Integer.compare(playerY, this.y);
+    protected Direction decide(Board board, Position playerPos) {
+        Position me = position();
+        int dx = Integer.compare(playerPos.x(), me.x());
+        int dy = Integer.compare(playerPos.y(), me.y());
 
-        // Distance on x and y. Used to decide which way to move first.
-        int absDx = Math.abs(playerX - this.x);
-        int absDy = Math.abs(playerY - this.y);
-
-        // If we are farther (or equal) on x, try moving on x first.
-        if (absDx >= absDy) {
-            // Try step on x. If blocked, try step on y.
-            if (!tryStep(grid, this.x + dx, this.y)) {
-                tryStep(grid, this.x, this.y + dy);
-            }
+        // Build preference list: move on the axis with larger |delta| first.
+        List<Direction> prefs = new ArrayList<>(4);
+        boolean horizFirst = Math.abs(playerPos.x() - me.x()) >= Math.abs(playerPos.y() - me.y());
+        if (horizFirst) {
+            if (dx > 0) prefs.add(Direction.RIGHT); else if (dx < 0) prefs.add(Direction.LEFT);
+            if (dy > 0) prefs.add(Direction.DOWN);  else if (dy < 0) prefs.add(Direction.UP);
         } else {
-            // If we are farther on y, try moving on y first.
-            if (!tryStep(grid, this.x, this.y + dy)) {
-                tryStep(grid, this.x + dx, this.y);
-            }
+            if (dy > 0) prefs.add(Direction.DOWN);  else if (dy < 0) prefs.add(Direction.UP);
+            if (dx > 0) prefs.add(Direction.RIGHT); else if (dx < 0) prefs.add(Direction.LEFT);
         }
-    }
+        // Add remaining directions as fallbacks
+        if (!prefs.contains(Direction.UP))    prefs.add(Direction.UP);
+        if (!prefs.contains(Direction.DOWN))  prefs.add(Direction.DOWN);
+        if (!prefs.contains(Direction.LEFT))  prefs.add(Direction.LEFT);
+        if (!prefs.contains(Direction.RIGHT)) prefs.add(Direction.RIGHT);
 
-    // Try to move to (nx, ny). Return true if the move works.
-    private boolean tryStep(char[][] grid, int nx, int ny) {
-        // Check if the next tile is walkable.
-        if (canStep(grid, nx, ny)) {
-            // Update the enemies position.
-            this.x = nx;
-            this.y = ny;
-            return true;
+        // Pick the first legal enterable target
+        for (Direction d : prefs) {
+            Position to = new Position(me.x() + d.dx, me.y() + d.dy);
+            if (board.tryEnter(to)) return d;
         }
-        // Could not move there.
-        return false;
+        return null; // stuck
     }
 }

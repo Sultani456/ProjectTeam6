@@ -1,20 +1,33 @@
 package com.project.team6.model.collectibles;
 
 import com.project.team6.model.GameObject;
+import com.project.team6.model.runtime.Scoreboard;
 
+/**
+ * Base class for on-cell items that affect score (positive or negative).
+ */
 public abstract class CollectibleObject extends GameObject {
-    public CollectibleObject(int x, int y) {
+
+    private final int value;           // + for rewards, - for punishments
+    private final boolean requiredToWin;
+
+    protected CollectibleObject(int x, int y, int value, boolean requiredToWin) {
         super(x, y);
+        this.value = value;
+        this.requiredToWin = requiredToWin;
     }
-    // The character we show on the map for this item.
-    /** Display / identity symbol that matches your grid legend. */
-    public abstract char symbol();
 
-    // Points this item gives or takes. Positive adds, negative subtracts.
-    /** Positive values add to score, negative subtract (punishment). */
-    public abstract int value();
+    public int value() { return value; }
+    public boolean isRequiredToWin() { return requiredToWin; }
 
-    // If true, you must collect this to win the level. Default is false.
-    /** Whether this item is required to win (i.e., regular reward). */
-    public boolean isRequiredToWin() { return false; }
+    /** Apply score effects; Board/Controller can call this when collected. */
+    public void applyTo(Scoreboard scoreboard) {
+        if (value >= 0) {
+            if (requiredToWin) scoreboard.collectedRequired(value);
+            else scoreboard.collectedOptional(value);
+        } else {
+            scoreboard.penalize(value); // negative OK
+        }
+    }
 }
+

@@ -4,20 +4,36 @@ package com.project.team6.model;
 // Other item types will extend this class.
 
 /** Base type for anything the player can step on and trigger. */
-public abstract class GameObject {
-    // Grid x position for this item.
-    protected int x;
-    // Grid y position for this item.
-    protected int y;
+import com.project.team6.model.boardUtilities.Position;
 
-    // Save the position when we make the item.
-    public GameObject(int x, int y) {
-        this.x = x;
-        this.y = y;
+import java.util.Objects;
+import java.util.UUID;
+
+/**
+ * Base class for all in-world objects (characters, collectibles).
+ * Holds identity and location.
+ */
+public abstract class GameObject {
+    private final UUID id = UUID.randomUUID();
+    private Position position;
+
+    protected GameObject(int x, int y) {
+        this.position = new Position(x, y);
     }
 
-    // Give back the x position.
-    public final int getX() { return x; }
-    // Give back the y position.
-    public final int getY() { return y; }
+    public UUID id() { return id; }
+
+    public Position position() { return position; }
+    /** Intended to be used by Board when moving objects between cells. */
+    public void setPosition(Position position) {
+        this.position = Objects.requireNonNull(position);
+    }
+
+    /** Single-character ASCII for quick board display; GUI can ignore this. */
+    public abstract char symbol();
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "@" + position;
+    }
 }
+

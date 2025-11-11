@@ -2,15 +2,28 @@ package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.characters.CharacterObject;
 
-// This is the base class for enemies.
-// Other enemy types will extend this class.
+import com.project.team6.model.boardUtilities.Board;
+import com.project.team6.model.boardUtilities.Direction;
+import com.project.team6.model.boardUtilities.Position;
+
+/**
+ * Base enemy with a one-tile-per-tick movement contract.
+ */
 public abstract class Enemy extends CharacterObject {
-    public Enemy(int x, int y) {
-        super(x, y);
+
+    protected Enemy(int x, int y) { super(x, y); }
+
+    /**
+     * Called once per tick by the controller.
+     * Default: move one step following the decision rule returned by decide().
+     */
+    public void tick(Board board, Position playerPos) {
+        Direction d = decide(board, playerPos);
+        if (d != null) tryMove(board, d);
     }
 
-    /** Move at most one tile. */
-    // This runs every game tick to decide the next move.
-    // The grid tells where walls are. Player position is given.
-    public abstract void tick(char[][] grid, int playerX, int playerY);
+    /** Choose a direction (may return null to stay still). */
+    protected abstract Direction decide(Board board, Position playerPos);
+
+    @Override public char symbol() { return 'B'; } // “B” for bad guy
 }

@@ -1,4 +1,4 @@
-package com.project.team6.controller;
+package com.project.team6.ui;
 
 
 import java.io.BufferedReader;

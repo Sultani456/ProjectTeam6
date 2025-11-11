@@ -1,20 +1,11 @@
-package com.project.team6.model.collectibles; // items live in this package
+package com.project.team6.model.collectibles;
 
-/** Punishment (negative score) — your '*' tiles. */
-public class Punishment extends CollectibleObject {
-    private final int penalty; // how many points this takes away
+/** Negative-score item. */
+public final class Punishment extends CollectibleObject {
 
     public Punishment(int x, int y, int penalty) {
-        super(x, y); // set the tile position
-        this.penalty = penalty; // store the penalty amount
+        super(x, y, Math.min(0, penalty), false); // ensure non-positive
     }
 
-    @Override
-    public char symbol() { return '*'; } // this shows as '*' on the map
-
-    @Override
-    public int value() { 
-        // make sure the value is negative so score goes down
-        return -Math.abs(penalty); // always negative
-    }
+    @Override public char symbol() { return '*'; }
 }

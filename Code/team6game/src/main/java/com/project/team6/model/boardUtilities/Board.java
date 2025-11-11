@@ -1,101 +1,232 @@
 package com.project.team6.model.boardUtilities;
 
-public class Board {
-    // This class holds the grid for the game.
-    // It stores size, blocked cells, and start/end cells.
-    private final int cols;
-    private final int rows;
+import com.project.team6.model.characters.*;
+import com.project.team6.model.collectibles.*;
+import com.project.team6.model.generators.BoardGenerator;
 
-    // Grid data
-    private final boolean[][] walls;     // true = wall (impassable)
-    private final boolean[][] barriers;  // true = barrier (impassable, single-cell obstacle)
+import java.util.*;
+import java.util.stream.Collectors;
 
-    // Start / End positions (cell coordinates)
-    private int startX = 0, startY = 0;
-    private int endX   = 0, endY   = 0;
+/**
+ * Authoritative model of the board: terrain, occupants, and items.
+ * Owns spawning and movement legality. Now includes a tick() that
+ * advances enemies, expires BonusRewards, and returns a summary.
+ */
+public final class Board {
 
-    public Board(int rows, int cols) {
-        // We do not allow zero or negative sizes.
-        if (rows <= 0 || cols <= 0) throw new IllegalArgumentException("cols/rows must be > 0");
-        this.rows = rows;
-        this.cols = cols;
-        // Each cell can be a wall or a barrier. Both are blocked.
-        this.walls    = new boolean[rows][cols];
-        this.barriers = new boolean[rows][cols];
+    private final int rows, cols;
+    private final Position start, exit;
+    private final Map<Position, Cell> grid;
+    private final Random rng;
+
+    // --- Summary returned by tick() ---
+    public static final class TickSummary {
+        private final int enemiesAttempted;
+        private final int enemiesMoved;
+        private final int bonusExpired;
+        private final boolean playerCaught;
+
+        public TickSummary(int enemiesAttempted, int enemiesMoved, int bonusExpired, boolean playerCaught) {
+            this.enemiesAttempted = enemiesAttempted;
+            this.enemiesMoved     = enemiesMoved;
+            this.bonusExpired     = bonusExpired;
+            this.playerCaught     = playerCaught;
+        }
+        public int enemiesAttempted() { return enemiesAttempted; }
+        public int enemiesMoved()     { return enemiesMoved; }
+        public int bonusExpired()     { return bonusExpired; }
+        public boolean playerCaught() { return playerCaught; }
+
+        @Override public String toString() {
+            return "TickSummary{attempted=" + enemiesAttempted +
+                    ", moved=" + enemiesMoved +
+                    ", bonusExpired=" + bonusExpired +
+                    ", playerCaught=" + playerCaught + "}";
+        }
     }
 
-    // ------- Dimensions
-    // Return number of columns.
-    public int cols() { return cols; }
-    // Return number of rows.
+    public Board(BoardGenerator.Options genOpts) {
+        this.rows = genOpts.rows();
+        this.cols = genOpts.cols();
+        this.start = genOpts.start();
+        this.exit  = genOpts.exit();
+        this.rng   = new Random(genOpts.randomSeed());
+        this.grid  = BoardGenerator.generate(genOpts);
+    }
+
+    // ---- Queries ----
+
     public int rows() { return rows; }
+    public int cols() { return cols; }
+    public Position start() { return start; }
+    public Position exit()  { return exit; }
 
-    // ------- Bounds & queries
-    // Check if (x, y) is inside the grid.
-    public boolean inBounds(int x, int y) {
-        return x >= 0 && y >= 0 && x < cols && y < rows;
+    public Cell cellAt(Position p) { return grid.get(p); }
+
+    public boolean isInBounds(Position p) {
+        return p.x() >= 0 && p.y() >= 0 && p.x() < cols && p.y() < rows;
     }
 
-    // Check if a cell is a wall.
-    public boolean isWall(int x, int y) {
-        return inBounds(x, y) && walls[y][x];
+    public boolean isWalkable(Position p) {
+        Cell c = grid.get(p);
+        return c != null && c.isWalkableTerrain();
     }
 
-    // Check if a cell is a barrier.
-    public boolean isBarrier(int x, int y) {
-        return inBounds(x, y) && barriers[y][x];
+    /** Returns a String view (ASCII) of the current board. */
+    public String displayBoard() {
+        return BoardGenerator.toAscii(grid, rows, cols);
     }
 
-    /** A cell is walkable if it is in bounds and NOT a wall or barrier. */
-    // This is what we use to see if the player can move to a cell.
-    public boolean isWalkable(int x, int y) {
-        return inBounds(x, y) && !walls[y][x] && !barriers[y][x];
+    // ---- Spawning (no factories) ----
+
+    /** Place N regular rewards of a fixed amount on free FLOOR cells. */
+    public List<Position> spawnRegularRewards(int count, int amount) {
+        return placeItems(count, pos -> new RegularReward(pos.x(), pos.y(), amount));
     }
 
-    // ------- Mutation helpers (used by MapLoader later)
-    // Mark or unmark a wall at (x, y).
-    public void setWall(int x, int y, boolean value) {
-        if (!inBounds(x, y)) throw new IndexOutOfBoundsException();
-        walls[y][x] = value;
+    /** Place N bonus rewards of a fixed amount on free FLOOR cells. */
+    public List<Position> spawnBonusRewards(int count, int amount) {
+        return placeItems(count, pos -> new BonusReward(pos.x(), pos.y(), amount));
     }
 
-    // Mark or unmark a barrier at (x, y).
-    public void setBarrier(int x, int y, boolean value) {
-        if (!inBounds(x, y)) throw new IndexOutOfBoundsException();
-        barriers[x][y] = value;
+    /** Place N punishments with a fixed penalty (negative score). */
+    public List<Position> spawnPunishments(int count, int penalty) {
+        return placeItems(count, pos -> new Punishment(pos.x(), pos.y(), penalty));
     }
 
-    // Set the start cell for the player.
-    public void setStart(int x, int y) {
-        if (!inBounds(x, y)) throw new IndexOutOfBoundsException();
-        startX = x; startY = y;
+    /** Place N moving enemies on free FLOOR cells (not Start/Exit). */
+    public List<Position> spawnEnemies(int count) {
+        List<Position> spots = pickFreeFloorCells(count, /*excludeStartExit*/true);
+        for (Position p : spots) {
+            MovingEnemy enemy = new MovingEnemy(p.x(), p.y());
+            grid.get(p).setOccupant(enemy);
+        }
+        return spots;
     }
 
-    // Set the end cell (goal).
-    public void setEnd(int x, int y) {
-        if (!inBounds(x, y)) throw new IndexOutOfBoundsException();
-        endX = x; endY = y;
+    // ---- Movement and item interaction ----
+
+    public boolean tryEnter(Position to) {
+        Cell c = grid.get(to);
+        return c != null && c.isEnterableNow();
     }
 
-    // ------- Accessors for start/end
-    // Get start x.
-    public int startX() { return startX; }
-    // Get start y.
-    public int startY() { return startY; }
-    // Get end x.
-    public int endX()   { return endX; }
-    // Get end y.
-    public int endY()   { return endY; }
+    /** Remove and return collectible at p, if any. */
+    public Optional<CollectibleObject> collectAt(Position p) {
+        Cell c = grid.get(p);
+        if (c == null) return Optional.empty();
+        CollectibleObject item = c.item();
+        if (item == null) return Optional.empty();
+        c.setItem(null);
+        return Optional.of(item);
+    }
 
-    // ------- for convenience: clear all data (It's optional)
-    // Remove all walls and barriers, and reset start/end to (0,0).
-    public void clear() {
+    /** Move a character from 'from' to 'to' if enterable. Returns success. */
+    public boolean moveCharacter(Position from, Position to) {
+        if (!tryEnter(to)) return false;
+        Cell a = grid.get(from);
+        Cell b = grid.get(to);
+        if (a == null || b == null) return false;
+        CharacterObject who = a.occupant();
+        if (who == null) return false;
+        a.setOccupant(null);
+        b.setOccupant(who);
+        who.setPosition(to);
+        return true;
+    }
+
+    // ---- Ticking ----
+
+    /**
+     * Advance world one tick:
+     * - Decrement lifetimes of BonusRewards; remove expired.
+     * - Move each Enemy by at most one cell (using Enemy.tick()).
+     * - Report whether an enemy ended up on the player's position.
+     *
+     * @param playerPos the current player position.
+     * @return TickSummary for controller decisions (e.g., lose condition).
+     */
+    public TickSummary tick(Position playerPos) {
+        // 1) Expire bonus rewards
+        int bonusExpired = 0;
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
-                walls[y][x] = false;
-                barriers[y][x] = false;
+                Cell c = grid.get(new Position(x, y));
+                if (c == null) continue;
+                if (c.item() instanceof BonusReward br) {
+                    if (!br.onTickAndAlive()) {
+                        c.setItem(null);
+                        bonusExpired++;
+                    }
+                }
             }
         }
-        startX = startY = endX = endY = 0;
+
+        // 2) Move enemies one step. Snapshot first to avoid alias issues during movement.
+        List<Enemy> enemies = snapshotEnemies();
+
+        int attempted = enemies.size();
+        int moved = 0;
+
+        for (Enemy e : enemies) {
+            Position before = e.position();
+            e.tick(this, playerPos);           // enemy decides its step; uses Board.tryEnter/move via CharacterObject.tryMove(...)
+            Position after = e.position();
+            if (!after.equals(before)) moved++;
+        }
+
+        // 3) Collision: did any enemy land on the player tile?
+        boolean playerCaught = enemyOn(playerPos);
+
+        return new TickSummary(attempted, moved, bonusExpired, playerCaught);
+    }
+
+    // ---- Helpers ----
+
+    private boolean enemyOn(Position p) {
+        Cell c = grid.get(p);
+        return c != null && c.occupant() instanceof Enemy;
+    }
+
+    /** Collect a snapshot list of current enemies by scanning cells. */
+    private List<Enemy> snapshotEnemies() {
+        List<Enemy> list = new ArrayList<>();
+        for (int y = 0; y < rows; y++) {
+            for (int x = 0; x < cols; x++) {
+                Cell c = grid.get(new Position(x, y));
+                if (c != null && c.occupant() instanceof Enemy e) {
+                    list.add(e);
+                }
+            }
+        }
+        return list;
+    }
+
+    private interface ItemMaker { CollectibleObject make(Position p); }
+
+    private List<Position> placeItems(int count, ItemMaker maker) {
+        List<Position> spots = pickFreeFloorCells(count, /*excludeStartExit*/false);
+        for (Position p : spots) {
+            Cell c = grid.get(p);
+            if (c.item() == null) c.setItem(maker.make(p));
+        }
+        return spots;
+    }
+
+    /** Pick up to 'count' random FLOOR cells with no occupant/item. */
+    private List<Position> pickFreeFloorCells(int count, boolean excludeStartExit) {
+        List<Position> candidates = grid.entrySet().stream()
+                .filter(e -> e.getValue().terrain() == Cell.Terrain.FLOOR)
+                .filter(e -> e.getValue().item() == null && e.getValue().occupant() == null)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (excludeStartExit) {
+            candidates.remove(start);
+            candidates.remove(exit);
+        }
+
+        Collections.shuffle(candidates, rng);
+        return candidates.subList(0, Math.min(count, candidates.size()));
     }
 }

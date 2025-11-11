@@ -1,28 +1,32 @@
 package com.project.team6.model.collectibles.rewards;
 
-// This class is for bonus rewards.
-// It gives extra points, but it is not needed to finish the game.
+/**
+ * Optional reward with higher value. Supports optional lifetime (ticks).
+ * If lifetime <= 0, it's persistent.
+ */
+public final class BonusReward extends Reward {
 
-/** Optional reward: not required to win (your 'o' tiles). */
-public class BonusReward extends Reward {
-    // This is how many points this bonus gives.
-    private final int amount;
+    private int lifetimeTicks; // 0 => disabled, <=0 means no expiry
 
-    // We set the position (x, y) and how many points it gives.
-    public BonusReward(int x, int y, int amount) {
-        super(x, y);
-        this.amount = amount;
+    public BonusReward(int x, int y, int value) {
+        this(x, y, value, 0);
     }
 
-    // On the map, this bonus shows as the letter 'o'.
-    @Override
-    public char symbol() { return 'o'; }
+    public BonusReward(int x, int y, int value, int lifetimeTicks) {
+        super(x, y, value, false);
+        this.lifetimeTicks = lifetimeTicks;
+    }
 
-    // This returns the points you get from this bonus.
-    @Override
-    public int value() { return amount; }
+    /** Returns true if still present; controller/board can remove when false. */
+    public boolean onTickAndAlive() {
+        if (lifetimeTicks > 0) {
+            lifetimeTicks--;
+            return lifetimeTicks > 0;
+        }
+        return true;
+    }
 
-    // This bonus is not needed to win the level.
-    @Override
-    public boolean isRequiredToWin() { return false; }
+    public int lifetimeRemaining() { return lifetimeTicks; }
+
+    @Override public char symbol() { return 'o'; }
 }

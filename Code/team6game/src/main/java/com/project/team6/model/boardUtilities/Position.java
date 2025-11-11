@@ -1,44 +1,42 @@
 package com.project.team6.model.boardUtilities;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
- * Immutable integer (x,y) grid position.
- * Records (x,y), equality, and hashCode for use in sets/maps.
+ * Immutable integer grid coordinate.
+ * Safe as a HashMap key.
  */
 public final class Position {
-    // x coordinate on the grid
     private final int x;
-    // y coordinate on the grid
     private final int y;
 
-    // Make a position with given x and y. Values never change after this.
     public Position(int x, int y) { this.x = x; this.y = y; }
 
-    // Get x value
     public int x() { return x; }
-    // Get y value
     public int y() { return y; }
 
-    // Return a new position moved by dx and dy. Does not change the current one.
-    public Position withDxDy(int dx, int dy) {
-        return new Position(x + dx, y + dy);
+    /** Manhattan distance. */
+    public int manhattanTo(Position o) { return Math.abs(x - o.x) + Math.abs(y - o.y); }
+
+    /** Return a new position moved by (dx, dy). */
+    public Position translate(int dx, int dy) { return new Position(x + dx, y + dy); }
+
+    /** 4-neighborhood (up, down, left, right). */
+    public List<Position> neighbors4() {
+        return List.of(
+                new Position(x + 1, y),
+                new Position(x - 1, y),
+                new Position(x, y + 1),
+                new Position(x, y - 1)
+        );
     }
 
-    // Two positions are equal if both x and y match.
     @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Position p)) return false;
         return x == p.x && y == p.y;
     }
-
-    // Hash for using this in a HashMap or HashSet.
-    @Override public int hashCode() {
-        return Objects.hash(x, y);
-    }
-
-    // Show the position like "(x,y)" when we print it.
-    @Override public String toString() {
-        return "(" + x + "," + y + ")";
-    }
+    @Override public int hashCode() { return Objects.hash(x, y); }
+    @Override public String toString() { return "(" + x + "," + y + ")"; }
 }
+
