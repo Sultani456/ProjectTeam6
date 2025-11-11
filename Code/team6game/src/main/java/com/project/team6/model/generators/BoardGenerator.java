@@ -248,5 +248,29 @@ public final class BoardGenerator {
         }
         return false;
     }
+
+    public static ArrayList<Position> barrierList() {
+        ArrayList<Position> list = new ArrayList<>();
+        list.add(new Position(4, 2));
+        list.add(new Position(13,2));
+        list.add(new Position(4,4));
+        list.add(new Position(5,4));
+        list.add(new Position(12,4));
+        list.add(new Position(13,4));
+        list.add(new Position(4,6));
+        list.add(new Position(8,6));
+        list.add(new Position(9,6));
+        list.add(new Position(10,6));
+        list.add(new Position(7,7));
+        list.add(new Position(8,7));
+        list.add(new Position(3,8));
+        list.add(new Position(4,8));
+        list.add(new Position(5,8));
+        list.add(new Position(12,8));
+        list.add(new Position(13,8));
+        list.add(new Position(14,8));
+
+        return list;
+    }
 }
 

@@ -15,8 +15,21 @@ import java.util.List;
  * skipping illegal cells.
  */
 public final class MovingEnemy extends Enemy {
+    private final int movePeriod;  // >=1 ticks between moves
+    private int cooldown = 0;
 
-    public MovingEnemy(int x, int y) { super(x, y); }
+    public MovingEnemy(int x, int y, int movePeriod) {
+        super(x, y);
+        this.movePeriod = movePeriod;
+    }
+
+    @Override
+    public void tick(Board board, Position playerPos) {
+        if (cooldown > 0) { cooldown--; return; }
+        Direction d = decide(board, playerPos);
+        if (d != null) tryMove(board, d);
+        cooldown = movePeriod - 1; // wait this many ticks before next move
+    }
 
     @Override
     protected Direction decide(Board board, Position playerPos) {

@@ -97,10 +97,10 @@ public final class Board {
     }
 
     /** Place N moving enemies on free FLOOR cells (not Start/Exit). */
-    public List<Position> spawnEnemies(int count) {
+    public List<Position> spawnEnemies(int count, int movePeriod) {
         List<Position> spots = pickFreeFloorCells(count, /*excludeStartExit*/true);
         for (Position p : spots) {
-            MovingEnemy enemy = new MovingEnemy(p.x(), p.y());
+            MovingEnemy enemy = new MovingEnemy(p.x(), p.y(), movePeriod);
             grid.get(p).setOccupant(enemy);
         }
         return spots;
