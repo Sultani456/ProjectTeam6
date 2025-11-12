@@ -10,10 +10,11 @@ import java.util.*;
 
 /**
  * Wires MVC together:
- * - Builds the Board (no external text files)
+ * - Builds the Board (no external text files) via BoardGenerator
  * - Spawns items and enemies
  * - Creates Scoreboard, GameState
  * - Creates GamePanel and GameController
+ * - Creates the view + controller
  * - Shows the GameFrame
  */
 public final class App {
@@ -22,37 +23,52 @@ public final class App {
         List<Position> barrierList = BoardGenerator.barrierList();
 
         SwingUtilities.invokeLater(() -> {
-            // --- Model setup ---
+            // --- Board generation options
             var opts = new BoardGenerator.Options(
-                    /*rows*/ 11, /*cols*/ 18,
-                    new Position(0, 8),              // Start on edge
-                    new Position(17, 8),             // Exit on opposite edge
+                    /*rows*/ 11,
+                    /*cols*/ 18,
+                    /*start*/ new Position(0, 8),
+                    /*exit*/  new Position(17, 8),
                     BoardGenerator.InternalBarrierMode.PROVIDED,
-//                    List.of(),                       // not used in RANDOM_MAZE
+                    // Provide your own internal barrier list, or use RANDOM mode above
                     barrierList,
-                    42L                              // seed for reproducibility
+                    /*seed*/ 42L
             );
-            Board board = new Board(opts);
 
-            // Spawn items/enemies directly via Board (no factories)
-            int regularCount = 8;
-            board.spawnRegularRewards(regularCount, /*amount*/ 5);
-            board.spawnBonusRewards(4, /*amount*/ 10);      // optional
-            board.spawnPunishments(10, /*penalty*/ -5);
-            board.spawnEnemies(4, 25);
+            var out   = BoardGenerator.generate(opts);
+            Board board = new Board(out);
+
+            int regularRewardCount = 8;
+            int regularPoints = 5;
+
+            int bonusRewardCount = 5;
+            int bonusPoints = 10;
+
+            int numPunishments = 10;
+            int punishmentPenalty = -5;
+
+            int numEnemies = 4;
+            int enemyMovePeriod = 15;
+
+            // --- Spawning (tweak counts as you like)
+            board.spawnRegularRewards(regularRewardCount, regularPoints);
+            board.spawnBonusRewards(bonusRewardCount, bonusPoints);
+            board.spawnPunishments(numPunishments, punishmentPenalty);
+            board.spawnEnemies(numEnemies, enemyMovePeriod); // 4 enemies, 1 tick period (fast). Increase to slow them down.
 
             // Score/time model
-            Scoreboard scoreboard = new Scoreboard(/*initialScore*/ 0, /*requiredCount*/ regularCount);
-            GameState state = new GameState(board.start(), /*enemyStarts*/ List.of(), scoreboard);
+            Scoreboard scoreboard = new Scoreboard(0, regularRewardCount);
+            GameState state = new GameState(board.start(), List.of(), scoreboard);
 
-            // --- View ---
+            // --- View + Window
             GamePanel panel = new GamePanel(board, scoreboard, state);
             GameFrame frame = new GameFrame(panel);
             frame.setVisible(true);
 
-            // --- Controller ---
+            // --- Controller
             GameController controller = new GameController(board, scoreboard, state, panel);
             controller.start();
         });
     }
 }
+

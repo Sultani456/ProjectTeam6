@@ -2,16 +2,14 @@ package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.characters.CharacterObject;
 
-import com.project.team6.model.boardUtilities.Board;
-import com.project.team6.model.boardUtilities.Direction;
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.boardUtilities.*;
 
 /**
  * Base enemy with a one-tile-per-tick movement contract.
  */
 public abstract class Enemy extends CharacterObject {
 
-    protected Enemy(int x, int y) { super(x, y); }
+    protected Enemy(Position position) { super(position); }
 
     /**
      * Called once per tick by the controller.
@@ -19,11 +17,16 @@ public abstract class Enemy extends CharacterObject {
      */
     public void tick(Board board, Position playerPos) {
         Direction d = decide(board, playerPos);
-        if (d != null) tryMove(board, d);
+        if (d == null) return;          // idle this tick
+        MoveResult r = board.step(this, d); // MOVED / BLOCKED / COLLISION
+        onPostStep(board, r);
     }
 
+    /** Optional hook for subclasses after stepping. */
+    protected void onPostStep(Board board, MoveResult result) { /* no-op */ }
+
     /** Choose a direction (may return null to stay still). */
-    protected abstract Direction decide(Board board, Position playerPos);
+    public abstract Direction decide(Board board, Position playerPos);
 
     @Override public char symbol() { return 'B'; } // “B” for bad guy
 }

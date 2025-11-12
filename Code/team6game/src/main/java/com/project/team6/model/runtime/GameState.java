@@ -43,7 +43,8 @@ public final class GameState {
 
     public void tick() { ticks++; }
 
-    public void win()  { status = Status.WON;  scoreboard.stop(); }
-    public void lose() { status = Status.LOST; scoreboard.stop(); }
+    public void setRunning() { status = Status.RUNNING; }
+    public void setWon()  { status = Status.WON;  scoreboard.stop(); }
+    public void setLost() { status = Status.LOST; scoreboard.stop(); }
 }
 

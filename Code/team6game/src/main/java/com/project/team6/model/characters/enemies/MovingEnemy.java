@@ -4,9 +4,11 @@ package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.boardUtilities.Board;
 import com.project.team6.model.boardUtilities.Direction;
+import com.project.team6.model.boardUtilities.MoveResult;
 import com.project.team6.model.boardUtilities.Position;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,46 +20,45 @@ public final class MovingEnemy extends Enemy {
     private final int movePeriod;  // >=1 ticks between moves
     private int cooldown = 0;
 
-    public MovingEnemy(int x, int y, int movePeriod) {
-        super(x, y);
+    public MovingEnemy(Position position, int movePeriod) {
+        super(position);
         this.movePeriod = movePeriod;
     }
 
     @Override
     public void tick(Board board, Position playerPos) {
         if (cooldown > 0) { cooldown--; return; }
-        Direction d = decide(board, playerPos);
-        if (d != null) tryMove(board, d);
-        cooldown = movePeriod - 1; // wait this many ticks before next move
+        super.tick(board, playerPos); // will call board.step(...)
+        cooldown = movePeriod - 1;
     }
 
     @Override
-    protected Direction decide(Board board, Position playerPos) {
+    public Direction decide(Board board, Position playerPos) {
         Position me = position();
         int dx = Integer.compare(playerPos.x(), me.x());
         int dy = Integer.compare(playerPos.y(), me.y());
 
-        // Build preference list: move on the axis with larger |delta| first.
-        List<Direction> prefs = new ArrayList<>(4);
         boolean horizFirst = Math.abs(playerPos.x() - me.x()) >= Math.abs(playerPos.y() - me.y());
-        if (horizFirst) {
-            if (dx > 0) prefs.add(Direction.RIGHT); else if (dx < 0) prefs.add(Direction.LEFT);
-            if (dy > 0) prefs.add(Direction.DOWN);  else if (dy < 0) prefs.add(Direction.UP);
-        } else {
-            if (dy > 0) prefs.add(Direction.DOWN);  else if (dy < 0) prefs.add(Direction.UP);
-            if (dx > 0) prefs.add(Direction.RIGHT); else if (dx < 0) prefs.add(Direction.LEFT);
-        }
-        // Add remaining directions as fallbacks
-        if (!prefs.contains(Direction.UP))    prefs.add(Direction.UP);
-        if (!prefs.contains(Direction.DOWN))  prefs.add(Direction.DOWN);
-        if (!prefs.contains(Direction.LEFT))  prefs.add(Direction.LEFT);
-        if (!prefs.contains(Direction.RIGHT)) prefs.add(Direction.RIGHT);
+        Direction direction1 = dx > 0 ? Direction.RIGHT : (dx < 0 ? Direction.LEFT : null);
+        Direction direction2 = dy > 0 ? Direction.DOWN  : (dy < 0 ? Direction.UP   : null);
+        Direction first  = horizFirst ? direction1 : direction2;
+        Direction second = horizFirst ? direction2 : direction1;
 
-        // Pick the first legal enterable target
-        for (Direction d : prefs) {
+        Direction[] order = order4(first, second);
+        for (Direction d : order) {
+            if (d == null) continue;
             Position to = new Position(me.x() + d.dx, me.y() + d.dy);
-            if (board.tryEnter(to)) return d;
+            if (board.isInBounds(to) && board.cellAt(to).isWalkableTerrain()) return d;
         }
         return null; // stuck
+    }
+
+    private static Direction[] order4(Direction a, Direction b) {
+        Direction[] all = { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
+        java.util.LinkedHashSet<Direction> set = new java.util.LinkedHashSet<>();
+        if (a != null) set.add(a);
+        if (b != null) set.add(b);
+        Collections.addAll(set, all);
+        return set.toArray(new Direction[0]);
     }
 }

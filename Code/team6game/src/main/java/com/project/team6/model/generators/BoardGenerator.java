@@ -9,244 +9,131 @@ import java.util.function.Predicate;
 /**
  * Creates a new board map with edge walls and internal barriers subject to constraints.
  * Uses a spanning-tree (maze) approach to ensure no closed loops when randomizing.
+ *
+ * Builds a rectangular board with walls on edges and either:
+ *  - PROVIDED internal barriers at given positions, or
+ *  - RANDOM internal barriers (density), both while preserving connectivity S->E.
  */
 public final class BoardGenerator {
 
-    public enum InternalBarrierMode { RANDOM_MAZE, PROVIDED }
+    public enum InternalBarrierMode { NONE, PROVIDED, RANDOM }
 
-    public record Options(
-            int rows, int cols,
-            Position start, Position exit,
-            InternalBarrierMode mode,
-            List<Position> providedBarriers,   // used only in PROVIDED mode
-            long randomSeed
-    ) {}
+    public static final class Options {
+        public final int rows, cols;
+        public final Position start, exit;
+        public final InternalBarrierMode barrierMode;
+        public final List<Position> barrierPositions; // used if PROVIDED
+        public final long seed;                       // used if RANDOM
 
-    /** Build a new board. */
-    public static Map<Position, Cell> generate(Options opts) {
-        validate(opts);
-        Map<Position, Cell> board = new HashMap<>(opts.rows * opts.cols);
-
-        // 1) Perimeter walls
-        for (int y = 0; y < opts.rows; y++) {
-            for (int x = 0; x < opts.cols; x++) {
-                boolean edge = (x == 0 || y == 0 || x == opts.cols - 1 || y == opts.rows - 1);
-                Cell.Terrain t = edge ? Cell.Terrain.WALL : Cell.Terrain.FLOOR;
-                board.put(new Position(x, y), new Cell(t));
-            }
+        public Options(int rows, int cols,
+                       Position start, Position exit,
+                       InternalBarrierMode barrierMode,
+                       List<Position> barrierPositions,
+                       long seed) {
+            this.rows = rows; this.cols = cols;
+            this.start = start; this.exit = exit;
+            this.barrierMode = barrierMode;
+            this.barrierPositions = barrierPositions == null ? List.of() : List.copyOf(barrierPositions);
+            this.seed = seed;
         }
-
-        // 2) Start/Exit cells are floors with their special terrain
-        board.put(opts.start, new Cell(Cell.Terrain.START));
-        board.put(opts.exit,  new Cell(Cell.Terrain.EXIT));
-
-        // 3) Internal barriers
-        switch (opts.mode) {
-            case RANDOM_MAZE -> carveMazeNoLoops(board, opts);
-            case PROVIDED -> placeProvidedBarriers(board, opts);
-        }
-
-        // 4) Validate path and no-lock constraints
-        if (!isReachable(board, opts.start, opts.exit)) {
-            throw new IllegalStateException("Start is not connected to Exit after barrier placement.");
-        }
-        if (!hasFreedom(board, opts.start)) {
-            throw new IllegalStateException("Start is blocked in; player cannot move away.");
-        }
-        if (!isEnterable(board, opts.exit)) {
-            throw new IllegalStateException("Exit is blocked; cannot enter.");
-        }
-
-        return board;
     }
 
-    /** Quick ASCII for debugging or GamePanel text-mode. */
-    public static String toAscii(Map<Position, Cell> board, int rows, int cols) {
-        StringBuilder sb = new StringBuilder(rows * (cols + 1));
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                sb.append(board.get(new Position(x, y)).symbol());
-            }
-            if (y < rows - 1) sb.append('\n');
+    /** Immutable output for constructing a Board. */
+    public static final class Output {
+        private final int rows, cols;
+        private final Cell.Terrain[][] terrain;
+        private final Position start, exit;
+
+        public Output(int rows, int cols, Cell.Terrain[][] terrain, Position start, Position exit) {
+            this.rows = rows; this.cols = cols; this.terrain = terrain; this.start = start; this.exit = exit;
         }
-        return sb.toString();
+        public int rows() { return rows; }
+        public int cols() { return cols; }
+        public Position start() { return start; }
+        public Position exit()  { return exit; }
+        public Cell.Terrain terrainAt(int x, int y) { return terrain[y][x]; }
     }
 
-    // --- Implementation details ---
+    public static Output generate(Options o) {
+        if (o.rows < 3 || o.cols < 3) throw new IllegalArgumentException("Board too small.");
+        if (!inBounds(o.start, o.cols, o.rows) || !inBounds(o.exit, o.cols, o.rows))
+            throw new IllegalArgumentException("Start/Exit out of bounds.");
 
-    private static void carveMazeNoLoops(Map<Position, Cell> board, Options o) {
-        // Start from a grid of BARRIER, carve passages (FLOOR) via randomized DFS -> spanning tree (no loops).
-        // We keep START/EXIT as floors and connect them to the carved structure.
-        Random rng = new Random(o.randomSeed);
+        Cell.Terrain[][] t = new Cell.Terrain[o.rows][o.cols];
+        for (int y=0; y<o.rows; y++)
+            for (int x=0; x<o.cols; x++)
+                t[y][x] = (x==0||y==0||x==o.cols-1||y==o.rows-1) ? Cell.Terrain.WALL : Cell.Terrain.FLOOR;
 
-        // Set all non-edge, non-start/exit to BARRIER first…
-        forEachInterior(o.rows, o.cols, p -> {
-            if (!p.equals(o.start) && !p.equals(o.exit)) {
-                board.put(p, new Cell(Cell.Terrain.BARRIER));
+        t[o.start.y()][o.start.x()] = Cell.Terrain.START;
+        t[o.exit.y()][o.exit.x()]   = Cell.Terrain.EXIT;
+
+        switch (o.barrierMode) {
+            case NONE -> { /* nothing */ }
+            case PROVIDED -> {
+                for (Position p : o.barrierPositions) {
+                    if (!inBounds(p, o.cols, o.rows)) continue;
+                    if (isEdge(p, o.cols, o.rows) || p.equals(o.start) || p.equals(o.exit)) continue;
+                    t[p.y()][p.x()] = Cell.Terrain.BARRIER;
+                }
+                ensureConnected(t, o.start, o.exit);
             }
-        });
-
-        // Choose a random odd cell to start carving; ensure inside and not start/exit
-        Position carveStart = pickAnyInterior(o, rng, p -> !p.equals(o.start) && !p.equals(o.exit));
-
-        // Iterative DFS
-        Deque<Position> stack = new ArrayDeque<>();
-        setFloor(board, carveStart);
-        stack.push(carveStart);
-
-        while (!stack.isEmpty()) {
-            Position current = stack.peek();
-            List<Position> neighbors = shuffledNeighbors(current, rng, 2); // step of 2 to leave walls between
-            boolean carved = false;
-            for (Position step2 : neighbors) {
-                if (!isInterior(step2, o.rows, o.cols)) continue;
-                if (board.get(step2).terrain() != Cell.Terrain.FLOOR &&
-                        !step2.equals(o.start) && !step2.equals(o.exit)) {
-                    // Midpoint between current and step2 (the wall to remove)
-                    Position mid = midpoint(current, step2);
-                    setFloor(board, mid);
-                    setFloor(board, step2);
-                    stack.push(step2);
-                    carved = true;
-                    break;
+            case RANDOM -> {
+                Random rng = new Random(o.seed);
+                int max = (o.rows * o.cols) / 6; // gentle density
+                int placed = 0;
+                while (placed < max) {
+                    int x = 1 + rng.nextInt(o.cols-2);
+                    int y = 1 + rng.nextInt(o.rows-2);
+                    Position p = new Position(x,y);
+                    if (p.equals(o.start) || p.equals(o.exit)) continue;
+                    if (t[y][x] != Cell.Terrain.FLOOR) continue;
+                    t[y][x] = Cell.Terrain.BARRIER;
+                    if (!isConnected(t, o.start, o.exit)) {
+                        t[y][x] = Cell.Terrain.FLOOR; // revert if disconnects
+                    } else {
+                        placed++;
+                    }
                 }
             }
-            if (!carved) stack.pop();
         }
-
-        // Ensure start and exit are connected to floors by opening a neighbor if needed
-        connectSpecialIfNeeded(board, o.start, o.rows, o.cols, rng);
-        connectSpecialIfNeeded(board, o.exit,  o.rows, o.cols, rng);
+        return new Output(o.rows, o.cols, t, o.start, o.exit);
     }
 
-    private static void placeProvidedBarriers(Map<Position, Cell> board, Options o) {
-        // Lay down barriers but never on START/EXIT or edges; then validate connectivity and closed loops.
-        for (Position p : o.providedBarriers) {
-            if (!isInterior(p, o.rows, o.cols)) continue;
-            if (p.equals(o.start) || p.equals(o.exit)) continue;
-            Cell c = board.get(p);
-            if (c.terrain() == Cell.Terrain.FLOOR) {
-                board.put(p, new Cell(Cell.Terrain.BARRIER));
-            }
-        }
-        // Basic validation:
-        if (!isReachable(board, o.start, o.exit)) {
-            throw new IllegalArgumentException("Provided barriers disconnect Start from Exit.");
-        }
-        // A strict “no closed loops” test on arbitrary inputs is expensive; we approximate:
-        // ensure the walkable subgraph is a single connected component with no 2x2 all-floor squares converted to loops by barriers placement.
-        // (You can expand this check later if you want.)
+    // --- connectivity helpers
+    private static void ensureConnected(Cell.Terrain[][] t, Position s, Position e) {
+        if (!isConnected(t, s, e)) throw new IllegalStateException("Start is not connected to Exit after barrier placement.");
     }
-
-    // --- Helpers ---
-
-    private static void validate(Options o) {
-        if (o.rows < 5 || o.cols < 5) throw new IllegalArgumentException("Board must be at least 5x5.");
-        if (!onEdge(o.start, o.rows, o.cols)) throw new IllegalArgumentException("Start must be on perimeter.");
-        if (!onEdge(o.exit,  o.rows, o.cols)) throw new IllegalArgumentException("Exit must be on perimeter.");
-        if (o.start.equals(o.exit)) throw new IllegalArgumentException("Start and Exit cannot be the same.");
-    }
-
-    private static boolean onEdge(Position p, int rows, int cols) {
-        return p.x() == 0 || p.y() == 0 || p.x() == cols - 1 || p.y() == rows - 1;
-    }
-
-    private static void forEachInterior(int rows, int cols, java.util.function.Consumer<Position> f) {
-        for (int y = 1; y < rows - 1; y++)
-            for (int x = 1; x < cols - 1; x++)
-                f.accept(new Position(x, y));
-    }
-
-    private static boolean isInterior(Position p, int rows, int cols) {
-        return p.x() > 0 && p.y() > 0 && p.x() < cols - 1 && p.y() < rows - 1;
-    }
-
-    private static Position pickAnyInterior(Options o, Random rng, Predicate<Position> ok) {
-        List<Position> list = new ArrayList<>();
-        forEachInterior(o.rows, o.cols, p -> { if (ok.test(p)) list.add(p); });
-        Collections.shuffle(list, rng);
-        return list.getFirst();
-    }
-
-    private static void setFloor(Map<Position, Cell> board, Position p) {
-        Cell cur = board.get(p);
-        if (cur.terrain() == Cell.Terrain.START || cur.terrain() == Cell.Terrain.EXIT) return;
-        board.put(p, new Cell(Cell.Terrain.FLOOR));
-    }
-
-    /** Return step-2 neighbors for maze carving. */
-    private static List<Position> shuffledNeighbors(Position p, Random rng, int step) {
-        List<Position> ns = new ArrayList<>(4);
-        ns.add(new Position(p.x() + step, p.y()));
-        ns.add(new Position(p.x() - step, p.y()));
-        ns.add(new Position(p.x(), p.y() + step));
-        ns.add(new Position(p.x(), p.y() - step));
-        Collections.shuffle(ns, rng);
-        return ns;
-    }
-
-    private static Position midpoint(Position a, Position b) {
-        return new Position((a.x() + b.x()) / 2, (a.y() + b.y()) / 2);
-    }
-
-    /** Ensure START/EXIT have at least one adjacent FLOOR. */
-    private static void connectSpecialIfNeeded(Map<Position, Cell> board, Position p, int rows, int cols, Random rng) {
-        boolean has = false;
-        for (Position n : neighbors4InBounds(p, rows, cols)) {
-            if (board.get(n).terrain() == Cell.Terrain.FLOOR) { has = true; break; }
-        }
-        if (!has) {
-            List<Position> ns = neighbors4InBounds(p, rows, cols);
-            Collections.shuffle(ns, rng);
-            setFloor(board, ns.getFirst());
-        }
-    }
-
-    private static List<Position> neighbors4InBounds(Position p, int rows, int cols) {
-        List<Position> list = new ArrayList<>(4);
-        if (p.x() > 0) list.add(new Position(p.x() - 1, p.y()));
-        if (p.x() < cols - 1) list.add(new Position(p.x() + 1, p.y()));
-        if (p.y() > 0) list.add(new Position(p.x(), p.y() - 1));
-        if (p.y() < rows - 1) list.add(new Position(p.x(), p.y() + 1));
-        return list;
-    }
-
-    /** BFS passability: START to EXIT must be reachable through FLOOR/START/EXIT. */
-    private static boolean isReachable(Map<Position, Cell> board, Position start, Position exit) {
-        Deque<Position> q = new ArrayDeque<>();
-        Set<Position> seen = new HashSet<>();
-        q.add(start); seen.add(start);
-
+    private static boolean isConnected(Cell.Terrain[][] t, Position s, Position e) {
+        int rows = t.length, cols = t[0].length;
+        boolean[][] seen = new boolean[rows][cols];
+        ArrayDeque<Position> q = new ArrayDeque<>();
+        q.add(s); seen[s.y()][s.x()] = true;
         while (!q.isEmpty()) {
             Position p = q.removeFirst();
-            if (p.equals(exit)) return true;
-            for (Position n : p.neighbors4()) {
-                Cell c = board.get(n);
-                if (c == null) continue;
-                if (seen.contains(n)) continue;
-                if (c.terrain() == Cell.Terrain.WALL || c.terrain() == Cell.Terrain.BARRIER) continue;
-                seen.add(n); q.addLast(n);
+            if (p.equals(e)) return true;
+            for (Position n : neighbors(p, cols, rows)) {
+                if (seen[n.y()][n.x()]) continue;
+                Cell.Terrain tt = t[n.y()][n.x()];
+                if (tt==Cell.Terrain.WALL || tt==Cell.Terrain.BARRIER) continue;
+                seen[n.y()][n.x()] = true;
+                q.addLast(n);
             }
         }
         return false;
     }
-
-    /** Start must have some adjacent enterable cell. */
-    private static boolean hasFreedom(Map<Position, Cell> board, Position start) {
-        for (Position n : start.neighbors4()) {
-            Cell c = board.get(n);
-            if (c != null && c.isWalkableTerrain()) return true;
-        }
-        return false;
+    private static Iterable<Position> neighbors(Position p, int cols, int rows) {
+        java.util.ArrayList<Position> list = new java.util.ArrayList<>(4);
+        if (p.y()>0)          list.add(new Position(p.x(), p.y()-1));
+        if (p.y()<rows-1)     list.add(new Position(p.x(), p.y()+1));
+        if (p.x()>0)          list.add(new Position(p.x()-1, p.y()));
+        if (p.x()<cols-1)     list.add(new Position(p.x()+1, p.y()));
+        return list;
     }
-
-    /** Exit must be enterable from at least one neighbor. */
-    private static boolean isEnterable(Map<Position, Cell> board, Position exit) {
-        for (Position n : exit.neighbors4()) {
-            Cell c = board.get(n);
-            if (c != null && c.isWalkableTerrain()) return true;
-        }
-        return false;
+    private static boolean inBounds(Position p, int cols, int rows) {
+        return p.x()>=0 && p.y()>=0 && p.x()<cols && p.y()<rows;
+    }
+    private static boolean isEdge(Position p, int cols, int rows) {
+        return p.x()==0||p.y()==0||p.x()==cols-1||p.y()==rows-1;
     }
 
     public static ArrayList<Position> barrierList() {
@@ -273,4 +160,5 @@ public final class BoardGenerator {
         return list;
     }
 }
+
 

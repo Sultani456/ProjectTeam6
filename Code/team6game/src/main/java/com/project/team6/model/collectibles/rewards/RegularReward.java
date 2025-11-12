@@ -1,10 +1,12 @@
 package com.project.team6.model.collectibles.rewards;
 
+import com.project.team6.model.boardUtilities.Position;
+
 /** Mandatory reward; needed to win. */
 public final class RegularReward extends Reward {
 
-    public RegularReward(int x, int y, int value) {
-        super(x, y, value, true);
+    public RegularReward(Position position, int value) {
+        super(position, value, true);
     }
 
     @Override public char symbol() { return '.'; }

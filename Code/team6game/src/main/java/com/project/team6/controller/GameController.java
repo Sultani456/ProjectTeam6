@@ -29,52 +29,49 @@ public final class GameController {
     private final Player player;
     private final Timer timer;
 
+    private boolean running = false;
+    private boolean gameOver = false;
+
     public GameController(Board board, Scoreboard scoreboard, GameState state, GamePanel view) {
         this.board = Objects.requireNonNull(board);
         this.scoreboard = Objects.requireNonNull(scoreboard);
         this.state = Objects.requireNonNull(state);
-        this.view = Objects.requireNonNull(view);
+        this.view  = Objects.requireNonNull(view);
 
         // Place player at Start
-        Position start = board.start();
-        this.player = new Player(start.x(), start.y());
-        Cell startCell = board.cellAt(start);
-        if (startCell != null) startCell.setOccupant(player);
+        Position s = board.start();
+        this.player = new Player(s);
+        board.cellAt(s).addOccupant(player);
 
-        // Bind input actions to the view
         installKeyBindings();
 
-        // Swing timer drives ticks
-        this.timer = new Timer(TICK_MS, e -> onTick());
+        this.timer = new Timer(TICK_MS, this::onTick);
     }
 
-    /** Start game loop and time tracking. */
     public void start() {
+        if (state.status() != GameState.Status.RUNNING) {
+            state.setRunning();
+        }
         scoreboard.start();
         timer.start();
         view.repaint();
     }
 
-    /** Stop game loop and time tracking. */
     public void stop() {
         timer.stop();
         scoreboard.stop();
     }
 
-    // ------------------------------------------------------------
-    // Input
-    // ------------------------------------------------------------
-
+    // -------- Input
     private void installKeyBindings() {
-        // Arrow keys
-        bind("MOVE_UP",    KeyStroke.getKeyStroke("UP"),    () -> tryPlayerMove(Direction.UP));
-        bind("MOVE_DOWN",  KeyStroke.getKeyStroke("DOWN"),  () -> tryPlayerMove(Direction.DOWN));
-        bind("MOVE_LEFT",  KeyStroke.getKeyStroke("LEFT"),  () -> tryPlayerMove(Direction.LEFT));
-        bind("MOVE_RIGHT", KeyStroke.getKeyStroke("RIGHT"), () -> tryPlayerMove(Direction.RIGHT));
-        // WASD
+        bind("UP",    KeyStroke.getKeyStroke("UP"),    () -> tryPlayerMove(Direction.UP));
+        bind("DOWN",  KeyStroke.getKeyStroke("DOWN"),  () -> tryPlayerMove(Direction.DOWN));
+        bind("LEFT",  KeyStroke.getKeyStroke("LEFT"),  () -> tryPlayerMove(Direction.LEFT));
+        bind("RIGHT", KeyStroke.getKeyStroke("RIGHT"), () -> tryPlayerMove(Direction.RIGHT));
+        // wasd
         bind("W", KeyStroke.getKeyStroke('W'), () -> tryPlayerMove(Direction.UP));
-        bind("S", KeyStroke.getKeyStroke('S'), () -> tryPlayerMove(Direction.DOWN));
         bind("A", KeyStroke.getKeyStroke('A'), () -> tryPlayerMove(Direction.LEFT));
+        bind("S", KeyStroke.getKeyStroke('S'), () -> tryPlayerMove(Direction.DOWN));
         bind("D", KeyStroke.getKeyStroke('D'), () -> tryPlayerMove(Direction.RIGHT));
     }
 
@@ -90,86 +87,66 @@ public final class GameController {
     private void tryPlayerMove(Direction dir) {
         if (state.status() != GameState.Status.RUNNING) return;
 
-        boolean moved = player.move(board, dir);
-        if (!moved) return;
+        MoveResult r = board.step(player, dir);
 
-        // Collect item if present
-        board.collectAt(player.position()).ifPresent(this::applyCollectible);
-
-        // Immediate collision check (player stepped onto enemy)
-        if (enemyOn(player.position())) {
-            lose();
-            view.repaint();
-            return;
+        switch (r) {
+            case MOVED -> {
+                // Item collection
+                board.collectAt(player.position()).ifPresent(this::applyCollectible);
+                evaluateEndStates();
+                view.repaint();
+            }
+            case COLLISION -> {
+                // Enemy + Player share a cell → lose immediately
+                lose("You were caught!");
+                view.repaint();
+            }
+            case BLOCKED -> { /* no-op */ }
         }
-
-        // Check win/lose (score may have changed from collectible)
-        evaluateEndStates();
-        view.repaint();
     }
-
-    // ------------------------------------------------------------
-    // Tick loop
-    // ------------------------------------------------------------
-
-    private void onTick() {
-        if (state.status() != GameState.Status.RUNNING) { timer.stop(); return; }
-        state.tick();
-
-        // Let the Board advance the world: enemies + bonus expiry
-        Board.TickSummary summary = board.tick(player.position());
-
-        // Enemy collision after enemy movement
-        if (summary.playerCaught()) {
-            lose();
-        } else {
-            evaluateEndStates();
-        }
-
-        view.repaint();
-    }
-
-    // ------------------------------------------------------------
-    // Helpers
-    // ------------------------------------------------------------
 
     private void applyCollectible(CollectibleObject obj) {
-        obj.applyTo(scoreboard);
-        if (scoreboard.score() < 0) {
-            lose();
-        }
-    }
-
-    private boolean enemyOn(Position p) {
-        Cell c = board.cellAt(p);
-        return c != null && c.occupant() instanceof Enemy;
+        obj.applyTo(scoreboard); // RegularReward should call collectedRequired(...)
+        view.onCollected(obj);
     }
 
     private void evaluateEndStates() {
-        if (state.status() != GameState.Status.RUNNING) return;
-
-        if (scoreboard.score() < 0) {
-            lose();
-            return;
-        }
-        boolean allRequiredCollected = scoreboard.requiredRemaining() == 0;
+        // Win condition: all required collected AND at exit
+        boolean allCollected = scoreboard.requiredRemaining() == 0;
         boolean atExit = player.position().equals(board.exit());
-        if (allRequiredCollected && atExit) {
-            win();
+
+        if (allCollected && atExit) {
+            win("You win! Time " + scoreboard.elapsedPretty() + "  Score " + scoreboard.score());
+        }
+        // Optional: lose if score < 0, if you want
+        if (scoreboard.score() < 0) {
+            lose("Score below zero!");
         }
     }
 
-    private void win() {
+    private void win(String msg) {
         if (state.status() != GameState.Status.RUNNING) return;
-        state.win();
+        state.setWon();
         stop();
-        view.setBannerText("You win!  Time " + scoreboard.elapsedPretty() + "   Score " + scoreboard.score());
+        view.onGameOver(msg);
     }
 
-    private void lose() {
+    private void lose(String msg) {
         if (state.status() != GameState.Status.RUNNING) return;
-        state.lose();
+        state.setLost();
         stop();
-        view.setBannerText("Game over!  Time " + scoreboard.elapsedPretty() + "   Score " + scoreboard.score());
+        view.onGameOver(msg);
+    }
+
+    // ------------ Ticks
+    private void onTick(ActionEvent e) {
+        if (state.status() != GameState.Status.RUNNING) return;
+
+        Board.TickSummary ts = board.tick(player.position());
+        if (ts.playerCaught) {
+            lose("You were caught!");
+        }
+        view.repaint();
     }
 }
+
