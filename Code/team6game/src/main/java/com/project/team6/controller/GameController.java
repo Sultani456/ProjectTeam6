@@ -19,7 +19,7 @@ import java.util.Objects;
  */
 public final class GameController {
 
-    private static final int TICK_MS = 120;
+    public static final int DEFAULT_TICK_MS = 120;
 
     private final Board board;
     private final Scoreboard scoreboard;
@@ -45,13 +45,14 @@ public final class GameController {
 
         installKeyBindings();
 
-        this.timer = new Timer(TICK_MS, this::onTick);
+        this.timer = new Timer(DEFAULT_TICK_MS, this::onTick);
     }
 
     public void start() {
         if (state.status() != GameState.Status.RUNNING) {
             state.setRunning();
         }
+
         scoreboard.start();
         timer.start();
         view.repaint();

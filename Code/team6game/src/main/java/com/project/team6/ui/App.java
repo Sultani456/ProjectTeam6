@@ -22,12 +22,28 @@ public final class App {
     public static void main(String[] args) {
         List<Position> barrierList = BoardGenerator.barrierList();
 
+        int regularRewardCount = 8;
+        int regularPoints = 5;
+
+        int bonusRewardCount = 5;
+        int bonusPoints = 10;
+        int spawnAt_MinSec = 3;
+        int spawnAt_MaxSec = 6;
+        int lifeMinSec = 3;
+        int lifeMaxSec = 6;
+
+        int numPunishments = 10;
+        int punishmentPenalty = -5;
+
+        int numEnemies = 4;
+        int enemyMovePeriod = 10;
+
         SwingUtilities.invokeLater(() -> {
             // --- Board generation options
             var opts = new BoardGenerator.Options(
                     /*rows*/ 11,
                     /*cols*/ 18,
-                    /*start*/ new Position(0, 8),
+                    /*start*/ new Position(0, 9),
                     /*exit*/  new Position(17, 8),
                     BoardGenerator.InternalBarrierMode.PROVIDED,
                     // Provide your own internal barrier list, or use RANDOM mode above
@@ -38,21 +54,10 @@ public final class App {
             var out   = BoardGenerator.generate(opts);
             Board board = new Board(out);
 
-            int regularRewardCount = 8;
-            int regularPoints = 5;
-
-            int bonusRewardCount = 5;
-            int bonusPoints = 10;
-
-            int numPunishments = 10;
-            int punishmentPenalty = -5;
-
-            int numEnemies = 4;
-            int enemyMovePeriod = 15;
+            board.configureBonusSpawner(bonusRewardCount, bonusPoints, spawnAt_MinSec, spawnAt_MaxSec, lifeMinSec, lifeMaxSec);
 
             // --- Spawning (tweak counts as you like)
             board.spawnRegularRewards(regularRewardCount, regularPoints);
-            board.spawnBonusRewards(bonusRewardCount, bonusPoints);
             board.spawnPunishments(numPunishments, punishmentPenalty);
             board.spawnEnemies(numEnemies, enemyMovePeriod); // 4 enemies, 1 tick period (fast). Increase to slow them down.
 
