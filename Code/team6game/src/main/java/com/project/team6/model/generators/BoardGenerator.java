@@ -3,137 +3,222 @@ package com.project.team6.model.generators;
 import com.project.team6.model.boardUtilities.Cell;
 import com.project.team6.model.boardUtilities.Position;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
- * Creates a new board map with edge walls and internal barriers subject to constraints.
- * Uses a spanning-tree (maze) approach to ensure no closed loops when randomizing.
+ * Builds immutable terrain + start/exit for a Board.
+ * Modes:
+ *  - NONE: perimeter walls only, empty interior
+ *  - PROVIDED: perimeter walls + programmer-provided internal barriers; start/exit randomized on west/east edges
+ *  - RANDOM: perimeter walls + random internal barriers
+ *  - TEXT: read terrain from a text file on the classpath (e.g., "maps/level1.txt")
  *
- * Builds a rectangular board with walls on edges and either:
- *  - PROVIDED internal barriers at given positions, or
- *  - RANDOM internal barriers (density), both while preserving connectivity S->E.
+ * Legend for TEXT maps:
+ *   'X' -> WALL, '#' -> BARRIER, everything else -> FLOOR
  */
 public final class BoardGenerator {
 
-    public enum InternalBarrierMode { NONE, PROVIDED, RANDOM }
+    public enum InternalBarrierMode { NONE, PROVIDED, RANDOM, TEXT }
 
+    /** Inputs for generation.  For TEXT, rows/cols are ignored (taken from file). */
     public static final class Options {
-        public final int rows, cols;
-        public final Position start, exit;
+        public final int rows;
+        public final int cols;
         public final InternalBarrierMode barrierMode;
-        public final List<Position> barrierPositions; // used if PROVIDED
-        public final long seed;                       // used if RANDOM
+        public final List<Position> barrierPositions; // used only in PROVIDED
+        public final String mapResource;              // used only in TEXT, e.g., "maps/level1.txt"
+
 
         public Options(int rows, int cols,
-                       Position start, Position exit,
                        InternalBarrierMode barrierMode,
                        List<Position> barrierPositions,
-                       long seed) {
-            this.rows = rows; this.cols = cols;
-            this.start = start; this.exit = exit;
-            this.barrierMode = barrierMode;
-            this.barrierPositions = barrierPositions == null ? List.of() : List.copyOf(barrierPositions);
-            this.seed = seed;
+                       String mapResource) {
+            this.rows = rows;
+            this.cols = cols;
+            this.barrierMode = Objects.requireNonNull(barrierMode);
+            this.barrierPositions = (barrierPositions == null ? List.of() : List.copyOf(barrierPositions));
+            this.mapResource = mapResource;
         }
     }
 
-    /** Immutable output for constructing a Board. */
+    /** Result returned to Board. */
     public static final class Output {
         private final int rows, cols;
-        private final Cell.Terrain[][] terrain;
         private final Position start, exit;
+        private final Cell.Terrain[][] terrain;
 
-        public Output(int rows, int cols, Cell.Terrain[][] terrain, Position start, Position exit) {
-            this.rows = rows; this.cols = cols; this.terrain = terrain; this.start = start; this.exit = exit;
+        public Output(int rows, int cols, Position start, Position exit, Cell.Terrain[][] terrain) {
+            this.rows = rows; this.cols = cols;
+            this.start = Objects.requireNonNull(start);
+            this.exit  = Objects.requireNonNull(exit);
+            this.terrain = Objects.requireNonNull(terrain);
         }
+
         public int rows() { return rows; }
         public int cols() { return cols; }
         public Position start() { return start; }
-        public Position exit()  { return exit; }
+        public Position exit() { return exit; }
         public Cell.Terrain terrainAt(int x, int y) { return terrain[y][x]; }
+        public Cell.Terrain[][] terrain() { return terrain; }
     }
 
-    public static Output generate(Options o) {
-        if (o.rows < 3 || o.cols < 3) throw new IllegalArgumentException("Board too small.");
-        if (!inBounds(o.start, o.cols, o.rows) || !inBounds(o.exit, o.cols, o.rows))
-            throw new IllegalArgumentException("Start/Exit out of bounds.");
+    // ---------------------------------------------------------------------
 
-        Cell.Terrain[][] t = new Cell.Terrain[o.rows][o.cols];
-        for (int y=0; y<o.rows; y++)
-            for (int x=0; x<o.cols; x++)
-                t[y][x] = (x==0||y==0||x==o.cols-1||y==o.rows-1) ? Cell.Terrain.WALL : Cell.Terrain.FLOOR;
+    public Output generate(Options opts) {
+        Objects.requireNonNull(opts);
+        Random rng = new Random();
 
-        t[o.start.y()][o.start.x()] = Cell.Terrain.START;
-        t[o.exit.y()][o.exit.x()]   = Cell.Terrain.EXIT;
-
-        switch (o.barrierMode) {
-            case NONE -> { /* nothing */ }
-            case PROVIDED -> {
-                for (Position p : o.barrierPositions) {
-                    if (!inBounds(p, o.cols, o.rows)) continue;
-                    if (isEdge(p, o.cols, o.rows) || p.equals(o.start) || p.equals(o.exit)) continue;
-                    t[p.y()][p.x()] = Cell.Terrain.BARRIER;
-                }
-                ensureConnected(t, o.start, o.exit);
+        switch (opts.barrierMode) {
+            case TEXT: {
+                TextMap tm = parseTextMapFromResource(opts.mapResource);
+                Position start = randomEdgeStart(tm.rows, tm.cols, rng);
+                Position exit  = randomEdgeExit(tm.rows, tm.cols, rng);
+                return new Output(tm.rows, tm.cols, start, exit, tm.terrain);
             }
-            case RANDOM -> {
-                Random rng = new Random(o.seed);
-                int max = (o.rows * o.cols) / 6; // gentle density
-                int placed = 0;
-                while (placed < max) {
-                    int x = 1 + rng.nextInt(o.cols-2);
-                    int y = 1 + rng.nextInt(o.rows-2);
-                    Position p = new Position(x,y);
-                    if (p.equals(o.start) || p.equals(o.exit)) continue;
-                    if (t[y][x] != Cell.Terrain.FLOOR) continue;
-                    t[y][x] = Cell.Terrain.BARRIER;
-                    if (!isConnected(t, o.start, o.exit)) {
-                        t[y][x] = Cell.Terrain.FLOOR; // revert if disconnects
-                    } else {
-                        placed++;
-                    }
+
+            case PROVIDED: {
+                if (opts.rows < 3 || opts.cols < 3) {
+                    throw new IllegalArgumentException("rows/cols must be >= 3.");
+                }
+                boolean[][] walls    = perimeterWalls(opts.rows, opts.cols);
+                boolean[][] barriers = new boolean[opts.rows][opts.cols];
+
+                for (Position p : opts.barrierPositions) {
+                    if (p.x() <= 0 || p.x() >= opts.cols - 1 || p.y() <= 0 || p.y() >= opts.rows - 1) continue;
+                    barriers[p.y()][p.x()] = true;
+                }
+                Position start = randomEdgeStart(opts.rows, opts.cols, rng);
+                Position exit  = randomEdgeExit(opts.rows, opts.cols, rng);
+                return new Output(opts.rows, opts.cols, start, exit, toTerrainGrid(opts.rows, opts.cols, walls, barriers));
+            }
+
+            case RANDOM: {
+                if (opts.rows < 3 || opts.cols < 3) {
+                    throw new IllegalArgumentException("rows/cols must be >= 3.");
+                }
+                boolean[][] walls    = perimeterWalls(opts.rows, opts.cols);
+                boolean[][] barriers = new boolean[opts.rows][opts.cols];
+
+                // simple random internal barrier density (~10% of interior)
+                int interior = (opts.rows - 2) * (opts.cols - 2);
+                int count = Math.max(0, (int)Math.round(interior * 0.10));
+                for (int i = 0; i < count; i++) {
+                    int x = 1 + rng.nextInt(opts.cols - 2);
+                    int y = 1 + rng.nextInt(opts.rows - 2);
+                    barriers[y][x] = true;
+                }
+
+                Position start = randomEdgeStart(opts.rows, opts.cols, rng);
+                Position exit  = randomEdgeExit(opts.rows, opts.cols, rng);
+                return new Output(opts.rows, opts.cols, start, exit, toTerrainGrid(opts.rows, opts.cols, walls, barriers));
+            }
+
+            case NONE: {
+                if (opts.rows < 3 || opts.cols < 3) {
+                    throw new IllegalArgumentException("rows/cols must be >= 3.");
+                }
+                boolean[][] walls    = perimeterWalls(opts.rows, opts.cols);
+                boolean[][] barriers = new boolean[opts.rows][opts.cols];
+                Position start = randomEdgeStart(opts.rows, opts.cols, rng);
+                Position exit  = randomEdgeExit(opts.rows, opts.cols, rng);
+                return new Output(opts.rows, opts.cols, start, exit, toTerrainGrid(opts.rows, opts.cols, walls, barriers));
+            }
+        }
+        throw new IllegalArgumentException("Unsupported mode: " + opts.barrierMode);
+    }
+
+    // ---------------------------------------------------------------------
+    // Helpers
+
+    private static boolean[][] perimeterWalls(int rows, int cols) {
+        boolean[][] walls = new boolean[rows][cols];
+        for (int y = 0; y < rows; y++) {
+            walls[y][0] = true; walls[y][cols - 1] = true;
+        }
+        for (int x = 0; x < cols; x++) {
+            walls[0][x] = true; walls[rows - 1][x] = true;
+        }
+        return walls;
+    }
+
+    private static Cell.Terrain[][] toTerrainGrid(int rows, int cols,
+                                                  boolean[][] walls, boolean[][] barriers) {
+        Cell.Terrain[][] t = new Cell.Terrain[rows][cols];
+        for (int y = 0; y < rows; y++) {
+            for (int x = 0; x < cols; x++) {
+                if (walls[y][x])       t[y][x] = Cell.Terrain.WALL;
+                else if (barriers[y][x]) t[y][x] = Cell.Terrain.BARRIER;
+                else                   t[y][x] = Cell.Terrain.FLOOR;
+            }
+        }
+        return t;
+    }
+
+    private static Position randomEdgeStart(int rows, int cols, Random rng) {
+        int y = 1 + rng.nextInt(rows - 2); // west edge, avoid corners
+        return new Position(0, y);
+    }
+
+    private static Position randomEdgeExit(int rows, int cols, Random rng) {
+        int y = 1 + rng.nextInt(rows - 2); // east edge, avoid corners
+        return new Position(cols - 1, y);
+    }
+
+    // ---- TEXT parsing ----
+
+    private static final class TextMap {
+        final int rows, cols;
+        final Cell.Terrain[][] terrain;
+        TextMap(int rows, int cols, Cell.Terrain[][] terrain) {
+            this.rows = rows; this.cols = cols; this.terrain = terrain;
+        }
+    }
+
+    /**
+     * Reads a classpath resource (e.g., "maps/level1.txt") and builds a terrain grid.
+     * Legend: 'X' = WALL, '#' = BARRIER, else FLOOR.
+     */
+    private TextMap parseTextMapFromResource(String resourcePath) {
+        if (resourcePath == null || resourcePath.isBlank()) {
+            throw new IllegalArgumentException("TEXT mode requires mapResource (e.g., \"maps/level1.txt\").");
+        }
+
+        List<String> lines = new ArrayList<>();
+        try (var in = BoardGenerator.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (in == null) throw new IllegalArgumentException("Resource not found on classpath: " + resourcePath);
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                String s;
+                while ((s = br.readLine()) != null) {
+                    if (!s.isEmpty()) lines.add(s);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read map resource: " + resourcePath, e);
+        }
+
+        if (lines.isEmpty()) throw new IllegalArgumentException("Empty map file: " + resourcePath);
+        int rows = lines.size();
+        int cols = lines.get(0).length();
+        for (String s : lines) {
+            if (s.length() != cols) throw new IllegalArgumentException("Non-rectangular map: line width mismatch.");
+        }
+
+        Cell.Terrain[][] terrain = new Cell.Terrain[rows][cols];
+        for (int y = 0; y < rows; y++) {
+            String s = lines.get(y);
+            for (int x = 0; x < cols; x++) {
+                char ch = s.charAt(x);
+                switch (ch) {
+                    case 'X': terrain[y][x] = Cell.Terrain.WALL;    break;
+                    case '#': terrain[y][x] = Cell.Terrain.BARRIER; break;
+                    default : terrain[y][x] = Cell.Terrain.FLOOR;   break;
                 }
             }
         }
-        return new Output(o.rows, o.cols, t, o.start, o.exit);
-    }
-
-    // --- connectivity helpers
-    private static void ensureConnected(Cell.Terrain[][] t, Position s, Position e) {
-        if (!isConnected(t, s, e)) throw new IllegalStateException("Start is not connected to Exit after barrier placement.");
-    }
-    private static boolean isConnected(Cell.Terrain[][] t, Position s, Position e) {
-        int rows = t.length, cols = t[0].length;
-        boolean[][] seen = new boolean[rows][cols];
-        ArrayDeque<Position> q = new ArrayDeque<>();
-        q.add(s); seen[s.y()][s.x()] = true;
-        while (!q.isEmpty()) {
-            Position p = q.removeFirst();
-            if (p.equals(e)) return true;
-            for (Position n : neighbors(p, cols, rows)) {
-                if (seen[n.y()][n.x()]) continue;
-                Cell.Terrain tt = t[n.y()][n.x()];
-                if (tt==Cell.Terrain.WALL || tt==Cell.Terrain.BARRIER) continue;
-                seen[n.y()][n.x()] = true;
-                q.addLast(n);
-            }
-        }
-        return false;
-    }
-    private static Iterable<Position> neighbors(Position p, int cols, int rows) {
-        java.util.ArrayList<Position> list = new java.util.ArrayList<>(4);
-        if (p.y()>0)          list.add(new Position(p.x(), p.y()-1));
-        if (p.y()<rows-1)     list.add(new Position(p.x(), p.y()+1));
-        if (p.x()>0)          list.add(new Position(p.x()-1, p.y()));
-        if (p.x()<cols-1)     list.add(new Position(p.x()+1, p.y()));
-        return list;
-    }
-    private static boolean inBounds(Position p, int cols, int rows) {
-        return p.x()>=0 && p.y()>=0 && p.x()<cols && p.y()<rows;
-    }
-    private static boolean isEdge(Position p, int cols, int rows) {
-        return p.x()==0||p.y()==0||p.x()==cols-1||p.y()==rows-1;
+        return new TextMap(rows, cols, terrain);
     }
 
     public static ArrayList<Position> barrierList() {
@@ -160,5 +245,6 @@ public final class BoardGenerator {
         return list;
     }
 }
+
 
 

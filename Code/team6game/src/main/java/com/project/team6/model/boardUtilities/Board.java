@@ -84,17 +84,38 @@ public final class Board {
     // ------------------------------------------------------------
     // Construction from generator
     // ------------------------------------------------------------
-    public Board(BoardGenerator.Output gen) {
-        this.rows = gen.rows();
-        this.cols = gen.cols();
+    public Board(BoardGenerator.Output output) {
+        Objects.requireNonNull(output, "BoardGenerator output must not be null.");
+
+        this.rows = output.rows();
+        this.cols = output.cols();
+        this.start = output.start();
+        this.exit = output.exit();
+
+        // --- Create grid with correct terrain ---
         this.grid = new Cell[rows][cols];
+        Cell.Terrain[][] terrainMap = output.terrain();
+
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
-                grid[y][x] = new Cell(gen.terrainAt(x, y));
+                Position p = new Position(x, y);
+                Cell.Terrain terrain = terrainMap[y][x];
+
+                // Override terrain for start/exit tiles
+                if (p.equals(start))      terrain = Cell.Terrain.START;
+                else if (p.equals(exit))  terrain = Cell.Terrain.EXIT;
+
+                grid[y][x] = new Cell(terrain);
             }
         }
-        this.start = gen.start();
-        this.exit  = gen.exit();
+
+        // --- Optional: Validation ---
+        if (start == null || exit == null) {
+            throw new IllegalStateException("Board requires both start and exit positions.");
+        }
+        if (!isInBounds(start) || !isInBounds(exit)) {
+            throw new IllegalArgumentException("Start or Exit lies outside grid bounds.");
+        }
     }
 
     // ------------------------------------------------------------
@@ -117,6 +138,27 @@ public final class Board {
     public void configureBonusSpawner(int totalBonusesToAppear, int bonusPoints,
                                                int spawnMinSec, int spawnMaxSec,
                                                int lifeMinSec,  int lifeMaxSec) {
+        // Count strictly empty floor cells (no Start/End, no occupants, no items)
+        int emptyFloors = 0;
+        for (int y = 0; y < rows; y++) {
+            for (int x = 0; x < cols; x++) {
+                Position p = new Position(x, y);
+                if (p.equals(start) || p.equals(exit)) continue;
+                Cell c = grid[y][x];
+                if (c.terrain() != Cell.Terrain.FLOOR) continue;
+                if (c.hasPlayer() || c.hasEnemy() || c.item() != null) continue;
+                emptyFloors++;
+            }
+        }
+
+        if (totalBonusesToAppear > emptyFloors) {
+            IllegalArgumentException ex = new IllegalArgumentException(
+                    "totalBonusesToAppear (" + totalBonusesToAppear + ") exceeds available empty floor cells (" + emptyFloors + ")."
+            );
+            ex.printStackTrace();
+            System.exit(1); // end program as requested
+        }
+
         this.bonusTotalQuota = Math.max(0, totalBonusesToAppear);
         this.bonusRemaining  = this.bonusTotalQuota;   // decremented ONLY when player collects
         this.tickMillis = Math.max(10, GameController.DEFAULT_TICK_MS);
@@ -152,34 +194,42 @@ public final class Board {
     // Manual spawners (optional use)
     // ------------------------------------------------------------
     public void spawnEnemies(int count, int movePeriod) {
-        List<Position> spots = freeFloorCells(count, true, true);
+        List<Position> spots = freeFloorCells(count, true, true, 3,3);
         for (Position p : spots) {
             Enemy e = new MovingEnemy(p, movePeriod);
             cellAt(p).addOccupant(e);
         }
     }
-    public void spawnEnemies(int count) { spawnEnemies(count, 1); }
 
     public void spawnRegularRewards(int count, int amountEach) {
-        for (Position p : freeFloorCells(count, false, true)) {
+        for (Position p : freeFloorCells(count, true, true, 0,0)) {
             cellAt(p).setItem(new RegularReward(p, amountEach));
         }
     }
 
     public void spawnPunishments(int count, int penaltyEach) {
-        for (Position p : freeFloorCells(count, false, true)) {
+        for (Position p : freeFloorCells(count, true, true, 2, 2)) {
             cellAt(p).setItem(new Punishment(p, penaltyEach));
         }
     }
 
     /** Avoid calling at start if you want no initial bonuses. */
     public void spawnBonusRewards(int count, int amountEach) {
-        for (Position p : freeFloorCells(count, true, true)) {
+        for (Position p : freeFloorCells(count, true, true,0,0)) {
             cellAt(p).setItem(new BonusReward(p, amountEach));
         }
     }
 
-    private List<Position> freeFloorCells(int n, boolean excludeStartExit, boolean excludeOccupied) {
+    private static int chebyshev(Position a, Position b) {
+        return Math.max(Math.abs(a.x() - b.x()), Math.abs(a.y() - b.y()));
+    }
+
+    // NEW overload used by enemy/punishment spawners
+    private List<Position> freeFloorCells(int n,
+                                          boolean excludeStartExit,
+                                          boolean excludeOccupied,
+                                          int minChebFromStart,
+                                          int minChebFromExit) {
         ArrayList<Position> all = new ArrayList<>();
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
@@ -188,12 +238,15 @@ public final class Board {
                 if (c.terrain() != Cell.Terrain.FLOOR) continue;
                 if (excludeStartExit && (p.equals(start) || p.equals(exit))) continue;
                 if (excludeOccupied && (c.hasPlayer() || c.hasEnemy() || c.item() != null)) continue;
+                if (minChebFromStart > 0 && chebyshev(p, start) < minChebFromStart) continue;
+                if (minChebFromExit  > 0 && chebyshev(p, exit)  < minChebFromExit ) continue;
                 all.add(p);
             }
         }
         Collections.shuffle(all, rng);
         return all.subList(0, Math.min(n, all.size()));
     }
+
 
     // ------------------------------------------------------------
     // Items
@@ -274,15 +327,23 @@ public final class Board {
 
         // B) Spawn a NEW BATCH if time reached and quota remains
         if (bonusSpawnerEnabled && nextSpawnTick >= 0 && bonusRemaining > 0 && ticks >= nextSpawnTick) {
-            int batch = bonusRemaining; // try to place up to all remaining
-            List<Position> spots = freeFloorCells(batch, true, true); // avoid Start/Exit, occupied
-            for (Position p : spots) {
-                cellAt(p).setItem(new BonusReward(p, bonusPoints));
-                long life = randBetween(lifeMinTicks, lifeMaxTicks);
-                activeBonuses.add(new TimedBonus(p, ticks + life));
+            int currentlyActive = activeBonuses.size();
+            int needed = Math.max(0, bonusRemaining - currentlyActive);
+
+            if (needed > 0) {
+                // Strict free floor cells only (no Start/End, no occupants, no any item)
+                List<Position> targets = freeFloorCells(needed, /*excludeStartExit*/ true, /*excludeOccupied*/ true,0,0);
+                // Place exactly 'needed' bonuses
+                for (Position p : targets) {
+                    Cell c = cellAt(p);
+                    c.setItem(new BonusReward(p, bonusPoints));
+                    long life = randBetween(lifeMinTicks, lifeMaxTicks);
+                    activeBonuses.add(new TimedBonus(p, ticks + life));
+                }
             }
-            // NOTE: quota is NOT decremented here; only on collect.
-            scheduleNextBonusSpawn(); // plan next batch
+
+            // Schedule the next spawn window
+            scheduleNextBonusSpawn();
         }
 
         // C) Move enemies
@@ -317,6 +378,7 @@ public final class Board {
         }
         return list;
     }
+
 }
 
 

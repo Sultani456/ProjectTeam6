@@ -67,23 +67,21 @@ public final class Cell {
 
     // --- ASCII symbol (GUI may ignore and draw sprites instead)
     public char symbol() {
-        // Walls/barriers are *never* overridden by occupants
-        if (terrain == Terrain.WALL)    return 'X';
-        if (terrain == Terrain.BARRIER) return '#';
-
         // NEW PRIORITY: show characters first
         if (hasCollision()) return 'C';
         if (hasPlayer())    return 'P';
         if (hasEnemy())     return 'B';
+        if (item != null)   return item.symbol();
 
-        // Only if no characters, show START/EXIT glyphs
-        if (terrain == Terrain.START) return 'S';
-        if (terrain == Terrain.EXIT)  return 'E';
+        // Terrain last (so S/E show when empty)
+        return switch (terrain) {
+            case WALL    -> 'X';
+            case BARRIER -> '#';
+            case START   -> 'S';
+            case EXIT    -> 'E';
+            default      -> ' ';
+        };
 
-        // Items
-        if (item != null) return item.symbol();
-
-        return ' ';
     }
 
     @Override public String toString() {
