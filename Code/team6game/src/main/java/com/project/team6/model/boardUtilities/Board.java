@@ -81,6 +81,12 @@ public final class Board {
         }
     }
 
+    // for when the player is caught
+    private Position explosionPos = null;
+
+    public void setExplosion(Position p) { explosionPos = p; }
+    public Position explosionPos()       { return explosionPos; }
+
     // ------------------------------------------------------------
     // Construction from generator
     // ------------------------------------------------------------

@@ -39,7 +39,7 @@ public final class App {
         int punishmentPenalty = -5;
 
         int numEnemies = 4;
-        int enemyMovePeriod = 20;
+        int enemyMovePeriod = 10;
 
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
@@ -48,34 +48,37 @@ public final class App {
             /** Option A: from textfile
              * Automatic wall/barrier population
              */
-//            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt", 42L);
-//            BoardGenerator.Output output = gen.generate(opts);
-//            Board board = new Board(output);
+            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
+            BoardGenerator.Output output = gen.generate(opts);
+            Board board = new Board(output);
 
-            /** Option B: from given list */
-            BoardGenerator.Options opts2 = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
-            BoardGenerator.Output output2 = gen.generate(opts2);
-            Board board2 = new Board(output2);
+//            /** Option B: from given list */
+//            BoardGenerator.Options opts2 = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
+//            BoardGenerator.Output output2 = gen.generate(opts2);
+//            Board board = new Board(output2);
 
             /** –––––––––––––––––––– BOARD POPULATION –––––––––––––––––––– */
-            board2.configureBonusSpawner(bonusRewardCount, bonusPoints, spawnAt_MinSec, spawnAt_MaxSec, lifeMinSec, lifeMaxSec);
+            board.configureBonusSpawner(bonusRewardCount, bonusPoints, spawnAt_MinSec, spawnAt_MaxSec, lifeMinSec, lifeMaxSec);
 
             // --- Spawning (tweak counts as you like)
-            board2.spawnRegularRewards(regularRewardCount, regularPoints);
-            board2.spawnPunishments(numPunishments, punishmentPenalty);
-            board2.spawnEnemies(numEnemies, enemyMovePeriod); // 4 enemies, 1 tick period (fast). Increase to slow them down.
+            board.spawnRegularRewards(regularRewardCount, regularPoints);
+            board.spawnPunishments(numPunishments, punishmentPenalty);
+            board.spawnEnemies(numEnemies, enemyMovePeriod); // 4 enemies, 1 tick period (fast). Increase to slow them down.
 
+            /** –––––––––––––––––––– GAME PANEL RENDERING –––––––––––––––––––– */
             // Score/time model
             Scoreboard scoreboard = new Scoreboard(0, regularRewardCount);
-            GameState state = new GameState(board2.start(), List.of(), scoreboard);
+            GameState state = new GameState(board.start(), List.of(), scoreboard);
 
             // --- View + Window
-            GamePanel panel = new GamePanel(board2, scoreboard, state);
+            GamePanel panel = new GamePanel(board, scoreboard, state);
+//            panel.setRenderMode(GamePanel.RenderMode.SYMBOLS);      // comment out if want IMAGES
+
             GameFrame frame = new GameFrame(panel);
             frame.setVisible(true);
 
             // --- Controller
-            GameController controller = new GameController(board2, scoreboard, state, panel);
+            GameController controller = new GameController(board, scoreboard, state, panel);
             controller.start();
         });
     }

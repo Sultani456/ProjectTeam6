@@ -134,6 +134,7 @@ public final class GameController {
 
     private void lose(String msg) {
         if (state.status() != GameState.Status.RUNNING) return;
+        board.setExplosion(player.position());
         state.setLost();
         stop();
         view.onGameOver(msg);
