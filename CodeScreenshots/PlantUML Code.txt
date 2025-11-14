@@ -1,0 +1,498 @@
+@startuml
+skinparam packageStyle rectangle
+scale max 4096x2160
+
+skinparam class {
+  RoundCorner 15
+  BorderColor #333333
+  ArrowThickness 2
+  classAttributeIconSize 0
+
+  BackgroundColor<<ui>>          #CCEEFF
+  BackgroundColor<<controller>>  #FFDDDD
+  BackgroundColor<<core>>        #DDDDDD
+  BackgroundColor<<board>>       #DDFFDD
+  BackgroundColor<<runtime>>     #CCFFFF
+  BackgroundColor<<character>>   #E0CCFF
+  BackgroundColor<<collectible>> #FFF5CC
+  BackgroundColor<<generator>>   #F5E0CC
+  BackgroundColor<<enumtype>>    #E8F0FF
+}
+
+' Darker arrow colors (origin-based)
+' ui arrows:           #2D6FA5
+' controller arrows:   #C44444
+' board utils arrows:  #3C8C3C
+' runtime arrows:      #2E8585
+' characters arrows:   #6C4EB8
+' collectibles arrows: #B88A1F
+' generators arrows:   #A86A33
+
+' =======================
+' Enums / simple types
+' =======================
+
+enum RenderMode <<enumtype>> {
+  SYMBOLS
+  IMAGES
+}
+
+enum Direction <<enumtype>> {
+  UP
+  DOWN
+  LEFT
+  RIGHT
+
+  + int dx
+  + int dy
+}
+
+enum MoveResult <<enumtype>> {
+  MOVED
+  BLOCKED
+  COLLISION
+}
+
+enum CellTerrain <<enumtype>> {
+  FLOOR
+  WALL
+  BARRIER
+  START
+  EXIT
+}
+
+enum GameStateStatus <<enumtype>> {
+  RUNNING
+  WON
+  LOST
+}
+
+enum InternalBarrierMode <<enumtype>> {
+  NONE
+  PROVIDED
+  RANDOM
+  TEXT
+}
+
+' =======================
+' UI package
+' =======================
+
+package "com.project.team6.ui" {
+
+  class App <<ui>> {
+    + {static} void main(String[] args)
+  }
+
+  class GameFrame <<ui>> {
+    ' functions omitted from UML
+  }
+
+  class GamePanel <<ui>> {
+    - Board board
+    - Scoreboard scoreboard
+    - GameState state
+
+    - RenderMode renderMode
+    - Image imgPlayer
+    - Image imgEnemy
+    - Image imgRegularReward
+    - Image imgBonusReward
+    - Image imgPunishment
+    - Image imgWall
+    - Image imgFloor
+    - Image imgStart
+    - Image imgExit
+    - Image imgExplosion
+
+    - {static} int TILE
+    - {static} int HUD_H
+    - {static} Color BACKGROUND_COLOR
+    - {static} Color FLOOR_COLOR
+    - {static} Color FLOOR_COLOR_IMAGES
+    - {static} Color GRID_COLOR
+
+    - String bannerMessage
+
+    + void onCollected(CollectibleObject obj)
+    + void onGameOver(String msg)
+    # void paintComponent(Graphics g)
+    - void paintHud(Graphics2D g)
+    - BufferedImage loadImage(String resourcePath)
+  }
+}
+
+' =======================
+' Controller package
+' =======================
+
+package "com.project.team6.controller" {
+
+  class GameController <<controller>> {
+    + {static} int DEFAULT_TICK_MS
+
+    - Board board
+    - Scoreboard scoreboard
+    - GameState state
+    - GamePanel view
+
+    - Player player
+    - Timer timer
+
+    + void start()
+    + void stop()
+
+    - void installKeyBindings()
+    - void bind(String name, KeyStroke key, Runnable action)
+
+    - void tryPlayerMove(Direction dir)
+    - void applyCollectible(CollectibleObject obj)
+    - void evaluateEndStates()
+    - void win(String msg)
+    - void lose(String msg)
+
+    - void onTick(ActionEvent e)
+  }
+}
+
+' =======================
+' Board utilities package
+' =======================
+
+package "com.project.team6.model.boardUtilities" {
+
+  class Position <<board>> {
+    - int x
+    - int y
+
+    + boolean equals(Object o)
+    + int hashCode()
+  }
+
+  class Cell <<board>> {
+    - CellTerrain terrain
+    - CollectibleObject item
+    - Player playerOcc
+    - Enemy enemyOcc
+
+    + boolean hasPlayer()
+    + boolean hasEnemy()
+    + boolean hasCollision()
+
+    + boolean isWalkableTerrain()
+    + boolean isEnterableFor(CharacterObject who)
+
+    + void addOccupant(CharacterObject obj)
+    + void removeOccupant(CharacterObject obj)
+
+    + char symbol()
+  }
+
+  class Board <<board>> {
+    - int rows
+    - int cols
+    - Cell[][] grid
+    - Position start
+    - Position exit
+
+    - Random rng
+    - boolean bonusSpawnerEnabled
+    - int tickMillis
+    - long ticks
+
+    - int spawnMinTicks
+    - int spawnMaxTicks
+    - int lifeMinTicks
+    - int lifeMaxTicks
+    - long nextSpawnTick
+
+    - int bonusTotalQuota
+    - int bonusRemaining
+    - int bonusPoints
+    - List<TimedBonus> activeBonuses
+
+    - Position explosionPos
+
+    + boolean isInBounds(Position p)
+    + Cell cellAt(Position p)
+
+    + MoveResult step(CharacterObject who, Direction dir)
+    + Optional<CollectibleObject> collectAt(Position p)
+    + BoardTickSummary tick(Position playerPos)
+
+    + void configureBonusSpawner(int totalBonusToAppear, int bonusPoints, int spawnMinSec, int spawnMaxSec, int lifeMinSec, int lifeMaxSec)
+
+    - int secToTicks(int seconds)
+    - void scheduleNextBonusSpawn()
+    - int randBetween(int aInclusive, int bInclusive)
+
+    + void spawnEnemies(int count, int movePeriod)
+    + void spawnRegularRewards(int count, int amountEach)
+    + void spawnPunishments(int count, int penaltyEach)
+
+    - {static} int chebyshev(Position a, Position b)
+    - List<Position> freeFloorCells(int n, boolean excludeStartExit, boolean excludeOccupied, int minChebFromStart, int minChebFromExit)
+
+    - List<Enemy> snapshotEnemies()
+  }
+
+  class BoardTimedBonus <<board>> {
+    + Position pos
+    + long expiryTick
+  }
+
+  class BoardTickSummary <<board>> {
+    + boolean playerCaught
+    + int enemiesAttempted
+    + int enemiesMoved
+    + int bonusExpired
+  }
+}
+
+' =======================
+' Core model package
+' =======================
+
+package "com.project.team6.model" {
+
+  abstract class GameObject <<core>> {
+    - UUID id
+    - Position position
+
+    + char symbol()
+  }
+}
+
+' =======================
+' Runtime package
+' =======================
+
+package "com.project.team6.model.runtime" {
+
+  class GameState <<runtime>> {
+    - GameStateStatus status
+    - long ticks
+    - Position player
+    - Set<Position> enemies
+    - Scoreboard scoreboard
+  }
+
+  class Scoreboard <<runtime>> {
+    - int score
+    - int requiredRemaining
+
+    - Instant startedAt
+    - Instant stoppedAt
+
+    + void add(int delta)
+
+    + void start()
+    + void stop()
+
+    + void collectedRequired(int value)
+    + void collectedOptional(int value)
+    + void penalize(int negativeValue)
+
+    + Duration elapsed()
+    + String elapsedPretty()
+  }
+}
+
+' =======================
+' Characters package
+' =======================
+
+package "com.project.team6.model.characters" {
+
+  abstract class CharacterObject <<character>> {
+    + char symbol()
+  }
+
+  class Player <<character>> {
+    + char symbol()
+  }
+}
+
+package "com.project.team6.model.characters.enemies" {
+
+  abstract class Enemy <<character>> {
+    + void tick(Board board, Position playerPos)
+    # void onPostStep(Board board, MoveResult result)
+    + Direction decide(Board board, Position playerPos)
+    + char symbol()
+  }
+
+  class MovingEnemy <<character>> {
+    - int movePeriod
+    - int cooldown
+
+    + void tick(Board board, Position playerPos)
+    + Direction decide(Board board, Position playerPos)
+    - {static} Direction[] order4(Direction a, Direction b)
+  }
+}
+
+' =======================
+' Collectibles package
+' =======================
+
+package "com.project.team6.model.collectibles" {
+
+  abstract class CollectibleObject <<collectible>> {
+    - int value
+    - boolean requiredToWin
+
+    + void applyTo(Scoreboard scoreboard)
+  }
+
+  class Punishment <<collectible>> {
+    + char symbol()
+  }
+}
+
+package "com.project.team6.model.collectibles.rewards" {
+
+  abstract class Reward <<collectible>> {
+  }
+
+  class RegularReward <<collectible>> {
+    + char symbol()
+  }
+
+  class BonusReward <<collectible>> {
+    - int lifetimeTicks
+
+    + char symbol()
+  }
+}
+
+' =======================
+' Generators package
+' =======================
+
+package "com.project.team6.model.generators" {
+
+  class BoardGenerator <<generator>> {
+    + Output generate(Options opts)
+
+    - {static} boolean[][] perimeterWalls(int rows, int cols)
+    - {static} CellTerrain[][] toTerrainGrid(int rows, int cols, boolean[][] walls, boolean[][] barriers)
+
+    - {static} Position randomEdgeStart(int rows, int cols, Random rng)
+    - {static} Position randomEdgeExit(int rows, int cols, Random rng)
+
+    - BoardGeneratorTextMap parseTextMapFromResource(String resourcePath)
+
+    + {static} ArrayList<Position> barrierList()
+  }
+
+  class BoardGeneratorOptions <<generator>> {
+    + int rows
+    + int cols
+    + InternalBarrierMode mode
+    + List<Position> barrierPositions
+    + String mapResource
+  }
+
+  class BoardGeneratorOutput <<generator>> {
+    + int rows
+    + int cols
+    + Position start
+    + Position exit
+    + CellTerrain[][] terrain
+  }
+
+  class BoardGeneratorTextMap <<generator>> {
+    + int rows
+    + int cols
+    + CellTerrain[][] terrain
+  }
+
+  BoardGeneratorOutput ..[#A86A33] BoardGeneratorOptions : generate(opts)
+}
+
+' =======================
+' Inheritance (arrows colored by subclass color)
+' =======================
+
+CharacterObject -[#6C4EB8]-|> GameObject
+CollectibleObject -[#B88A1F]-|> GameObject
+
+Player -[#6C4EB8]-|> CharacterObject
+Enemy -[#6C4EB8]-|> CharacterObject
+MovingEnemy -[#6C4EB8]-|> Enemy
+
+Reward -[#B88A1F]-|> CollectibleObject
+Punishment -[#B88A1F]-|> CollectibleObject
+
+RegularReward -[#B88A1F]-|> Reward
+BonusReward -[#B88A1F]-|> Reward
+
+' =======================
+' Associations (arrows colored by source class color)
+' =======================
+
+App ..[#2D6FA5]> Board
+App ..[#2D6FA5]> Scoreboard
+App ..[#2D6FA5]> GameState
+App ..[#2D6FA5]> GamePanel
+App ..[#2D6FA5]> GameFrame
+App ..[#2D6FA5]> GameController
+
+GameFrame "1" *-[#2D6FA5]-> "1" GamePanel
+
+GamePanel "1" -[#2D6FA5]-> "1" Board
+GamePanel "1" -[#2D6FA5]-> "1" Scoreboard
+GamePanel "1" -[#2D6FA5]-> "1" GameState
+GamePanel ..[#2D6FA5]> Position
+GamePanel ..[#2D6FA5]> CollectibleObject
+GamePanel ..[#2D6FA5]> RenderMode
+
+GameController "1" -[#C44444]-> "1" Board
+GameController "1" -[#C44444]-> "1" Scoreboard
+GameController "1" -[#C44444]-> "1" GameState
+GameController "1" -[#C44444]-> "1" GamePanel
+GameController "1" -[#C44444]-> "1" Player
+GameController ..[#C44444]> Direction
+GameController ..[#C44444]> MoveResult
+GameController ..[#C44444]> CollectibleObject
+
+Board "1" *-[#3C8C3C]-> "*" Cell
+Board "1" -[#3C8C3C]-> "1" Position : start
+Board "1" -[#3C8C3C]-> "1" Position : exit
+Board ..[#3C8C3C]> CharacterObject
+Board ..[#3C8C3C]> CollectibleObject
+Board ..[#3C8C3C]> MoveResult
+Board ..[#3C8C3C]> Direction
+Board ..[#3C8C3C]> BoardTickSummary
+Board ..[#3C8C3C]> BoardTimedBonus
+
+BoardTimedBonus ..[#3C8C3C]> Position
+
+Cell "1" -[#3C8C3C]-> "1" CellTerrain
+Cell "1" -[#3C8C3C]-> "0..1" CollectibleObject
+Cell "1" -[#3C8C3C]-> "0..1" Player
+Cell "1" -[#3C8C3C]-> "0..1" Enemy
+
+GameState "1" -[#2E8585]-> "1" Position : player
+GameState "1" -[#2E8585]-> "*" Position : enemies
+GameState "1" -[#2E8585]-> "1" Scoreboard
+GameState ..[#2E8585]> GameStateStatus
+
+CollectibleObject "1" -[#B88A1F]-> "1" Scoreboard : applyTo
+
+BoardGenerator "1" ..[#A86A33]> BoardGeneratorOptions
+BoardGenerator "1" ..[#A86A33]> BoardGeneratorOutput
+BoardGenerator "1" ..[#A86A33]> BoardGeneratorTextMap
+BoardGeneratorOptions ..[#A86A33]> Position
+BoardGeneratorOptions ..[#A86A33]> InternalBarrierMode
+BoardGeneratorOutput ..[#A86A33]> Position
+BoardGeneratorOutput ..[#A86A33]> CellTerrain
+BoardGeneratorTextMap ..[#A86A33]> CellTerrain
+
+MovingEnemy ..[#6C4EB8]> Direction
+Enemy ..[#6C4EB8]> Board
+Enemy ..[#6C4EB8]> Position
+Enemy ..[#6C4EB8]> MoveResult
+
+@enduml
