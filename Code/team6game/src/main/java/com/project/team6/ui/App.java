@@ -45,17 +45,22 @@ public final class App {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
             BoardGenerator gen = new BoardGenerator();
 
-            /** Option A: from textfile
+            /** Option A: from textfile, with given rows/cols from textfile
              * Automatic wall/barrier population
              */
-            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
-            BoardGenerator.Output output = gen.generate(opts);
-            Board board = new Board(output);
+//            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
+//            BoardGenerator.Output output = gen.generate(opts);
+//            Board board = new Board(output);
 
-//            /** Option B: from given list */
+            /** Option B: from given barrierList, with given rows/cols from client */
 //            BoardGenerator.Options opts2 = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
 //            BoardGenerator.Output output2 = gen.generate(opts2);
 //            Board board = new Board(output2);
+
+            /** Option C: given rows/cols from client, randomly put barriers*/
+            BoardGenerator.Options opts2 = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
+            BoardGenerator.Output output2 = gen.generate(opts2);
+            Board board = new Board(output2);
 
             /** –––––––––––––––––––– BOARD POPULATION –––––––––––––––––––– */
             board.configureBonusSpawner(bonusRewardCount, bonusPoints, spawnAt_MinSec, spawnAt_MaxSec, lifeMinSec, lifeMaxSec);
