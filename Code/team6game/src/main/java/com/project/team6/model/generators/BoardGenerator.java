@@ -67,7 +67,7 @@ public final class BoardGenerator {
 
     // ---------------------------------------------------------------------
 
-    public Output generate(Options opts) {
+    public Output generate(Options opts, double boardBarrierPercentage) {
         Objects.requireNonNull(opts);
         Random rng = new Random();
 
@@ -104,7 +104,7 @@ public final class BoardGenerator {
 
                 // simple random internal barrier density (~10% of interior)
                 int interior = (opts.rows - 2) * (opts.cols - 2);
-                int count = Math.max(0, (int)Math.round(interior * 0.10));
+                int count = Math.max(0, (int)Math.round(interior * boardBarrierPercentage));
                 for (int i = 0; i < count; i++) {
                     int x = 1 + rng.nextInt(opts.cols - 2);
                     int y = 1 + rng.nextInt(opts.rows - 2);

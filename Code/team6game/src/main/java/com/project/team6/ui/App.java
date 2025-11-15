@@ -22,8 +22,8 @@ public final class App {
     public static void main(String[] args) {
         List<Position> barrierList = BoardGenerator.barrierList();
 
-        int rows = 11;
-        int cols = 18;
+        int rows = 24;
+        int cols = 24;
 
         int regularRewardCount = 8;
         int regularPoints = 5;
@@ -41,25 +41,27 @@ public final class App {
         int numEnemies = 4;
         int enemyMovePeriod = 10;
 
+        double boardBarrierPercentage = 0.6;        // 0.1 to 0.4 are best
+
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
             BoardGenerator gen = new BoardGenerator();
 
 
-            /** Option A: No barriers, with given rows/cols from client*/
-            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.NONE, null, null);
+            /** Option A: NONE – No barriers, with given rows/cols from client*/
+//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.NONE, null, null);
 
-            /** Option B: populate barriers from given barrierList, with given rows/cols from client */
+            /** Option B: PROVIDED – populate barriers from given barrierList, with given rows/cols from client */
 //            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
 
-            /** Option C: randomly put barriers, with given rows/cols from client */
-//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
+            /** Option C: RANDOM – randomly put barriers, with given rows/cols from client */
+            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
 
-            /** Option D: populate barriers from textfile, with given rows/cols from textfile */
+            /** Option D: TEXT – populate barriers from textfile, with given rows/cols from textfile */
 //            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
 
 
-            BoardGenerator.Output output = gen.generate(opts);
+            BoardGenerator.Output output = gen.generate(opts, boardBarrierPercentage);
             Board board = new Board(output);
 
             /** –––––––––––––––––––– BOARD POPULATION –––––––––––––––––––– */
