@@ -41,7 +41,7 @@ public final class App {
         int numEnemies = 4;
         int enemyMovePeriod = 10;
 
-        double boardBarrierPercentage = 0.6;        // 0.1 to 0.4 are best
+        double boardBarrierPercentage = 0.1;        // 0.1 to 0.4 are best
 
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
@@ -49,13 +49,13 @@ public final class App {
 
 
             /** Option A: NONE – No barriers, with given rows/cols from client*/
-//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.NONE, null, null);
+            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.NONE, null, null);
 
             /** Option B: PROVIDED – populate barriers from given barrierList, with given rows/cols from client */
 //            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
 
             /** Option C: RANDOM – randomly put barriers, with given rows/cols from client */
-            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
+//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
 
             /** Option D: TEXT – populate barriers from textfile, with given rows/cols from textfile */
 //            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
