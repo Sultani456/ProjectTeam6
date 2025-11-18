@@ -3,33 +3,51 @@ package com.project.team6.model.collectibles.rewards;
 import com.project.team6.model.boardUtilities.Position;
 
 /**
- * Optional reward with higher value. Supports optional lifetime (ticks).
- * If lifetime <= 0, it's persistent.
+ * Optional reward with higher value.
+ * Can be temporary: if lifetimeTicks > 0, it disappears after that many ticks.
+ * If lifetimeTicks <= 0, it is persistent.
  */
 public final class BonusReward extends Reward {
 
-    private int lifetimeTicks; // 0 => disabled, <=0 means no expiry
+    /** Remaining lifetime in ticks. <= 0 means "no expiry / persistent". */
+    private int lifetimeTicks;
 
     public BonusReward(Position position, int value) {
-        super(position, value, false);
-        this.lifetimeTicks = 0;
+        super(position, value, /*requiredToWin=*/false);
+        this.lifetimeTicks = 0; // persistent
     }
 
     public BonusReward(Position position, int value, int lifetimeTicks) {
-        super(position, value, false);
+        super(position, value, /*requiredToWin=*/false);
         this.lifetimeTicks = lifetimeTicks;
     }
 
-    /** Returns true if still present; controller/board can remove when false. */
+    /**
+     * Called once per game tick while this bonus is on the board.
+     *
+     * @return true if the bonus is still alive and should remain on the board;
+     *         false if it has expired and can be removed by Board.tick(...).
+     */
     public boolean onTickAndAlive() {
         if (lifetimeTicks > 0) {
             lifetimeTicks--;
             return lifetimeTicks > 0;
         }
+        // lifetime <= 0 ⇒ no expiry
         return true;
     }
 
-    public int lifetimeRemaining() { return lifetimeTicks; }
+    /**
+     * @return remaining lifetime in ticks, or <= 0 if this bonus does not expire.
+     */
+    public int lifetimeRemaining() {
+        return lifetimeTicks;
+    }
 
-    @Override public char symbol() { return 'o'; }
+    @Override
+    public char symbol() {
+        // ASCII representation used in SYMBOL render mode
+        return 'o';
+    }
 }
+

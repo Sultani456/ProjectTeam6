@@ -40,7 +40,14 @@ public final class Cell {
     public boolean isEnterableFor(CharacterObject who) {
         if (!isWalkableTerrain() || who == null) return false;
         if (who instanceof Player) return playerOcc == null;
-        if (who instanceof Enemy)  return enemyOcc  == null;
+
+        if (who instanceof Enemy)  {
+            if (terrain == Terrain.START || terrain == Terrain.EXIT) {
+                return false;
+            }
+
+            return enemyOcc  == null;
+        }
         return false;
     }
 

@@ -1,4 +1,4 @@
-package com.project.team6.model.boardUtilities.generators;
+package com.project.team6.model.boardUtilities.generators.barrierProperties;
 
 import com.project.team6.model.boardUtilities.Position;
 

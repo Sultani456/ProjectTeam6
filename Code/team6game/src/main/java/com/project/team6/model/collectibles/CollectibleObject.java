@@ -21,14 +21,5 @@ public abstract class CollectibleObject extends GameObject {
     public int value() { return value; }
     public boolean isRequiredToWin() { return requiredToWin; }
 
-    /** Apply score effects; Board/Controller can call this when collected. */
-    public void applyTo(Scoreboard scoreboard) {
-        if (value >= 0) {
-            if (requiredToWin) scoreboard.collectedRequired(value);
-            else scoreboard.collectedOptional(value);
-        } else {
-            scoreboard.penalize(value); // negative OK
-        }
-    }
 }
 

@@ -1,9 +1,11 @@
 package com.project.team6.controller;
 
 import com.project.team6.model.boardUtilities.*;
+import com.project.team6.model.boardUtilities.generators.*;
 import com.project.team6.model.characters.*;
 import com.project.team6.model.characters.enemies.*;
 import com.project.team6.model.collectibles.*;
+import com.project.team6.model.collectibles.rewards.*;
 import com.project.team6.model.runtime.*;
 import com.project.team6.ui.GamePanel;
 
@@ -17,31 +19,35 @@ import java.util.Objects;
  * - World advancement (enemies, expiring bonus rewards) happens each tick via Board.tick().
  * - View is notified via repaint() and lightweight banner messages.
  */
+
 public final class GameController {
 
+    /** Must match the tick duration used when constructing Spawner. */
     public static final int DEFAULT_TICK_MS = 120;
 
     private final Board board;
+    private final Spawner spawner;
     private final Scoreboard scoreboard;
     private final GameState state;
     private final GamePanel view;
-
     private final Player player;
+
     private final Timer timer;
 
-    public GameController(Board board, Scoreboard scoreboard, GameState state, GamePanel view) {
+    public GameController(Board board,
+                          Spawner spawner,
+                          Scoreboard scoreboard,
+                          GameState state,
+                          GamePanel view) {
         this.board = Objects.requireNonNull(board);
+        this.spawner = Objects.requireNonNull(spawner);
         this.scoreboard = Objects.requireNonNull(scoreboard);
         this.state = Objects.requireNonNull(state);
-        this.view  = Objects.requireNonNull(view);
+        this.view = Objects.requireNonNull(view);
 
-        // Place player at Start
-        Position start = board.start();
-        this.player = new Player(start);
-        board.cellAt(start).addOccupant(player);
+        this.player = board.player();
 
         installKeyBindings();
-
         this.timer = new Timer(DEFAULT_TICK_MS, this::onTick);
     }
 
@@ -49,7 +55,6 @@ public final class GameController {
         if (state.status() != GameState.Status.RUNNING) {
             state.setRunning();
         }
-
         scoreboard.start();
         timer.start();
         view.repaint();
@@ -60,25 +65,32 @@ public final class GameController {
         scoreboard.stop();
     }
 
-    // -------- Input
+    // ---------------------------------------------------------------
+    // Input
+    // ---------------------------------------------------------------
+
     private void installKeyBindings() {
         bind("UP",    KeyStroke.getKeyStroke("UP"),    () -> tryPlayerMove(Direction.UP));
         bind("DOWN",  KeyStroke.getKeyStroke("DOWN"),  () -> tryPlayerMove(Direction.DOWN));
         bind("LEFT",  KeyStroke.getKeyStroke("LEFT"),  () -> tryPlayerMove(Direction.LEFT));
         bind("RIGHT", KeyStroke.getKeyStroke("RIGHT"), () -> tryPlayerMove(Direction.RIGHT));
-        // wasd
-        bind("W", KeyStroke.getKeyStroke('W'), () -> tryPlayerMove(Direction.UP));
-        bind("A", KeyStroke.getKeyStroke('A'), () -> tryPlayerMove(Direction.LEFT));
-        bind("S", KeyStroke.getKeyStroke('S'), () -> tryPlayerMove(Direction.DOWN));
-        bind("D", KeyStroke.getKeyStroke('D'), () -> tryPlayerMove(Direction.RIGHT));
+
+        // WASD
+        bind("W", KeyStroke.getKeyStroke('w'), () -> tryPlayerMove(Direction.UP));
+        bind("S", KeyStroke.getKeyStroke('s'), () -> tryPlayerMove(Direction.DOWN));
+        bind("A", KeyStroke.getKeyStroke('a'), () -> tryPlayerMove(Direction.LEFT));
+        bind("D", KeyStroke.getKeyStroke('d'), () -> tryPlayerMove(Direction.RIGHT));
     }
 
     private void bind(String name, KeyStroke key, Runnable action) {
-        InputMap inputMap = view.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actionMap = view.getActionMap();
-        inputMap.put(key, name);
-        actionMap.put(name, new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) { action.run(); }
+        InputMap im = view.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = view.getActionMap();
+
+        im.put(key, name);
+        am.put(name, new AbstractAction() {
+            @Override public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
         });
     }
 
@@ -89,34 +101,85 @@ public final class GameController {
 
         switch (result) {
             case MOVED -> {
-                // Item collection
-                board.collectAt(player.position()).ifPresent(this::applyCollectible);
+                board.collectAt(player.position())
+                        .ifPresent(this::applyCollectible);
                 evaluateEndStates();
                 view.repaint();
             }
             case COLLISION -> {
-                // Enemy + Player share a cell → lose immediately
                 lose("You were caught!");
-                view.repaint();
             }
-            case BLOCKED -> { /* no-op */ }
+            case BLOCKED -> {
+                // no-op
+            }
         }
     }
 
-    private void applyCollectible(CollectibleObject collectible) {
-        collectible.applyTo(scoreboard); // RegularReward should call collectedRequired(...)
-        view.onCollected(collectible);
+    /** Apply score effects; */
+    private void applyCollectible(CollectibleObject obj) {
+        int val = obj.value();
+
+        // Required reward?
+        if (obj.isRequiredToWin()) {
+            scoreboard.collectedRequired(val);
+        }
+        // Optional reward? (e.g., BonusReward)
+        else if (val > 0) {
+            scoreboard.collectedOptional(val);
+        }
+        // Punishment (value < 0)
+        else {
+            scoreboard.penalize(val);
+        }
+
+        // Notify spawner only if it's a bonus
+        if (obj instanceof BonusReward) {
+            spawner.notifyBonusCollected();
+        }
+
+        // UI feedback
+        view.onCollected(obj);
     }
+
+
+    // ---------------------------------------------------------------
+    // Tick loop
+    // ---------------------------------------------------------------
+
+    private void onTick(ActionEvent e) {
+        if (state.status() != GameState.Status.RUNNING) return;
+
+        Position playerPos = player.position();
+        Board.TickSummary summary = board.tick(playerPos);
+
+        // bonus spawning
+        spawner.onTick();
+
+        if (summary.playerCaught()) {
+            lose("You were caught!");
+        } else {
+            evaluateEndStates();
+        }
+
+        view.repaint();
+    }
+
+    // ---------------------------------------------------------------
+    // Win / lose logic
+    // ---------------------------------------------------------------
 
     private void evaluateEndStates() {
-        // Win condition: all required collected AND at exit
-        boolean allCollected = scoreboard.requiredRemaining() == 0;
+        if (state.status() != GameState.Status.RUNNING) return;
+
+        boolean allRequiredCollected = scoreboard.requiredRemaining() == 0;
         boolean atExit = player.position().equals(board.exit());
 
-        if (allCollected && atExit) {
-            win("You win! Time " + scoreboard.elapsedPretty() + "  Score " + scoreboard.score());
+        if (allRequiredCollected && atExit) {
+            win("You win! Time " + scoreboard.elapsedPretty()
+                    + "   Score " + scoreboard.score());
         }
-        // Optional: lose if score < 0, if you want
+
+        // Optional: lose when score < 0
         if (scoreboard.score() < 0) {
             lose("Score below zero!");
         }
@@ -131,21 +194,11 @@ public final class GameController {
 
     private void lose(String msg) {
         if (state.status() != GameState.Status.RUNNING) return;
-        board.setExplosion(player.position());
         state.setLost();
         stop();
+        board.setExplosion(player.position());
         view.onGameOver(msg);
     }
-
-    // ------------ Ticks
-    private void onTick(ActionEvent e) {
-        if (state.status() != GameState.Status.RUNNING) return;
-
-        Board.TickSummary ts = board.tick(player.position());
-        if (ts.playerCaught) {
-            lose("You were caught!");
-        }
-        view.repaint();
-    }
 }
+
 
