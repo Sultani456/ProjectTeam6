@@ -29,9 +29,6 @@ public final class GameController {
     private final Player player;
     private final Timer timer;
 
-    private boolean running = false;
-    private boolean gameOver = false;
-
     public GameController(Board board, Scoreboard scoreboard, GameState state, GamePanel view) {
         this.board = Objects.requireNonNull(board);
         this.scoreboard = Objects.requireNonNull(scoreboard);
@@ -39,9 +36,9 @@ public final class GameController {
         this.view  = Objects.requireNonNull(view);
 
         // Place player at Start
-        Position s = board.start();
-        this.player = new Player(s);
-        board.cellAt(s).addOccupant(player);
+        Position start = board.start();
+        this.player = new Player(start);
+        board.cellAt(start).addOccupant(player);
 
         installKeyBindings();
 
@@ -77,20 +74,20 @@ public final class GameController {
     }
 
     private void bind(String name, KeyStroke key, Runnable action) {
-        var im = view.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        var am = view.getActionMap();
-        im.put(key, name);
-        am.put(name, new AbstractAction() {
+        InputMap inputMap = view.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = view.getActionMap();
+        inputMap.put(key, name);
+        actionMap.put(name, new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) { action.run(); }
         });
     }
 
-    private void tryPlayerMove(Direction dir) {
+    private void tryPlayerMove(Direction direction) {
         if (state.status() != GameState.Status.RUNNING) return;
 
-        MoveResult r = board.step(player, dir);
+        MoveResult result = board.step(player, direction);
 
-        switch (r) {
+        switch (result) {
             case MOVED -> {
                 // Item collection
                 board.collectAt(player.position()).ifPresent(this::applyCollectible);
@@ -106,9 +103,9 @@ public final class GameController {
         }
     }
 
-    private void applyCollectible(CollectibleObject obj) {
-        obj.applyTo(scoreboard); // RegularReward should call collectedRequired(...)
-        view.onCollected(obj);
+    private void applyCollectible(CollectibleObject collectible) {
+        collectible.applyTo(scoreboard); // RegularReward should call collectedRequired(...)
+        view.onCollected(collectible);
     }
 
     private void evaluateEndStates() {

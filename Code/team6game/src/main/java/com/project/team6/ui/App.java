@@ -1,8 +1,8 @@
 package com.project.team6.ui;
 
-import com.project.team6.controller.GameController;
+import com.project.team6.controller.*;
 import com.project.team6.model.boardUtilities.*;
-import com.project.team6.model.generators.BoardGenerator;
+import com.project.team6.model.boardUtilities.generators.*;
 import com.project.team6.model.runtime.*;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public final class App {
         int numEnemies = 4;
         int enemyMovePeriod = 10;
 
-        double boardBarrierPercentage = 0.1;        // 0.1 to 0.4 are best
+        double boardBarrierPercentage = 0.3;        // 0.1 to 0.4 are best
 
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
@@ -49,17 +49,16 @@ public final class App {
 
 
             /** Option A: NONE – No barriers, with given rows/cols from client*/
-            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.NONE, null, null);
+//            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.NONE, null, null);
 
             /** Option B: PROVIDED – populate barriers from given barrierList, with given rows/cols from client */
-//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.PROVIDED, barrierList, null);
+//            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.PROVIDED, barrierList, null);
 
-            /** Option C: RANDOM – randomly put barriers, with given rows/cols from client */
-//            BoardGenerator.Options opts = new BoardGenerator.Options(rows, cols, BoardGenerator.InternalBarrierMode.RANDOM, null, null);
+            /** Option C: TEXT – populate barriers from textfile, with given rows/cols from textfile */
+//            BarrierOptions opts = new BarrierOptions(0,0, BarrierMode.TEXT, null, "maps/level1.txt");
 
-            /** Option D: TEXT – populate barriers from textfile, with given rows/cols from textfile */
-//            BoardGenerator.Options opts = new BoardGenerator.Options(0,0, BoardGenerator.InternalBarrierMode.TEXT, null, "maps/level1.txt");
-
+            /** Option D: RANDOM – randomly put barriers, with given rows/cols from client */
+            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.RANDOM, null, null);
 
             BoardGenerator.Output output = gen.generate(opts, boardBarrierPercentage);
             Board board = new Board(output);
@@ -84,6 +83,7 @@ public final class App {
             GameFrame frame = new GameFrame(panel);
             frame.setVisible(true);
 
+            /** –––––––––––––––––––– GAMEPLAY –––––––––––––––––––– */
             // --- Controller
             GameController controller = new GameController(board, scoreboard, state, panel);
             controller.start();

@@ -5,10 +5,9 @@ import com.project.team6.model.characters.*;
 import com.project.team6.model.characters.enemies.*;
 import com.project.team6.model.collectibles.*;
 import com.project.team6.model.collectibles.rewards.*;
-import com.project.team6.model.generators.BoardGenerator;
+import com.project.team6.model.boardUtilities.generators.BoardGenerator;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Authoritative model of the board: terrain, occupants, and items.
@@ -226,7 +225,7 @@ public final class Board {
         }
     }
 
-    private static int chebyshev(Position a, Position b) {
+    public static int chebyshev(Position a, Position b) {
         return Math.max(Math.abs(a.x() - b.x()), Math.abs(a.y() - b.y()));
     }
 
