@@ -4,7 +4,7 @@ package com.project.team6.model.collectibles.rewards;
 // It is abstract. We cannot make collectibles from it directly.
 // Other classes will extend this and become real rewards.
 
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 import com.project.team6.model.collectibles.CollectibleObject;
 
 /** Positive-score base. */

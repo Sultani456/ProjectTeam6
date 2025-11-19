@@ -1,7 +1,7 @@
 package com.project.team6.model.characters;
 
 import com.project.team6.model.GameObject;
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 
 /**
  * Base for Player and Enemy. Owns common movement helpers.

@@ -1,6 +1,6 @@
 package com.project.team6.model.collectibles.rewards;
 
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 
 /**
  * Optional reward with higher value.

@@ -1,6 +1,6 @@
 package com.project.team6.model.runtime;
 
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 
 import java.util.*;
 

@@ -3,7 +3,7 @@ package com.project.team6.model;
 // This class is the parent for all items a player can step on.
 // Other item types will extend this class.
 
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 
 import java.util.Objects;
 import java.util.UUID;

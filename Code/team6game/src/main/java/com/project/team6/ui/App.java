@@ -1,9 +1,9 @@
 package com.project.team6.ui;
 
 import com.project.team6.controller.*;
-import com.project.team6.model.boardUtilities.*;
-import com.project.team6.model.boardUtilities.generators.*;
-import com.project.team6.model.boardUtilities.generators.barrierProperties.*;
+import com.project.team6.model.board.*;
+import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.generators.barrierProperties.*;
 import com.project.team6.model.runtime.*;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public final class App {
     public static void main(String[] args) {
         /** –––––––––––––––––––– GAME CONTROLS –––––––––––––––––––– */
         int rows = 24;
-        int cols = 24;
+        int cols = 36;
 
         int regularRewardCount = 15;
         int regularPoints = 10;

@@ -1,6 +1,6 @@
 package com.project.team6.model.collectibles;
 
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Position;
 
 /** Negative-score item. */
 public final class Punishment extends CollectibleObject {

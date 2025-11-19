@@ -2,9 +2,9 @@ package com.project.team6.model.characters.enemies;
 
 // This enemy always tries to move closer to the players
 
-import com.project.team6.model.boardUtilities.Board;
-import com.project.team6.model.boardUtilities.Direction;
-import com.project.team6.model.boardUtilities.Position;
+import com.project.team6.model.board.Board;
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.Position;
 
 import java.util.Collections;
 

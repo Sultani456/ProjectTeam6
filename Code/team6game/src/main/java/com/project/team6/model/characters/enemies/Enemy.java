@@ -1,8 +1,10 @@
 package com.project.team6.model.characters.enemies;
 
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
 import com.project.team6.model.characters.CharacterObject;
 
-import com.project.team6.model.boardUtilities.*;
+import com.project.team6.model.board.*;
 
 /**
  * Base enemy with a one-tile-per-tick movement contract.

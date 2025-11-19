@@ -1,9 +1,11 @@
 package com.project.team6.controller;
 
-import com.project.team6.model.boardUtilities.*;
-import com.project.team6.model.boardUtilities.generators.*;
+import com.project.team6.model.board.*;
+import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
+import com.project.team6.model.board.utilities.TickSummary;
 import com.project.team6.model.characters.*;
-import com.project.team6.model.characters.enemies.*;
 import com.project.team6.model.collectibles.*;
 import com.project.team6.model.collectibles.rewards.*;
 import com.project.team6.model.runtime.*;
@@ -150,7 +152,7 @@ public final class GameController {
         if (state.status() != GameState.Status.RUNNING) return;
 
         Position playerPos = player.position();
-        Board.TickSummary summary = board.tick(playerPos);
+        TickSummary summary = board.tick(playerPos);
 
         // bonus spawning
         spawner.onTick();
