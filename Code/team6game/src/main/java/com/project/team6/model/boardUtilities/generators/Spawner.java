@@ -71,28 +71,6 @@ public final class Spawner {
         this.rng = new Random();
     }
 
-    public Board board() {return this.board;}
-    public int rows() {return this.rows;}
-    public int cols() {return this.cols;}
-    public Cell[][] grid() {return this.grid;}
-    public int tickMillis() {return this.tickMillis;}
-
-    public boolean bonusEnabled() {return this.bonusEnabled;}
-    public int bonusRemaining() {return bonusRemaining;}
-    public int bonusPointsPer() {return bonusPointsPer;}
-    public int spawnMinTicks() {return spawnMinTicks;}
-    public int spawnMaxTicks() {return spawnMaxTicks;}
-    public int lifeMinTicks() {return lifeMinTicks;}
-    public int lifeMaxTicks() {return lifeMaxTicks;}
-    public int ticksUntilNextSpawn() {return ticksUntilNextSpawn;}
-
-    public void setBonusEnabled(boolean bonusEnabled) {this.bonusEnabled = bonusEnabled;}
-    public void setTicksUntilNextSpawn(int ticksUntilNextSpawn) {this.ticksUntilNextSpawn = ticksUntilNextSpawn;}
-    public void decrementTicksUntilNextSpawn() {ticksUntilNextSpawn--;}
-    public void decrementBonusRemaining() {bonusRemaining--;}
-
-
-
     // ================================================================
     // Bonus spawning (config + per-tick)
     // ================================================================
@@ -319,9 +297,6 @@ public final class Spawner {
             placed++;
         }
     }
-
-
-
 }
 
 

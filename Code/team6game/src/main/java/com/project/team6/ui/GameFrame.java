@@ -1,7 +1,6 @@
 package com.project.team6.ui;
 
 import javax.swing.*;
-import java.awt.*;
 
 /** Simple window to host the GamePanel. */
 public final class GameFrame extends JFrame {

@@ -12,11 +12,6 @@ public final class BonusReward extends Reward {
     /** Remaining lifetime in ticks. <= 0 means "no expiry / persistent". */
     private int lifetimeTicks;
 
-    public BonusReward(Position position, int value) {
-        super(position, value, /*requiredToWin=*/false);
-        this.lifetimeTicks = 0; // persistent
-    }
-
     public BonusReward(Position position, int value, int lifetimeTicks) {
         super(position, value, /*requiredToWin=*/false);
         this.lifetimeTicks = lifetimeTicks;
@@ -35,13 +30,6 @@ public final class BonusReward extends Reward {
         }
         // lifetime <= 0 ⇒ no expiry
         return true;
-    }
-
-    /**
-     * @return remaining lifetime in ticks, or <= 0 if this bonus does not expire.
-     */
-    public int lifetimeRemaining() {
-        return lifetimeTicks;
     }
 
     @Override

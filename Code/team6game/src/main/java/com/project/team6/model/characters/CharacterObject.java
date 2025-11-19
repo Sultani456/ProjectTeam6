@@ -1,12 +1,7 @@
 package com.project.team6.model.characters;
 
 import com.project.team6.model.GameObject;
-import com.project.team6.model.boardUtilities.Board;
-import com.project.team6.model.boardUtilities.Direction;
 import com.project.team6.model.boardUtilities.Position;
-import com.project.team6.model.boardUtilities.Cell;
-
-import java.util.Objects;
 
 /**
  * Base for Player and Enemy. Owns common movement helpers.

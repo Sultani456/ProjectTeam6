@@ -2,7 +2,6 @@ package com.project.team6.model.collectibles;
 
 import com.project.team6.model.GameObject;
 import com.project.team6.model.boardUtilities.Position;
-import com.project.team6.model.runtime.Scoreboard;
 
 /**
  * Base class for on-cell items that affect score (positive or negative).

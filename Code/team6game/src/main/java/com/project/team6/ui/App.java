@@ -3,8 +3,7 @@ package com.project.team6.ui;
 import com.project.team6.controller.*;
 import com.project.team6.model.boardUtilities.*;
 import com.project.team6.model.boardUtilities.generators.*;
-import com.project.team6.model.boardUtilities.generators.barrierProperties.BarrierMode;
-import com.project.team6.model.boardUtilities.generators.barrierProperties.BarrierOptions;
+import com.project.team6.model.boardUtilities.generators.barrierProperties.*;
 import com.project.team6.model.runtime.*;
 
 import javax.swing.*;
@@ -22,8 +21,6 @@ import java.util.*;
 public final class App {
 
     public static void main(String[] args) {
-        List<Position> barrierList = BoardGenerator.barrierList();
-
         /** –––––––––––––––––––– GAME CONTROLS –––––––––––––––––––– */
         int rows = 24;
         int cols = 24;
@@ -39,14 +36,14 @@ public final class App {
         int lifeMinSec = 3;
         int lifeMaxSec = 6;
 
-        int numPunishments = 15;
+        int numPunishments = 8;
         int punishmentPenalty = -5;
 
-        int numEnemies = 30;
+        int numEnemies = 3;
         int enemyMovePeriod = 10;
 
-        // Barrier density for BARRIER mode (fraction of interior cells)
-        double boardBarrierPercentage = 0.3;        // 0.1 to 0.4 are best
+        // Barrier density for RANDOM barrier mode (fraction of interior cells)
+        double boardBarrierPercentage = 0.4;        // 0.1 to 0.4 are best
 
 
 
@@ -59,6 +56,7 @@ public final class App {
 //            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.NONE, null, null);
 
             /** Option B: PROVIDED – populate barriers from given barrierList, with given rows/cols from client */
+//            List<Position> barrierList = BoardGenerator.barrierList();
 //            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.PROVIDED, barrierList, null);
 
             /** Option C: TEXT – populate barriers from textfile, with given rows/cols from textfile */

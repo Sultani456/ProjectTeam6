@@ -4,12 +4,9 @@ package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.boardUtilities.Board;
 import com.project.team6.model.boardUtilities.Direction;
-import com.project.team6.model.boardUtilities.MoveResult;
 import com.project.team6.model.boardUtilities.Position;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Greedy, Manhattan chaser: picks a 4-neighbor step that reduces distance,
