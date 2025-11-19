@@ -9,19 +9,36 @@ import com.project.team6.model.board.Position;
 import java.util.Collections;
 
 /**
- * Greedy, Manhattan chaser: picks a 4-neighbor step that reduces distance,
- * preferring horizontal/vertical order that best approaches the player,
- * skipping illegal cells.
+ * Enemy that chases the player using Manhattan distance.
+ * Tries to step closer every time it moves.
+ * Prefers the axis that reduces distance the most.
  */
 public final class MovingEnemy extends Enemy {
+
+    /** Number of ticks between moves. Must be at least 1. */
     private final int movePeriod;  // >=1 ticks between moves
+
+    /** Internal counter until the next move. */
     private int cooldown = 0;
 
+    /**
+     * Creates a moving enemy.
+     *
+     * @param position   starting position
+     * @param movePeriod ticks between moves
+     */
     public MovingEnemy(Position position, int movePeriod) {
         super(position);
         this.movePeriod = movePeriod;
     }
 
+    /**
+     * Runs once per tick.
+     * Waits for cooldown, then moves and resets the cooldown.
+     *
+     * @param board     the game board
+     * @param playerPos current player position
+     */
     @Override
     public void tick(Board board, Position playerPos) {
         if (cooldown > 0) { cooldown--; return; }
@@ -29,6 +46,15 @@ public final class MovingEnemy extends Enemy {
         cooldown = movePeriod - 1;
     }
 
+    /**
+     * Chooses a direction that reduces Manhattan distance to the player.
+     * Prefers horizontal when horizontal distance is larger or equal.
+     * Skips directions that are out of bounds or not walkable.
+     *
+     * @param board     the game board
+     * @param playerPos current player position
+     * @return direction to move or null to stay still
+     */
     @Override
     public Direction decide(Board board, Position playerPos) {
         Position me = position();
@@ -50,6 +76,14 @@ public final class MovingEnemy extends Enemy {
         return null; // stuck
     }
 
+    /**
+     * Builds an ordered list of directions.
+     * Places the two preferred directions first, then the rest.
+     *
+     * @param a first preferred direction
+     * @param b second preferred direction
+     * @return array with up to four unique directions
+     */
     private static Direction[] order4(Direction a, Direction b) {
         Direction[] all = { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
         java.util.LinkedHashSet<Direction> set = new java.util.LinkedHashSet<>();
