@@ -1,4 +1,4 @@
-package com.project.team6.model.board.generators;
+package com.project.team6.model.board.generators; 
 
 import com.project.team6.model.board.*;
 import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
@@ -7,8 +7,8 @@ import com.project.team6.model.board.generators.helpers.GeneratorHelper;
 import java.util.*;
 
 /**
- * Builds the initial terrain for a Board.
- * It does NOT place rewards, punishments, or enemies – that is Spawner's job.
+ * Builds the first terrain for a board.
+ * It does not place rewards, punishments, or enemies. Spawner handles that.
  */
 public final class BoardGenerator {
 
@@ -16,6 +16,10 @@ public final class BoardGenerator {
     // Output type
     // --------------------------------------------------------------------
 
+    /**
+     * Result of terrain generation.
+     * Holds size, start and exit, and the terrain grid.
+     */
     public static final class Output {
         private final int rows;
         private final int cols;
@@ -23,6 +27,15 @@ public final class BoardGenerator {
         private final Position exit;
         private final Cell.Terrain[][] terrain;
 
+        /**
+         * Creates an output record.
+         *
+         * @param rows     number of rows
+         * @param cols     number of columns
+         * @param start    start position
+         * @param exit     exit position
+         * @param terrain  terrain grid
+         */
         public Output(int rows, int cols,
                       Position start, Position exit,
                       Cell.Terrain[][] terrain) {
@@ -33,10 +46,15 @@ public final class BoardGenerator {
             this.terrain = terrain;
         }
 
+        /** @return number of rows */
         public int rows() {return rows;}
+        /** @return number of columns */
         public int cols() {return cols;}
+        /** @return start position */
         public Position start() {return start;}
+        /** @return exit position */
         public Position exit() {return exit;}
+        /** @return terrain grid */
         public Cell.Terrain[][] terrain() {return terrain;}
 
     }
@@ -45,6 +63,14 @@ public final class BoardGenerator {
     // Public API
     // --------------------------------------------------------------------
 
+    /**
+     * Generates a terrain layout based on options.
+     *
+     * @param opts options for barriers and size
+     * @param boardBarrierPercentage target fraction of interior barriers for RANDOM mode
+     * @return generated output
+     * @throws NullPointerException if opts is null
+     */
     public Output generate(BarrierOptions opts, double boardBarrierPercentage) {
         Objects.requireNonNull(opts);
 
@@ -57,9 +83,13 @@ public final class BoardGenerator {
     }
 
     // --------------------------------------------------------------------
-    // NONE – just perimeter walls, empty interior
+    // NONE: just perimeter walls, empty interior
     // --------------------------------------------------------------------
 
+    /**
+     * Makes a board with only perimeter walls.
+     * Interior has no barriers.
+     */
     private Output generateNone(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
@@ -75,9 +105,13 @@ public final class BoardGenerator {
     }
 
     // --------------------------------------------------------------------
-    // PROVIDED – perimeter + programmer-provided barrier list
+    // PROVIDED: perimeter and programmer provided barrier list
     // --------------------------------------------------------------------
 
+    /**
+     * Makes a board with perimeter walls and a provided barrier list.
+     * Ignores any barrier placed on the perimeter.
+     */
     private Output generateProvided(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls    = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
@@ -104,9 +138,16 @@ public final class BoardGenerator {
     }
 
     // --------------------------------------------------------------------
-    // TEXT – read terrain from a level*.txt on classpath
+    // TEXT: read terrain from a level file on the classpath
     // --------------------------------------------------------------------
 
+    /**
+     * Loads terrain from a text map.
+     * Uses characters to set walls, barriers, start, and exit.
+     *
+     * @throws NullPointerException if mapResource is null
+     * @throws IllegalArgumentException if the map is empty or lines have different length
+     */
     private Output generateFromText(BarrierOptions opts) {
         Objects.requireNonNull(opts.mapResource,
                 "TEXT mode requires a mapResource (e.g., \"maps/level1.txt\")");
@@ -156,9 +197,17 @@ public final class BoardGenerator {
     }
 
     // --------------------------------------------------------------------
-    // RANDOM – perimeter + random internal barriers with constraints
+    // RANDOM: perimeter and random internal barriers with constraints
     // --------------------------------------------------------------------
 
+    /**
+     * Makes random interior barriers while keeping the board playable.
+     * Keeps distance from start and exit and checks connectivity.
+     *
+     * @param opts options for size
+     * @param boardBarrierPercentage target interior fraction for barriers
+     * @return generated output
+     */
     private Output generateRandomWithConstraints(BarrierOptions opts,
                                                  double boardBarrierPercentage) {
         int rows = opts.rows;
@@ -191,7 +240,7 @@ public final class BoardGenerator {
 
             Position p = new Position(x, y);
 
-            // keep at least Chebyshev 2 away from start/exit
+            // keep at least Chebyshev 2 away from start and exit
             if (Board.chebyshev(p, start) < 2 || Board.chebyshev(p, exit) < 2) {
                 continue;
             }
@@ -211,6 +260,11 @@ public final class BoardGenerator {
         return new Output(rows, cols, start, exit, terrain);
     }
 
+    /**
+     * Returns a fixed list of barrier positions for the PROVIDED mode.
+     *
+     * @return list of positions for barriers
+     */
     public static ArrayList<Position> barrierList() {
         ArrayList<Position> list = new ArrayList<>();
         list.add(new Position(4, 2));
@@ -235,7 +289,3 @@ public final class BoardGenerator {
         return list;
     }
 }
-
-
-
-
