@@ -4,13 +4,23 @@ import com.project.team6.model.board.*;
 
 import java.util.*;
 
+/**
+ * Helpers for spawning items and enemies.
+ * Includes search functions for free cells and path checks.
+ */
 public final class SpawnerHelper {
 
     // -----------------------------------------------------------------
     // Reachability Functions
     // -----------------------------------------------------------------
 
-    /** All empty floor cells (no items, no occupants). */
+    /**
+     * Finds all empty floor cells.
+     * A cell is free when it is floor and has no item, player, or enemy.
+     *
+     * @param board the game board
+     * @return list of positions that are free
+     */
     public static List<Position> freeFloorCells(Board board) {
         int rows = board.rows();
         int cols = board.cols();
@@ -33,8 +43,14 @@ public final class SpawnerHelper {
     }
 
     /**
-     * BFS reachability helper used by Spawner to ensure punishments don’t
-     * block required paths.
+     * Checks if there is a path from one cell to another using BFS.
+     * Treats positions in {@code blocked} as closed.
+     *
+     * @param board   the game board
+     * @param from    start position
+     * @param to      target position
+     * @param blocked set of blocked positions, may be null
+     * @return true if a path exists
      */
     public static boolean canReach(Board board, Position from,
                             Position to,
@@ -63,6 +79,17 @@ public final class SpawnerHelper {
         return false;
     }
 
+    /**
+     * Tries to add a neighbor to the BFS queue.
+     * Skips out of bounds cells, visited cells, blocked cells, and walls.
+     *
+     * @param board   the game board
+     * @param x       column index
+     * @param y       row index
+     * @param blocked set of blocked positions, may be null
+     * @param visited visited flags
+     * @param q       BFS queue
+     */
     public static void tryVisit(Board board, int x, int y,
                          Set<Position> blocked,
                          boolean[][] visited,
@@ -85,4 +112,3 @@ public final class SpawnerHelper {
         q.addLast(p);
     }
 }
-
