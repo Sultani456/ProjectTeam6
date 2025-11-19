@@ -4,19 +4,36 @@ import com.project.team6.model.GameObject;
 import com.project.team6.model.board.Position;
 
 /**
- * Base for Player and Enemy. Owns common movement helpers.
+ * Abstract base for player and enemy characters.
+ * Stores position and common movement helpers.
  */
 public abstract class CharacterObject extends GameObject {
+
+    /**
+     * Creates a character at a starting position.
+     *
+     * @param position initial location on the board
+     */
     protected CharacterObject(Position position) {
         super(position);
     }
 
-    /** Board calls this after a successful move to update the character’s position. */
+    /**
+     * Updates the character position after a successful move.
+     * Called by the board.
+     *
+     * @param p new position
+     */
     public final void setPosition(Position p) {
         super.setPosition(p);
     }
 
-    /** Symbol used for ASCII / debug rendering. */
+    /**
+     * Returns the ASCII symbol for this character.
+     * Used in text based or debug views.
+     *
+     * @return character symbol
+     */
     @Override
     public abstract char symbol();
 }
