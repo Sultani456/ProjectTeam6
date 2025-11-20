@@ -10,16 +10,17 @@ import javax.swing.*;
 import java.util.*;
 
 /**
- * Wires MVC together:
- * - Builds the Board (no external text files) via BoardGenerator
- * - Spawns items and enemies
- * - Creates Scoreboard, GameState
- * - Creates GamePanel and GameController
- * - Creates the view + controller
- * - Shows the GameFrame
+ * Sets up and runs the game.
+ * Builds the board, spawns items and enemies, and opens the window.
  */
 public final class App {
 
+    /**
+     * Entry point.
+     * Creates models, view, and controller, then starts the game.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
         /** –––––––––––––––––––– GAME CONTROLS –––––––––––––––––––– */
         int rows = 24;
@@ -45,12 +46,9 @@ public final class App {
         // Barrier density for RANDOM barrier mode (fraction of interior cells)
         double boardBarrierPercentage = 0.4;        // 0.1 to 0.4 are best
 
-
-
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
             BoardGenerator gen = new BoardGenerator();
-
 
             /** Option A: NONE – No barriers, with given rows/cols from client*/
 //            BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.NONE, null, null);
@@ -95,4 +93,3 @@ public final class App {
         });
     }
 }
-

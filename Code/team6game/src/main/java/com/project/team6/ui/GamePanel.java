@@ -13,22 +13,34 @@ import java.net.URL;
 import java.util.*;
 
 /**
- * Pure view. Renders the board, HUD, and an optional banner.
- * Knows nothing about input or ticking; only painting.
-
- * View: paints the Board. It does not mutate the model.
- * GameController calls repaint(), onCollected(...), and onGameOver(...).
+ * View class that draws the game.
+ * Renders the board, HUD, and an optional banner.
+ * Does not handle input or game logic.
  */
 public final class GamePanel extends JPanel {
+
+    /**
+     * How the board is drawn.
+     * Symbols uses ASCII. Images uses sprites.
+     */
     public enum RenderMode {
         SYMBOLS, IMAGES
     }
 
+    /**
+     * Sets the render mode and repaints.
+     *
+     * @param mode new render mode
+     */
     public void setRenderMode(RenderMode mode) {
         this.renderMode = Objects.requireNonNull(mode);
         repaint();
     }
 
+    /**
+     * Switches between images and symbols.
+     * Triggers a repaint.
+     */
     public void toggleRenderMode() {
         this.renderMode = (renderMode == RenderMode.IMAGES)
                 ? RenderMode.SYMBOLS
@@ -38,7 +50,6 @@ public final class GamePanel extends JPanel {
 
     // default to images
     private RenderMode renderMode = RenderMode.IMAGES;
-
 
     private static final int TILE = 36;         // size of one board tile in pixels
     private static final int HUD_H = 36;        // height of HUD strip at bottom
@@ -68,6 +79,14 @@ public final class GamePanel extends JPanel {
 
     private String bannerText = null;
 
+    /**
+     * Creates the panel and loads images.
+     * Sets size based on board rows and columns.
+     *
+     * @param board      model of the world
+     * @param scoreboard score and time model
+     * @param state      game state
+     */
     public GamePanel(Board board, Scoreboard scoreboard, GameState state) {
         this.board = board;
         this.scoreboard = scoreboard;
@@ -91,15 +110,33 @@ public final class GamePanel extends JPanel {
         requestFocusInWindow();
     }
 
+    /**
+     * Called when the player collects an item.
+     * You can add small UI effects here.
+     *
+     * @param obj collected item
+     */
     public void onCollected(CollectibleObject obj) {
         // optional UI feedback; keep minimal
     }
 
+    /**
+     * Shows a banner with a message.
+     * Used on win or loss.
+     *
+     * @param message text to show
+     */
     public void onGameOver(String message) {
         this.bannerText = message;
         repaint();
     }
 
+    /**
+     * Paints the HUD and the board.
+     * Uses images or symbols based on the render mode.
+     *
+     * @param g0 graphics context
+     */
     @Override
     protected void paintComponent(Graphics g0) {
         super.paintComponent(g0);
@@ -280,8 +317,12 @@ public final class GamePanel extends JPanel {
         g.dispose();
     }
 
-
-
+    /**
+     * Draws the top HUD strip.
+     * Shows score, required left, time, and state.
+     *
+     * @param g graphics context
+     */
     private void paintHud(Graphics2D g) {
         // HUD strip occupies the top HUD_H pixels of the panel
         g.setColor(new Color(24, 24, 24));
@@ -310,9 +351,13 @@ public final class GamePanel extends JPanel {
         g.drawString(right, getWidth() - rightW - 10, baselineY);
     }
 
-
-
-
+    /**
+     * Loads an image from the classpath.
+     *
+     * @param resourcePath path inside resources
+     * @return loaded image
+     * @throws RuntimeException if the image cannot be loaded
+     */
     private BufferedImage loadImage(String resourcePath) {
         try {
             URL url = getClass().getResource(resourcePath);
@@ -325,6 +370,15 @@ public final class GamePanel extends JPanel {
         }
     }
 
+    /**
+     * Draws item and character sprites in a cell.
+     * Items go under characters.
+     *
+     * @param g   graphics context
+     * @param cell cell to draw
+     * @param px  x in pixels
+     * @param py  y in pixels
+     */
     private void drawCellSprites(Graphics2D g, Cell cell, int px, int py) {
         // --- items first (under characters) ---
         var item = cell.item();
@@ -346,5 +400,3 @@ public final class GamePanel extends JPanel {
         }
     }
 }
-
-
