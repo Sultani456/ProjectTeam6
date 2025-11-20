@@ -3,39 +3,48 @@ package com.project.team6.model.collectibles.rewards;
 import com.project.team6.model.board.Position;
 
 /**
- * Optional reward with higher value.
- * Can be temporary: if lifetimeTicks > 0, it disappears after that many ticks.
- * If lifetimeTicks <= 0, it is persistent.
+ * Optional reward with a higher value than regular rewards.
+ * It can be temporary based on its lifetime in ticks.
  */
 public final class BonusReward extends Reward {
 
-    /** Remaining lifetime in ticks. <= 0 means "no expiry / persistent". */
+    /** Remaining lifetime in ticks. A value of 0 or less means it does not expire. */
     private int lifetimeTicks;
 
+    /**
+     * Creates a bonus reward.
+     *
+     * @param position       board position of the bonus
+     * @param value          score value when collected
+     * @param lifetimeTicks  ticks to live. 0 or less means persistent
+     */
     public BonusReward(Position position, int value, int lifetimeTicks) {
         super(position, value, /*requiredToWin=*/false);
         this.lifetimeTicks = lifetimeTicks;
     }
 
     /**
-     * Called once per game tick while this bonus is on the board.
+     * Updates the lifetime and reports if the bonus should remain.
+     * Call this once per game tick while the bonus is on the board.
      *
-     * @return true if the bonus is still alive and should remain on the board;
-     *         false if it has expired and can be removed by Board.tick(...).
+     * @return true if still alive, false if it has expired
      */
     public boolean onTickAndAlive() {
         if (lifetimeTicks > 0) {
             lifetimeTicks--;
             return lifetimeTicks > 0;
         }
-        // lifetime <= 0 ⇒ no expiry
+        // lifetime <= 0 means no expiry
         return true;
     }
 
+    /**
+     * Returns the ASCII symbol used for this bonus.
+     *
+     * @return 'o'
+     */
     @Override
     public char symbol() {
-        // ASCII representation used in SYMBOL render mode
         return 'o';
     }
 }
-
