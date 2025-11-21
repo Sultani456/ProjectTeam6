@@ -313,7 +313,8 @@ public final class Spawner {
 
     /**
      * Places moving enemies on free floor cells.
-     * Each enemy starts at least Chebyshev distance 3 from start and exit.
+     * Allows enemies near start and exit but not on the first interior tiles.
+     * Keeps a valid path from start to exit after each placement.
      *
      * @param count      how many enemies to add
      * @param movePeriod ticks between enemy moves
@@ -323,20 +324,37 @@ public final class Spawner {
 
         List<Position> free = SpawnerHelper.freeFloorCells(board);
         Position start = board.start();
-        Position exit = board.exit();
+        Position exit  = board.exit();
 
-        free.removeIf(p ->
-                Board.chebyshev(p, start) < 3 || Board.chebyshev(p, exit) < 3);
+        // Never allow the tile directly inside Start or Exit
+        Position blockStartFront = new Position(start.x() + 1, start.y());
+        Position blockExitFront  = new Position(exit.x() - 1,  exit.y());
+        free.remove(blockStartFront);
+        free.remove(blockExitFront);
 
         if (free.isEmpty()) return;
 
         Collections.shuffle(free, rng);
 
+        // Track placed enemies and validate reachability incrementally
+        Set<Position> placedEnemies = new HashSet<>();
+
         int placed = 0;
         for (Position pos : free) {
             if (placed >= count) break;
+
+            // Treat enemy cells as blocked for path checks
+            Set<Position> blocked = new HashSet<>(placedEnemies);
+            blocked.add(pos);
+
+            if (!SpawnerHelper.canReach(board, start, exit, blocked)) {
+                continue; // would block Start -> Exit path
+            }
+
+            // Safe to place
             MovingEnemy e = new MovingEnemy(pos, movePeriod);
             board.registerEnemy(e);
+            placedEnemies.add(pos);
             placed++;
         }
     }
