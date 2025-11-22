@@ -19,12 +19,12 @@ The player starts at the left side, collects required rewards, avoids enemies an
 
 ## Build and Run
 
-go to 'team6game' directory and run the follwoing two commands on your terminal:
+Go to 'team6game' directory and run the follwoing two commands on your terminal:
 > mvn clean compile
 > mvn exec:java
 
 ## Tests and Coverage
-go to 'team6game' directory and run the following command to run all tests:
+Go to 'team6game' directory and run the following command to run all tests:
 > mvn test
 
 
