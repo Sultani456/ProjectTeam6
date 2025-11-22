@@ -11,14 +11,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Movement on the board.
- * Checks wall blocks and normal stepping.
+ * Tests how movement works on the board.
+ * These tests check when a player is blocked by walls and when the player can move normally.
  */
 final class BoardMoveTest {
 
     @Test
     void wallBlocksMove() {
-        // 5x5 with perimeter walls and empty inside
+        // Creates a 5x5 board with walls around the edges and empty cells inside.
         BoardGenerator gen = new BoardGenerator();
         BoardGenerator.Output out = gen.generate(
                 new BarrierOptions(5, 5, BarrierMode.NONE, null, null),
@@ -26,13 +26,14 @@ final class BoardMoveTest {
         );
         Board b = new Board(out);
 
-        // Move start is at west edge. A wall sits at x=0, but the cell to the west is out of bounds.
+        // The player starts near the west edge. Moving left should fail because the space is out of bounds.
         MoveResult r = b.step(b.player(), Direction.LEFT);
         assertEquals(MoveResult.BLOCKED, r);
     }
 
     @Test
     void floorAllowsMove() {
+        // Creates a simple 5x5 board with no barriers.
         BoardGenerator gen = new BoardGenerator();
         BoardGenerator.Output out = gen.generate(
                 new BarrierOptions(5, 5, BarrierMode.NONE, null, null),
@@ -41,7 +42,7 @@ final class BoardMoveTest {
         Board b = new Board(out);
         Player p = b.player();
 
-        // Move right onto floor
+        // The player moves right onto an empty floor cell.
         MoveResult r = b.step(p, Direction.RIGHT);
         assertEquals(MoveResult.MOVED, r);
         assertEquals(new Position(1, p.position().y()), p.position());
