@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Enemy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.characters.enemies</a> &gt; <span class="el_source">Enemy.java</span></div><h1>Enemy.java</h1><pre class="source lang-java linenums">package com.project.team6.model.characters.enemies;
+
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
+import com.project.team6.model.characters.CharacterObject;
+import com.project.team6.model.board.*;
+
+/**
+ * Base enemy that moves at most one tile per tick.
+ * Subclasses define the decision rule.
+ */
+public abstract class Enemy extends CharacterObject {
+
+    /**
+     * Creates an enemy at a starting position.
+     *
+     * @param position initial location on the board
+     */
+<span class="fc" id="L19">    protected Enemy(Position position) { super(position); }</span>
+
+    /**
+     * Runs once per tick.
+     * Chooses a direction, tries to step, then calls the post step hook.
+     *
+     * @param board     the game board
+     * @param playerPos current player position
+     */
+    public void tick(Board board, Position playerPos) {
+<span class="fc" id="L29">        Direction d = decide(board, playerPos);</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        if (d == null) return;          // idle this tick</span>
+<span class="fc" id="L31">        MoveResult r = board.step(this, d); // MOVED / BLOCKED / COLLISION</span>
+<span class="fc" id="L32">        onPostStep(board, r);</span>
+<span class="fc" id="L33">    }</span>
+
+    /**
+     * Hook that runs after a step attempt.
+     * Subclasses can react to the move result.
+     *
+     * @param board  the game board
+     * @param result move outcome from the board
+     */
+<span class="fc" id="L42">    protected void onPostStep(Board board, MoveResult result) { /* no-op */ }</span>
+
+    /**
+     * Picks a direction to move this tick.
+     * May return null to stay still.
+     *
+     * @param board     the game board
+     * @param playerPos current player position
+     * @return a direction or null
+     */
+    public abstract Direction decide(Board board, Position playerPos);
+
+    /**
+     * Returns the ASCII symbol used for enemies.
+     *
+     * @return 'B'
+     */
+<span class="nc" id="L59">    @Override public char symbol() { return 'B'; } // &quot;B&quot; for bad guy</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Scoreboard.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.runtime</a> &gt; <span class="el_source">Scoreboard.java</span></div><h1>Scoreboard.java</h1><pre class="source lang-java linenums">package com.project.team6.model.runtime;
+
+import java.time.Duration;
+import java.time.Instant;
+
+/**
+ * Tracks score, required collectibles, and elapsed time.
+ * The controller starts and stops it. Collectibles update the score here.
+ */
+public final class Scoreboard {
+
+    /** Current score. Can be positive or negative. */
+    private int score;
+
+    /** How many required rewards are still needed to win. */
+    private int requiredRemaining;
+
+    /** When the timer started. Null if not started yet. */
+    private Instant startedAt;
+
+    /** When the timer stopped. Null if still running. */
+    private Instant stoppedAt;
+
+    /**
+     * Creates a scoreboard.
+     *
+     * @param initialScore   starting score
+     * @param requiredCount  number of required rewards on the board
+     */
+<span class="fc" id="L30">    public Scoreboard(int initialScore, int requiredCount) {</span>
+<span class="fc" id="L31">        this.score = initialScore;</span>
+<span class="fc" id="L32">        this.requiredRemaining = Math.max(0, requiredCount);</span>
+<span class="fc" id="L33">    }</span>
+
+    // Lifecycle
+
+    /**
+     * Starts the timer. Resets any previous stop time.
+     */
+<span class="nc" id="L40">    public void start() { startedAt = Instant.now(); stoppedAt = null; }</span>
+
+    /**
+     * Stops the timer if it is running.
+     */
+<span class="pc bpc" id="L45" title="3 of 4 branches missed.">    public void stop()  { if (startedAt != null &amp;&amp; stoppedAt == null) stoppedAt = Instant.now(); }</span>
+
+    // Score API
+
+    /**
+     * Returns the current score.
+     *
+     * @return score value
+     */
+<span class="fc" id="L54">    public int score() { return score; }</span>
+
+    /**
+     * Returns how many required rewards remain.
+     *
+     * @return remaining required count
+     */
+<span class="fc" id="L61">    public int requiredRemaining() { return requiredRemaining; }</span>
+
+    /**
+     * Adds a delta to the score.
+     *
+     * @param delta points to add, can be negative
+     */
+<span class="nc" id="L68">    public void add(int delta) { score += delta; }</span>
+
+    /**
+     * Call when a required reward is collected.
+     * Adds its value and decreases the remaining counter.
+     *
+     * @param value points to add
+     */
+    public void collectedRequired(int value) {
+<span class="fc" id="L77">        score += value;</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">        if (requiredRemaining &gt; 0) requiredRemaining--;</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Call when an optional reward is collected.
+     * Adds its value to the score.
+     *
+     * @param value points to add
+     */
+<span class="fc" id="L87">    public void collectedOptional(int value) { score += value; }</span>
+
+    /**
+     * Call when a punishment is collected.
+     * The value should be zero or negative.
+     *
+     * @param negativeValue points to add, expected to be negative
+     */
+<span class="fc" id="L95">    public void penalize(int negativeValue) { score += negativeValue; }</span>
+
+    // Time
+
+    /**
+     * Returns elapsed time since start.
+     * If stopped, returns the duration between start and stop.
+     * If never started, returns zero.
+     *
+     * @return elapsed duration
+     */
+    public Duration elapsed() {
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (startedAt == null) return Duration.ZERO;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        Instant end = (stoppedAt != null) ? stoppedAt : Instant.now();</span>
+<span class="nc" id="L109">        return Duration.between(startedAt, end);</span>
+    }
+
+    /**
+     * Returns a short mm:ss style string of elapsed time.
+     *
+     * @return formatted time string
+     */
+    public String elapsedPretty() {
+<span class="fc" id="L118">        Duration d = elapsed();</span>
+<span class="fc" id="L119">        long s = d.getSeconds();</span>
+<span class="fc" id="L120">        long m = s / 60;</span>
+<span class="fc" id="L121">        long sec = s % 60;</span>
+<span class="fc" id="L122">        return String.format(&quot;%d:%02d&quot;, m, sec);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

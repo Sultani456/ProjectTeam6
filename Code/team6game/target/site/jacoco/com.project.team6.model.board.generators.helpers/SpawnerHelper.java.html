@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpawnerHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators.helpers</a> &gt; <span class="el_source">SpawnerHelper.java</span></div><h1>SpawnerHelper.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators.helpers;
+
+import com.project.team6.model.board.*;
+
+import java.util.*;
+
+/**
+ * Helpers for spawning items and enemies.
+ * Includes search functions for free cells and path checks.
+ */
+<span class="nc" id="L11">public final class SpawnerHelper {</span>
+
+    // -----------------------------------------------------------------
+    // Reachability Functions
+    // -----------------------------------------------------------------
+
+    /**
+     * Finds all empty floor cells.
+     * A cell is free when it is floor and has no item, player, or enemy.
+     *
+     * @param board the game board
+     * @return list of positions that are free
+     */
+    public static List&lt;Position&gt; freeFloorCells(Board board) {
+<span class="fc" id="L25">        int rows = board.rows();</span>
+<span class="fc" id="L26">        int cols = board.cols();</span>
+<span class="fc" id="L27">        Cell[][] grid = board.grid();</span>
+
+<span class="fc" id="L29">        List&lt;Position&gt; free = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc bfc" id="L31" title="All 2 branches covered.">            for (int x = 0; x &lt; cols; x++) {</span>
+<span class="fc" id="L32">                Position p = new Position(x, y);</span>
+<span class="fc" id="L33">                Cell c = grid[y][x];</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">                if (c.terrain() == Cell.Terrain.FLOOR &amp;&amp;</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">                        c.item() == null &amp;&amp;</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">                        !c.hasPlayer() &amp;&amp;</span>
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">                        !c.hasEnemy()) {</span>
+<span class="fc" id="L38">                    free.add(p);</span>
+                }
+            }
+        }
+<span class="fc" id="L42">        return free;</span>
+    }
+
+    /**
+     * Checks if there is a path from one cell to another using BFS.
+     * Treats positions in {@code blocked} as closed.
+     *
+     * @param board   the game board
+     * @param from    start position
+     * @param to      target position
+     * @param blocked set of blocked positions, may be null
+     * @return true if a path exists
+     */
+    public static boolean canReach(Board board, Position from,
+                            Position to,
+                            Set&lt;Position&gt; blocked) {
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if (from.equals(to)) return true;</span>
+
+<span class="fc" id="L60">        int rows = board.rows();</span>
+<span class="fc" id="L61">        int cols = board.cols();</span>
+
+<span class="fc" id="L63">        boolean[][] visited = new boolean[rows][cols];</span>
+<span class="fc" id="L64">        Deque&lt;Position&gt; q = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L65">        q.add(from);</span>
+<span class="fc" id="L66">        visited[from.y()][from.x()] = true;</span>
+
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        while (!q.isEmpty()) {</span>
+<span class="fc" id="L69">            Position p = q.removeFirst();</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (p.equals(to)) return true;</span>
+
+<span class="fc" id="L72">            int x = p.x(), y = p.y();</span>
+<span class="fc" id="L73">            tryVisit(board, x + 1, y, blocked, visited, q);</span>
+<span class="fc" id="L74">            tryVisit(board, x - 1, y, blocked, visited, q);</span>
+<span class="fc" id="L75">            tryVisit(board, x, y + 1, blocked, visited, q);</span>
+<span class="fc" id="L76">            tryVisit(board, x, y - 1, blocked, visited, q);</span>
+<span class="fc" id="L77">        }</span>
+
+<span class="nc" id="L79">        return false;</span>
+    }
+
+    /**
+     * Tries to add a neighbor to the BFS queue.
+     * Skips out of bounds cells, visited cells, blocked cells, and walls.
+     *
+     * @param board   the game board
+     * @param x       column index
+     * @param y       row index
+     * @param blocked set of blocked positions, may be null
+     * @param visited visited flags
+     * @param q       BFS queue
+     */
+    public static void tryVisit(Board board, int x, int y,
+                         Set&lt;Position&gt; blocked,
+                         boolean[][] visited,
+                         Deque&lt;Position&gt; q) {
+
+<span class="fc" id="L98">        int rows = board.rows();</span>
+<span class="fc" id="L99">        int cols = board.cols();</span>
+<span class="fc" id="L100">        Cell[][] grid = board.grid();</span>
+
+<span class="pc bpc" id="L102" title="2 of 8 branches missed.">        if (x &lt; 0 || x &gt;= cols || y &lt; 0 || y &gt;= rows) return;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (visited[y][x]) return;</span>
+
+<span class="fc" id="L105">        Position p = new Position(x, y);</span>
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">        if (blocked != null &amp;&amp; blocked.contains(p)) return;</span>
+
+<span class="fc" id="L108">        Cell c = grid[y][x];</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (!c.isWalkableTerrain()) return;</span>
+
+<span class="fc" id="L111">        visited[y][x] = true;</span>
+<span class="fc" id="L112">        q.addLast(p);</span>
+<span class="fc" id="L113">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

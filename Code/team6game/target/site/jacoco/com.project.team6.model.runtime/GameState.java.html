@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameState.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.runtime</a> &gt; <span class="el_source">GameState.java</span></div><h1>GameState.java</h1><pre class="source lang-java linenums">package com.project.team6.model.runtime;
+
+import com.project.team6.model.board.Position;
+
+import java.util.*;
+
+/**
+ * Holds the current game status.
+ * The controller updates it. Views read it.
+ */
+public final class GameState {
+
+    /**
+     * Overall state of the game.
+     */
+<span class="fc" id="L16">    public enum Status { RUNNING, WON, LOST }</span>
+
+    /** Current status flag. Starts in running state. */
+<span class="fc" id="L19">    private Status status = Status.RUNNING;</span>
+
+    /** Player position snapshot. */
+    private Position player;
+
+    /** Enemy position snapshots. */
+<span class="fc" id="L25">    private final Set&lt;Position&gt; enemies = new HashSet&lt;&gt;();</span>
+
+    /** Scoreboard for time and score. */
+    private final Scoreboard scoreboard;
+
+    /**
+     * Creates a game state snapshot.
+     *
+     * @param playerStart starting player position
+     * @param enemyStarts starting enemy positions, may be null
+     * @param scoreboard  scoreboard reference
+     * @throws NullPointerException if playerStart or scoreboard is null
+     */
+<span class="fc" id="L38">    public GameState(Position playerStart, Collection&lt;Position&gt; enemyStarts, Scoreboard scoreboard) {</span>
+<span class="fc" id="L39">        this.player = Objects.requireNonNull(playerStart);</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if (enemyStarts != null) this.enemies.addAll(enemyStarts);</span>
+<span class="fc" id="L41">        this.scoreboard = Objects.requireNonNull(scoreboard);</span>
+<span class="fc" id="L42">    }</span>
+
+    // Mutations
+
+    /**
+     * Returns the current status.
+     *
+     * @return RUNNING, WON, or LOST
+     */
+<span class="fc" id="L51">    public Status status() {return status;}</span>
+
+    /**
+     * Sets the game to running.
+     */
+<span class="nc" id="L56">    public void setRunning() { status = Status.RUNNING; }</span>
+
+    /**
+     * Marks the game as won and stops the scoreboard.
+     */
+<span class="fc" id="L61">    public void setWon()  { status = Status.WON;  scoreboard.stop(); }</span>
+
+    /**
+     * Marks the game as lost and stops the scoreboard.
+     */
+<span class="fc" id="L66">    public void setLost() { status = Status.LOST; scoreboard.stop(); }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
