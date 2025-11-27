@@ -1,30 +1,57 @@
 # CMPT 276 Project – Team 6 Game
 
 ## Team Members
-Sultani, Besmillah – bsa106@sfu.ca  
-Mirzada, Rahim – rkm12@sfu.ca  
-Presto, Caleb – cpresto@sfu.ca  
-Mock, Kai Lun Jason – klm28@sfu.ca  
+
+1. Sultani, Besmillah – <bsa106@sfu.ca>
+2. Presto, Caleb – <cpresto@sfu.ca>
+3. Mirzada, Rahim – <rkm12@sfu.ca>
+4. Mock, Kai Lun Jason – <klm28@sfu.ca>
 
 ## Overview
-This project is a 2D grid based game written in Java.  
-The player starts at the left side, collects required rewards, avoids enemies and punishments, and then reaches the exit to win.
 
-- Source code is in `src/main/java/com/project/team6`.  
-- Tests are in `src/test/java/com/project/team6`.
+This project is a 2D grid based game written in Java.  
+The player starts on the left side, collects required rewards,
+avoids enemies and punishments, and then reaches the exit to win.
+
+- Source code is in `src/main/java/com/project/team6`  
+- Tests are in `src/test/java/com/project/team6`
 
 ## Requirements
+
 - Java 17  
 - Maven 3  
 
 ## Build and Run
 
-Go to 'team6game' directory and run the follwoing two commands on your terminal:
-> mvn clean compile
-> mvn exec:java
+Go to the `team6game` directory (where `pom.xml` is) and run:
+> mvn clean compile exec:java  
+This compiles the code and starts the game window.
 
 ## Tests and Coverage
-Go to 'team6game' directory and run the following command to run all tests:
-> mvn test
 
+Go to the `team6game` directory and run:
+> mvn clean test  
+This compiles the code and runs all JUnit tests.  
+JaCoCo also runs and creates a coverage report at:
+`target/site/jacoco/index.html`
+Open this file in a browser to see the coverage report.
 
+## JAR File and Javadocs
+
+To build a runnable JAR from `team6game`:
+> mvn clean package  
+This creates: `target/team6game-1.0-SNAPSHOT.jar`  
+
+Run it with:
+> java -jar target/team6game-1.0-SNAPSHOT.jar  
+
+To generate Javadocs, run:
+> mvn javadoc:javadoc  
+
+The HTML docs are in `target/site/apidocs`
+
+## Tutorial / Demo Video
+
+We also provide a short tutorial and demo video that shows how
+the game is played and explains the main features.
+Tutorial / demo video link: ___________
