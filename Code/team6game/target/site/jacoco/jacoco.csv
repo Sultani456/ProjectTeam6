@@ -4,8 +4,13 @@ team6game,com.project.team6.model.characters,CharacterObject,0,8,0,0,0,4,0,2,0,2
 team6game,com.project.team6.model.board.generators,Spawner,55,492,25,41,16,114,23,19,1,8
 team6game,com.project.team6.model.board.generators,BoardGenerator.Output,0,33,0,0,0,12,0,6,0,6
 team6game,com.project.team6.model.board.generators,BoardGenerator,406,226,35,14,68,44,24,10,3,4
+<<<<<<< HEAD
 team6game,com.project.team6.model.board.generators.helpers,GeneratorHelper,61,472,15,69,15,86,15,40,2,11
 team6game,com.project.team6.model.board.generators.helpers,SpawnerHelper,7,204,8,26,2,42,9,12,1,3
+=======
+team6game,com.project.team6.model.board.generators.helpers,GeneratorHelper,59,474,14,70,14,87,14,41,2,11
+team6game,com.project.team6.model.board.generators.helpers,SpawnerHelper,7,204,7,27,2,42,8,13,1,3
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 team6game,com.project.team6.model.board.utilities,Direction,0,46,0,0,0,6,0,2,0,2
 team6game,com.project.team6.model.board.utilities,TickSummary,0,9,0,0,0,4,0,2,0,2
 team6game,com.project.team6.model.board.utilities,MoveResult,0,21,0,0,0,4,0,1,0,1
@@ -24,7 +29,11 @@ team6game,com.project.team6.model.collectibles.rewards,Reward,0,6,0,0,0,2,0,1,0,
 team6game,com.project.team6.model.collectibles.rewards,BonusReward,4,25,1,3,2,6,2,3,1,2
 team6game,com.project.team6.model,GameObject,11,21,0,0,2,7,2,3,2,3
 team6game,com.project.team6.model.runtime,GameState.Status,0,21,0,0,0,1,0,1,0,1
+<<<<<<< HEAD
 team6game,com.project.team6.model.runtime,Scoreboard,8,110,3,7,1,21,4,12,1,10
+=======
+team6game,com.project.team6.model.runtime,Scoreboard,33,85,7,3,4,18,7,9,2,9
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 team6game,com.project.team6.model.runtime,GameState,4,45,1,1,1,10,2,4,1,4
 team6game,com.project.team6.ui,GamePanel.RenderMode,0,15,0,0,0,2,0,1,0,1
 team6game,com.project.team6.ui,GameFrame,18,0,0,0,7,0,1,0,1,0

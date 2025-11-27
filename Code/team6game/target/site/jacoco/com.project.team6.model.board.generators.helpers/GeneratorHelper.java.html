@@ -159,8 +159,13 @@ import java.util.*;
 <span class="fc" id="L159">        int reachable = BFSCount(terrain, start, visited);</span>
 
         // Exit must be reachable
+<<<<<<< HEAD
 <span class="pc bpc" id="L162" title="1 of 2 branches missed.">        if (!visited[exit.y()][exit.x()]) {</span>
 <span class="nc" id="L163">            return false;</span>
+=======
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (!visited[exit.y()][exit.x()]) {</span>
+<span class="fc" id="L163">            return false;</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
         }
 
         // All passable cells must be connected

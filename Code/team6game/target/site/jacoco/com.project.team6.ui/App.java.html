@@ -23,10 +23,17 @@ import java.util.*;
      */
     public static void main(String[] args) {
         /** –––––––––––––––––––– GAME CONTROLS –––––––––––––––––––– */
+<<<<<<< HEAD
 <span class="nc" id="L26">        int rows = 24;</span>
 <span class="nc" id="L27">        int cols = 36;</span>
 
 <span class="nc" id="L29">        int regularRewardCount = 15;</span>
+=======
+<span class="nc" id="L26">        int rows = 12;</span>
+<span class="nc" id="L27">        int cols = 18;</span>
+
+<span class="nc" id="L29">        int regularRewardCount = 5;</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 <span class="nc" id="L30">        int regularPoints = 10;</span>
 
 <span class="nc" id="L32">        int bonusRewardCount = 5;</span>
@@ -37,6 +44,7 @@ import java.util.*;
 <span class="nc" id="L37">        int lifeMinSec = 3;</span>
 <span class="nc" id="L38">        int lifeMaxSec = 6;</span>
 
+<<<<<<< HEAD
 <span class="nc" id="L40">        int numPunishments = 8;</span>
 <span class="nc" id="L41">        int punishmentPenalty = -5;</span>
 
@@ -45,6 +53,16 @@ import java.util.*;
 
         // Barrier density for RANDOM barrier mode (fraction of interior cells)
 <span class="nc" id="L47">        double boardBarrierPercentage = 0.3;        </span>
+=======
+<span class="nc" id="L40">        int numPunishments = 5;</span>
+<span class="nc" id="L41">        int punishmentPenalty = -5;</span>
+
+<span class="nc" id="L43">        int numEnemies = 4;</span>
+<span class="nc" id="L44">        int enemyMovePeriod = 10;</span>
+
+        // Barrier density for RANDOM barrier mode (fraction of interior cells)
+<span class="nc" id="L47">        double boardBarrierPercentage = 0.4;        // 0.1 to 0.4 are best</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 
 <span class="nc" id="L49">        SwingUtilities.invokeLater(() -&gt; {</span>
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */

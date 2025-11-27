@@ -51,8 +51,8 @@ public final class GamePanel extends JPanel {
     // default to images
     private RenderMode renderMode = RenderMode.IMAGES;
 
-    private static final int TILE = 28;         // size of one board tile in pixels
-    private static final int HUD_H = 54;        // height of HUD strip at bottom
+    private static final int TILE = 36;         // size of one board tile in pixels
+    private static final int HUD_H = 36;        // height of HUD strip at bottom
 
 
     // --- colours for background / grid / floor ---

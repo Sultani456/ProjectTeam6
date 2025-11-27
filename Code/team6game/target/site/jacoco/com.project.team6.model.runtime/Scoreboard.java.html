@@ -37,12 +37,20 @@ public final class Scoreboard {
     /**
      * Starts the timer. Resets any previous stop time.
      */
+<<<<<<< HEAD
 <span class="fc" id="L40">    public void start() { startedAt = Instant.now(); stoppedAt = null; }</span>
+=======
+<span class="nc" id="L40">    public void start() { startedAt = Instant.now(); stoppedAt = null; }</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 
     /**
      * Stops the timer if it is running.
      */
+<<<<<<< HEAD
 <span class="pc bpc" id="L45" title="1 of 4 branches missed.">    public void stop()  { if (startedAt != null &amp;&amp; stoppedAt == null) stoppedAt = Instant.now(); }</span>
+=======
+<span class="pc bpc" id="L45" title="3 of 4 branches missed.">    public void stop()  { if (startedAt != null &amp;&amp; stoppedAt == null) stoppedAt = Instant.now(); }</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
 
     // Score API
 
@@ -104,9 +112,15 @@ public final class Scoreboard {
      * @return elapsed duration
      */
     public Duration elapsed() {
+<<<<<<< HEAD
 <span class="fc bfc" id="L107" title="All 2 branches covered.">        if (startedAt == null) return Duration.ZERO;</span>
 <span class="pc bpc" id="L108" title="1 of 2 branches missed.">        Instant end = (stoppedAt != null) ? stoppedAt : Instant.now();</span>
 <span class="fc" id="L109">        return Duration.between(startedAt, end);</span>
+=======
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (startedAt == null) return Duration.ZERO;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        Instant end = (stoppedAt != null) ? stoppedAt : Instant.now();</span>
+<span class="nc" id="L109">        return Duration.between(startedAt, end);</span>
+>>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e
     }
 
     /**
