@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeneratorHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators.helpers</a> &gt; <span class="el_source">GeneratorHelper.java</span></div><h1>GeneratorHelper.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators.helpers;
+
+import com.project.team6.model.board.Cell;
+import com.project.team6.model.board.Position;
+import com.project.team6.model.board.generators.BoardGenerator;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.*;
+
+/**
+ * Helper methods for generating and validating board terrain.
+ * Includes BFS utilities, size checks, wall creation, and file loading.
+ */
+<span class="nc" id="L17">public class GeneratorHelper {</span>
+    // --------------------------------------------------------------------
+    // BFS helpers for validation
+    // --------------------------------------------------------------------
+
+    /**
+     * Checks if a terrain cell can be walked on.
+     *
+     * @param t terrain type
+     * @return true if floor, start, or exit
+     */
+    public static boolean isPassable(Cell.Terrain t) {
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        return switch (t) {</span>
+<span class="fc" id="L30">            case WALL, BARRIER -&gt; false;</span>
+<span class="fc" id="L31">            default -&gt; true;   // FLOOR, START, EXIT</span>
+        };
+    }
+
+    /**
+     * Runs BFS and counts how many passable cells are reachable.
+     * Marks visited cells in the provided matrix.
+     *
+     * @param terrain terrain grid
+     * @param start   starting position
+     * @param visited visited flags, same size as terrain
+     * @return number of reachable cells
+     */
+    public static int BFSCount(Cell.Terrain[][] terrain,
+                                Position start,
+                                boolean[][] visited) {
+<span class="fc" id="L47">        int rows = terrain.length;</span>
+<span class="fc" id="L48">        int cols = terrain[0].length;</span>
+
+<span class="fc" id="L50">        Deque&lt;Position&gt; q = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L51">        q.addLast(start);</span>
+<span class="fc" id="L52">        visited[start.y()][start.x()] = true;</span>
+
+<span class="fc" id="L54">        int count = 0;</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        while (!q.isEmpty()) {</span>
+<span class="fc" id="L56">            Position p = q.removeFirst();</span>
+<span class="fc" id="L57">            count++;</span>
+
+<span class="fc" id="L59">            int x = p.x();</span>
+<span class="fc" id="L60">            int y = p.y();</span>
+
+<span class="fc" id="L62">            tryVisit(terrain, visited, q, x + 1, y);</span>
+<span class="fc" id="L63">            tryVisit(terrain, visited, q, x - 1, y);</span>
+<span class="fc" id="L64">            tryVisit(terrain, visited, q, x, y + 1);</span>
+<span class="fc" id="L65">            tryVisit(terrain, visited, q, x, y - 1);</span>
+<span class="fc" id="L66">        }</span>
+<span class="fc" id="L67">        return count;</span>
+    }
+
+    /**
+     * Adds a cell to the BFS queue if it is inside the grid, not visited, and passable.
+     *
+     * @param terrain terrain grid
+     * @param visited visited flags
+     * @param q       BFS queue
+     * @param x       column index
+     * @param y       row index
+     */
+    public static void tryVisit(Cell.Terrain[][] terrain,
+                                 boolean[][] visited,
+                                 Deque&lt;Position&gt; q,
+                                 int x, int y) {
+<span class="fc" id="L83">        int rows = terrain.length;</span>
+<span class="fc" id="L84">        int cols = terrain[0].length;</span>
+<span class="pc bpc" id="L85" title="2 of 8 branches missed.">        if (x &lt; 0 || x &gt;= cols || y &lt; 0 || y &gt;= rows) return;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (visited[y][x]) return;</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!isPassable(terrain[y][x])) return;</span>
+
+<span class="fc" id="L89">        visited[y][x] = true;</span>
+<span class="fc" id="L90">        q.addLast(new Position(x, y));</span>
+<span class="fc" id="L91">    }</span>
+
+    /**
+     * Counts how many cells in the grid are passable.
+     *
+     * @param terrain terrain grid
+     * @return number of passable cells
+     */
+    public static int countPassable(Cell.Terrain[][] terrain) {
+<span class="fc" id="L100">        int rows = terrain.length;</span>
+<span class="fc" id="L101">        int cols = terrain[0].length;</span>
+<span class="fc" id="L102">        int count = 0;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            for (int x = 0; x &lt; cols; x++) {</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">                if (isPassable(terrain[y][x])) count++;</span>
+            }
+        }
+<span class="fc" id="L108">        return count;</span>
+    }
+
+    /**
+     * Detects if any passable cell has no passable neighbors.
+     *
+     * @param terrain terrain grid
+     * @return true if an isolated passable cell exists
+     */
+    public static boolean hasIsolatedFloor(Cell.Terrain[][] terrain) {
+<span class="fc" id="L118">        int rows = terrain.length;</span>
+<span class="fc" id="L119">        int cols = terrain[0].length;</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">            for (int x = 0; x &lt; cols; x++) {</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">                if (!isPassable(terrain[y][x])) continue;</span>
+<span class="fc" id="L123">                int open = 0;</span>
+<span class="pc bpc" id="L124" title="1 of 4 branches missed.">                if (y &gt; 0        &amp;&amp; isPassable(terrain[y - 1][x])) open++;</span>
+<span class="pc bpc" id="L125" title="1 of 4 branches missed.">                if (y &lt; rows - 1 &amp;&amp; isPassable(terrain[y + 1][x])) open++;</span>
+<span class="fc bfc" id="L126" title="All 4 branches covered.">                if (x &gt; 0        &amp;&amp; isPassable(terrain[y][x - 1])) open++;</span>
+<span class="fc bfc" id="L127" title="All 4 branches covered.">                if (x &lt; cols - 1 &amp;&amp; isPassable(terrain[y][x + 1])) open++;</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">                if (open == 0) return true;</span>
+            }
+        }
+<span class="fc" id="L131">        return false;</span>
+    }
+
+    // --------------------------------------------------------------------
+    // Validation for RANDOM configuration
+    // --------------------------------------------------------------------
+
+    /**
+     * Validates a barrier layout for the random mode.
+     * Requires exit reachability, full connectivity of passable cells, and no isolated floor.
+     *
+     * @param walls    wall mask
+     * @param barriers barrier mask
+     * @param start    start position
+     * @param exit     exit position
+     * @return true if configuration is valid
+     */
+    public static boolean isBarrierConfigurationValid(boolean[][] walls,
+                                                boolean[][] barriers,
+                                                Position start,
+                                                Position exit) {
+<span class="fc" id="L152">        int rows = walls.length;</span>
+<span class="fc" id="L153">        int cols = walls[0].length;</span>
+
+<span class="fc" id="L155">        Cell.Terrain[][] terrain =</span>
+<span class="fc" id="L156">                toTerrainGrid(rows, cols, walls, barriers, start, exit);</span>
+
+<span class="fc" id="L158">        boolean[][] visited = new boolean[rows][cols];</span>
+<span class="fc" id="L159">        int reachable = BFSCount(terrain, start, visited);</span>
+
+        // Exit must be reachable
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">        if (!visited[exit.y()][exit.x()]) {</span>
+<span class="nc" id="L163">            return false;</span>
+        }
+
+        // All passable cells must be connected
+<span class="fc" id="L167">        int totalPassable = countPassable(terrain);</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (reachable &lt; totalPassable) {</span>
+<span class="fc" id="L169">            return false;</span>
+        }
+
+        // No isolated floor cells
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">        if (hasIsolatedFloor(terrain)) {</span>
+<span class="nc" id="L174">            return false;</span>
+        }
+
+<span class="fc" id="L177">        return true;</span>
+    }
+
+    // --------------------------------------------------------------------
+    // Utility helpers
+    // --------------------------------------------------------------------
+
+    /**
+     * Checks that board size is at least 3 by 3.
+     *
+     * @param rows number of rows
+     * @param cols number of columns
+     * @throws IllegalArgumentException if rows or cols is less than 3
+     */
+    public static void validateSize(int rows, int cols) {
+<span class="pc bpc" id="L192" title="2 of 4 branches missed.">        if (rows &lt; 3 || cols &lt; 3) {</span>
+<span class="nc" id="L193">            throw new IllegalArgumentException(&quot;rows/cols must be &gt;= 3&quot;);</span>
+        }
+<span class="fc" id="L195">    }</span>
+
+    /**
+     * Creates a wall mask that surrounds the board.
+     *
+     * @param rows number of rows
+     * @param cols number of columns
+     * @return boolean grid with perimeter walls set to true
+     */
+    public static boolean[][] perimeterWalls(int rows, int cols) {
+<span class="fc" id="L205">        boolean[][] walls = new boolean[rows][cols];</span>
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc" id="L207">            walls[y][0]        = true;</span>
+<span class="fc" id="L208">            walls[y][cols - 1] = true;</span>
+        }
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        for (int x = 0; x &lt; cols; x++) {</span>
+<span class="fc" id="L211">            walls[0][x]        = true;</span>
+<span class="fc" id="L212">            walls[rows - 1][x] = true;</span>
+        }
+<span class="fc" id="L214">        return walls;</span>
+    }
+
+    /**
+     * Picks a start position on the west edge, not in a corner.
+     *
+     * @param rows number of rows
+     * @param cols number of columns
+     * @param rng  random source
+     * @return a start position
+     */
+    public static Position randomEdgeStart(int rows, int cols, Random rng) {
+<span class="fc" id="L226">        int y = 1 + rng.nextInt(rows - 2); // west edge, avoid corners</span>
+<span class="fc" id="L227">        return new Position(0, y);</span>
+    }
+
+    /**
+     * Picks an exit position on the east edge, not in a corner.
+     *
+     * @param rows number of rows
+     * @param cols number of columns
+     * @param rng  random source
+     * @return an exit position
+     */
+    public static Position randomEdgeExit(int rows, int cols, Random rng) {
+<span class="fc" id="L239">        int y = 1 + rng.nextInt(rows - 2); // east edge, avoid corners</span>
+<span class="fc" id="L240">        return new Position(cols - 1, y);</span>
+    }
+
+    /**
+     * Builds a terrain grid from walls, barriers, and fixed start and exit.
+     *
+     * @param rows     number of rows
+     * @param cols     number of columns
+     * @param walls    wall mask
+     * @param barriers barrier mask
+     * @param start    start position, may be null
+     * @param exit     exit position, may be null
+     * @return terrain grid
+     */
+    public static Cell.Terrain[][] toTerrainGrid(int rows, int cols,
+                                                  boolean[][] walls,
+                                                  boolean[][] barriers,
+                                                  Position start,
+                                                  Position exit) {
+<span class="fc" id="L259">        Cell.Terrain[][] t = new Cell.Terrain[rows][cols];</span>
+
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc bfc" id="L262" title="All 2 branches covered.">            for (int x = 0; x &lt; cols; x++) {</span>
+
+<span class="pc bpc" id="L264" title="1 of 6 branches missed.">                if (start != null &amp;&amp; start.x() == x &amp;&amp; start.y() == y) {</span>
+<span class="fc" id="L265">                    t[y][x] = Cell.Terrain.START;</span>
+<span class="pc bpc" id="L266" title="1 of 6 branches missed.">                } else if (exit != null &amp;&amp; exit.x() == x &amp;&amp; exit.y() == y) {</span>
+<span class="fc" id="L267">                    t[y][x] = Cell.Terrain.EXIT;</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                } else if (walls[y][x]) {</span>
+<span class="fc" id="L269">                    t[y][x] = Cell.Terrain.WALL;</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">                } else if (barriers[y][x]) {</span>
+<span class="fc" id="L271">                    t[y][x] = Cell.Terrain.BARRIER;</span>
+                } else {
+<span class="fc" id="L273">                    t[y][x] = Cell.Terrain.FLOOR;</span>
+                }
+            }
+        }
+<span class="fc" id="L277">        return t;</span>
+    }
+
+    /**
+     * Reads all lines from a classpath resource.
+     *
+     * @param resourcePath path relative to the classpath root
+     * @return list of lines in order
+     * @throws IllegalArgumentException if the resource is not found
+     * @throws RuntimeException if an IO error occurs
+     */
+    public static List&lt;String&gt; readLinesFromResource(String resourcePath) {
+<span class="nc" id="L289">        try (InputStream in = BoardGenerator.class.getClassLoader()</span>
+<span class="nc" id="L290">                .getResourceAsStream(resourcePath)) {</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">            if (in == null) {</span>
+<span class="nc" id="L292">                throw new IllegalArgumentException(&quot;Resource not found: &quot; + resourcePath);</span>
+            }
+<span class="nc" id="L294">            try (BufferedReader br = new BufferedReader(new InputStreamReader(in))) {</span>
+<span class="nc" id="L295">                List&lt;String&gt; lines = new ArrayList&lt;&gt;();</span>
+                String line;
+<span class="nc bnc" id="L297" title="All 2 branches missed.">                while ((line = br.readLine()) != null) {</span>
+<span class="nc" id="L298">                    lines.add(line);</span>
+                }
+<span class="nc" id="L300">                return lines;</span>
+            }
+<span class="nc" id="L302">        } catch (IOException e) {</span>
+<span class="nc" id="L303">            throw new RuntimeException(&quot;Error reading resource &quot; + resourcePath, e);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

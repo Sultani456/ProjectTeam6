@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GamePanel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.ui</a> &gt; <span class="el_source">GamePanel.java</span></div><h1>GamePanel.java</h1><pre class="source lang-java linenums">package com.project.team6.ui;
+
+import com.project.team6.model.board.*;
+import com.project.team6.model.collectibles.*;
+import com.project.team6.model.collectibles.rewards.*;
+import com.project.team6.model.runtime.*;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.net.URL;
+import java.util.*;
+
+/**
+ * View class that draws the game.
+ * Renders the board, HUD, and an optional banner.
+ * Does not handle input or game logic.
+ */
+public final class GamePanel extends JPanel {
+
+    /**
+     * How the board is drawn.
+     * Symbols uses ASCII. Images uses sprites.
+     */
+<span class="fc" id="L26">    public enum RenderMode {</span>
+<span class="fc" id="L27">        SYMBOLS, IMAGES</span>
+    }
+
+    /**
+     * Sets the render mode and repaints.
+     *
+     * @param mode new render mode
+     */
+    public void setRenderMode(RenderMode mode) {
+<span class="nc" id="L36">        this.renderMode = Objects.requireNonNull(mode);</span>
+<span class="nc" id="L37">        repaint();</span>
+<span class="nc" id="L38">    }</span>
+
+    /**
+     * Switches between images and symbols.
+     * Triggers a repaint.
+     */
+    public void toggleRenderMode() {
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        this.renderMode = (renderMode == RenderMode.IMAGES)</span>
+<span class="nc" id="L46">                ? RenderMode.SYMBOLS</span>
+<span class="nc" id="L47">                : RenderMode.IMAGES;</span>
+<span class="nc" id="L48">        repaint();</span>
+<span class="nc" id="L49">    }</span>
+
+    // default to images
+<span class="fc" id="L52">    private RenderMode renderMode = RenderMode.IMAGES;</span>
+
+    private static final int TILE = 28;         // size of one board tile in pixels
+    private static final int HUD_H = 54;        // height of HUD strip at bottom
+
+
+    // --- colours for background / grid / floor ---
+<span class="fc" id="L59">    private static final Color BACKGROUND_COLOR = Color.BLACK;</span>
+
+<span class="fc" id="L61">    private static final Color FLOOR_COLOR      = new Color(28, 28, 30);</span>
+<span class="fc" id="L62">    private static final Color FLOOR_COLOR_IMAGES = new Color(180,200,225);</span>
+<span class="fc" id="L63">    private static final Color GRID_COLOR       = new Color(20, 20, 22);</span>
+
+    // model references
+    private final Board board;
+    private final Scoreboard scoreboard;
+    private final GameState state;
+
+    // --- image assets ---
+    private BufferedImage imgPlayer;
+    private BufferedImage imgEnemy;
+    private BufferedImage imgWall;
+    private BufferedImage imgStart;
+    private BufferedImage imgExit;
+    private BufferedImage imgRegularReward;
+    private BufferedImage imgBonusReward;
+    private BufferedImage imgPunishment;
+    private BufferedImage imgExplosion;
+
+<span class="fc" id="L81">    private String bannerText = null;</span>
+
+    /**
+     * Creates the panel and loads images.
+     * Sets size based on board rows and columns.
+     *
+     * @param board      model of the world
+     * @param scoreboard score and time model
+     * @param state      game state
+     */
+<span class="fc" id="L91">    public GamePanel(Board board, Scoreboard scoreboard, GameState state) {</span>
+<span class="fc" id="L92">        this.board = board;</span>
+<span class="fc" id="L93">        this.scoreboard = scoreboard;</span>
+<span class="fc" id="L94">        this.state = state;</span>
+
+<span class="fc" id="L96">        imgPlayer        = loadImage(&quot;/assets/player.png&quot;);</span>
+<span class="fc" id="L97">        imgEnemy         = loadImage(&quot;/assets/enemy.png&quot;);</span>
+<span class="fc" id="L98">        imgWall          = loadImage(&quot;/assets/wall.jpg&quot;);</span>
+<span class="fc" id="L99">        imgStart         = loadImage(&quot;/assets/start.jpg&quot;);</span>
+<span class="fc" id="L100">        imgExit          = loadImage(&quot;/assets/exit.jpg&quot;);</span>
+<span class="fc" id="L101">        imgRegularReward = loadImage(&quot;/assets/RegularReward.png&quot;);</span>
+<span class="fc" id="L102">        imgBonusReward   = loadImage(&quot;/assets/BonusReward.jpg&quot;);</span>
+<span class="fc" id="L103">        imgPunishment    = loadImage(&quot;/assets/punishment.png&quot;);</span>
+<span class="fc" id="L104">        imgExplosion     = loadImage(&quot;/assets/explosion.jpg&quot;);</span>
+
+<span class="fc" id="L106">        int w = board.cols() * TILE;</span>
+<span class="fc" id="L107">        int h = board.rows() * TILE + HUD_H;</span>
+<span class="fc" id="L108">        setPreferredSize(new Dimension(w, h));</span>
+<span class="fc" id="L109">        setBackground(BACKGROUND_COLOR);</span>
+<span class="fc" id="L110">        setFocusable(true);</span>
+<span class="fc" id="L111">        requestFocusInWindow();</span>
+<span class="fc" id="L112">    }</span>
+
+    /**
+     * Called when the player collects an item.
+     * You can add small UI effects here.
+     *
+     * @param obj collected item
+     */
+    public void onCollected(CollectibleObject obj) {
+        // optional UI feedback; keep minimal
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Shows a banner with a message.
+     * Used on win or loss.
+     *
+     * @param message text to show
+     */
+    public void onGameOver(String message) {
+<span class="fc" id="L131">        this.bannerText = message;</span>
+<span class="fc" id="L132">        repaint();</span>
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Paints the HUD and the board.
+     * Uses images or symbols based on the render mode.
+     *
+     * @param g0 graphics context
+     */
+    @Override
+    protected void paintComponent(Graphics g0) {
+<span class="nc" id="L143">        super.paintComponent(g0);</span>
+<span class="nc" id="L144">        Graphics2D g = (Graphics2D) g0.create();</span>
+
+<span class="nc" id="L146">        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,</span>
+                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+<span class="nc" id="L148">        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,</span>
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
+        // background
+<span class="nc" id="L152">        g.setColor(BACKGROUND_COLOR);</span>
+<span class="nc" id="L153">        g.fillRect(0, 0, getWidth(), getHeight());</span>
+
+        // HUD at top
+<span class="nc" id="L156">        paintHud(g);</span>
+
+        // board starts under HUD
+<span class="nc" id="L159">        int originX = 0;</span>
+<span class="nc" id="L160">        int originY = HUD_H;</span>
+
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (renderMode == RenderMode.IMAGES) {</span>
+            // ===== IMAGE MODE =====
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            for (int row = 0; row &lt; board.rows(); row++) {</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">                for (int col = 0; col &lt; board.cols(); col++) {</span>
+<span class="nc" id="L166">                    Position pos = new Position(col, row);</span>
+<span class="nc" id="L167">                    Cell cell = board.cellAt(pos);</span>
+
+<span class="nc" id="L169">                    int px = originX + col * TILE;</span>
+<span class="nc" id="L170">                    int py = originY + row * TILE;</span>
+
+                    // floor background
+<span class="nc" id="L173">                    g.setColor(FLOOR_COLOR_IMAGES);</span>
+//                    g.setColor(FLOOR_COLOR);
+<span class="nc" id="L175">                    g.fillRect(px, py, TILE, TILE);</span>
+
+                    // EXPLOSION EFFECT (if caught)
+<span class="nc bnc" id="L178" title="All 2 branches missed.">                    if (board.explosionPos() != null</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">                            &amp;&amp; board.explosionPos().equals(pos)) {</span>
+
+                        // draw powder-blue or terrain first
+<span class="nc" id="L182">                        g.setColor(FLOOR_COLOR_IMAGES);</span>
+<span class="nc" id="L183">                        g.fillRect(px, py, TILE, TILE);</span>
+
+                        // then explosion sprite
+<span class="nc" id="L186">                        g.drawImage(imgExplosion, px, py, TILE, TILE, null);</span>
+
+                        // skip all other drawing for this cell
+<span class="nc" id="L189">                        continue;</span>
+                    }
+
+                    // --- 1) Draw terrain background ---
+<span class="nc bnc" id="L193" title="All 4 branches missed.">                    switch (cell.terrain()) {</span>
+<span class="nc" id="L194">                        case WALL, BARRIER -&gt; g.drawImage(imgWall, px, py, TILE, TILE, null);</span>
+<span class="nc" id="L195">                        case START        -&gt; g.drawImage(imgStart, px, py, TILE, TILE, null);</span>
+<span class="nc" id="L196">                        case EXIT         -&gt; g.drawImage(imgExit,  px, py, TILE, TILE, null);</span>
+                        default -&gt; {
+<span class="nc" id="L198">                            g.setColor(FLOOR_COLOR_IMAGES);</span>
+<span class="nc" id="L199">                            g.fillRect(px, py, TILE, TILE);</span>
+                        }
+                    }
+
+                    // --- 2) Draw collectibles ---
+<span class="nc" id="L204">                    var item = cell.item();</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                    if (item instanceof RegularReward) {</span>
+<span class="nc" id="L206">                        g.drawImage(imgRegularReward, px, py, TILE, TILE, null);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">                    } else if (item instanceof BonusReward) {</span>
+<span class="nc" id="L208">                        g.drawImage(imgBonusReward, px, py, TILE, TILE, null);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">                    } else if (item instanceof Punishment) {</span>
+<span class="nc" id="L210">                        g.drawImage(imgPunishment, px, py, TILE, TILE, null);</span>
+                    }
+
+                    // --- 3) Draw enemies ---
+<span class="nc bnc" id="L214" title="All 2 branches missed.">                    if (cell.hasEnemy()) {</span>
+<span class="nc" id="L215">                        g.drawImage(imgEnemy, px, py, TILE, TILE, null);</span>
+                    }
+
+                    // --- 4) Draw player last (on top) ---
+<span class="nc bnc" id="L219" title="All 2 branches missed.">                    if (cell.hasPlayer()) {</span>
+<span class="nc" id="L220">                        g.drawImage(imgPlayer, px, py, TILE, TILE, null);</span>
+                    }
+
+                    // --- 5) Draw grid outline ---
+<span class="nc" id="L224">                    g.setColor(GRID_COLOR);</span>
+<span class="nc" id="L225">                    g.drawRect(px, py, TILE, TILE);</span>
+                }
+            }
+        } else {
+            // ===== SYMBOL MODE (old ASCII-style rendering) =====
+<span class="nc bnc" id="L230" title="All 2 branches missed.">            for (int row = 0; row &lt; board.rows(); row++) {</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">                for (int col = 0; col &lt; board.cols(); col++) {</span>
+<span class="nc" id="L232">                    Position pos = new Position(col, row);</span>
+<span class="nc" id="L233">                    Cell cell    = board.cellAt(pos);</span>
+
+<span class="nc" id="L235">                    int px = originX + col * TILE;</span>
+<span class="nc" id="L236">                    int py = originY + row * TILE;</span>
+
+                    // background per terrain (optional – you can simplify if you like)
+<span class="nc bnc" id="L239" title="All 4 branches missed.">                    switch (cell.terrain()) {</span>
+<span class="nc" id="L240">                        case WALL, BARRIER -&gt; g.setColor(new Color(55, 55, 55));</span>
+<span class="nc" id="L241">                        case START         -&gt; g.setColor(new Color(0, 128, 0));</span>
+<span class="nc" id="L242">                        case EXIT          -&gt; g.setColor(new Color(128, 0, 0));</span>
+<span class="nc" id="L243">                        default            -&gt; g.setColor(FLOOR_COLOR);</span>
+                    }
+<span class="nc" id="L245">                    g.fillRect(px, py, TILE, TILE);</span>
+
+                    // grid outline
+<span class="nc" id="L248">                    g.setColor(GRID_COLOR);</span>
+<span class="nc" id="L249">                    g.drawRect(px, py, TILE, TILE);</span>
+
+                    // ASCII symbol from Cell.symbol()
+<span class="nc" id="L252">                    char sym = cell.symbol();</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                    if (sym != ' ') {</span>
+                        // choose colour based on symbol
+<span class="nc bnc" id="L255" title="All 11 branches missed.">                        Color fg = switch (sym) {</span>
+<span class="nc" id="L256">                            case 'P' -&gt; new Color(90, 210, 250);   // player</span>
+<span class="nc" id="L257">                            case 'B' -&gt; new Color(210, 90, 120);   // enemy / bad guy</span>
+<span class="nc" id="L258">                            case '.' -&gt; new Color(255, 255, 200);  // regular reward</span>
+<span class="nc" id="L259">                            case 'o' -&gt; new Color(255, 210, 120);  // bonus reward</span>
+<span class="nc" id="L260">                            case '*' -&gt; new Color(255, 120, 120);  // punishment</span>
+<span class="nc" id="L261">                            case 'C' -&gt; new Color(255, 255, 255);  // collision</span>
+<span class="nc" id="L262">                            case 'X' -&gt; new Color(160, 160, 160);  // wall</span>
+<span class="nc" id="L263">                            case '#' -&gt; new Color(200, 200, 200);  // barrier</span>
+<span class="nc" id="L264">                            case 'S' -&gt; new Color(120, 255, 120);  // start</span>
+<span class="nc" id="L265">                            case 'E' -&gt; new Color(255, 120, 120);  // exit</span>
+<span class="nc" id="L266">                            default  -&gt; Color.WHITE;</span>
+<span class="nc" id="L267">                        };</span>
+
+<span class="nc" id="L269">                        g.setColor(fg);</span>
+<span class="nc" id="L270">                        g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));</span>
+
+<span class="nc" id="L272">                        FontMetrics fm = g.getFontMetrics();</span>
+<span class="nc" id="L273">                        int cw = fm.charWidth(sym);</span>
+<span class="nc" id="L274">                        int ch = fm.getAscent();</span>
+
+<span class="nc" id="L276">                        int cx = px + (TILE - cw) / 2;</span>
+<span class="nc" id="L277">                        int cy = py + (TILE + ch) / 2 - 4;</span>
+<span class="nc" id="L278">                        g.drawString(String.valueOf(sym), cx, cy);</span>
+                    }
+                }
+            }
+        }
+
+        // banner text under the board
+<span class="nc bnc" id="L285" title="All 4 branches missed.">        if (bannerText != null &amp;&amp; !bannerText.isBlank()) {</span>
+<span class="nc" id="L286">            g.setFont(getFont().deriveFont(Font.BOLD, 20f));</span>
+<span class="nc" id="L287">            String text = bannerText;</span>
+
+<span class="nc" id="L289">            FontMetrics fm = g.getFontMetrics();</span>
+<span class="nc" id="L290">            int textW = fm.stringWidth(text);</span>
+<span class="nc" id="L291">            int textH = fm.getHeight();</span>
+
+            // Board area (under the HUD)
+<span class="nc" id="L294">            int boardW = board.cols() * TILE;</span>
+<span class="nc" id="L295">            int boardH = board.rows() * TILE;</span>
+
+<span class="nc" id="L297">            int centerX = boardW / 2;</span>
+<span class="nc" id="L298">            int centerY = HUD_H + boardH / 2;   // middle of the board area</span>
+
+<span class="nc" id="L300">            int padX = 24;</span>
+<span class="nc" id="L301">            int padY = 12;</span>
+<span class="nc" id="L302">            int rectW = textW + padX * 2;</span>
+<span class="nc" id="L303">            int rectH = textH + padY * 2;</span>
+<span class="nc" id="L304">            int rectX = centerX - rectW / 2;</span>
+<span class="nc" id="L305">            int rectY = centerY - rectH / 2;</span>
+
+            // Translucent black background
+<span class="nc" id="L308">            g.setColor(new Color(0, 0, 0, 90));   // alpha 170 ~= 2/3 opaque</span>
+<span class="nc" id="L309">            g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);</span>
+
+            // White text centered in the box
+<span class="nc" id="L312">            g.setColor(Color.WHITE);</span>
+<span class="nc" id="L313">            int textX = centerX - textW / 2;</span>
+<span class="nc" id="L314">            int textY = rectY + padY + fm.getAscent();</span>
+<span class="nc" id="L315">            g.drawString(text, textX, textY);</span>
+        }
+
+<span class="nc" id="L318">        g.dispose();</span>
+<span class="nc" id="L319">    }</span>
+
+    /**
+     * Draws the top HUD strip.
+     * Shows score, required left, time, and state.
+     *
+     * @param g graphics context
+     */
+    private void paintHud(Graphics2D g) {
+        // HUD strip occupies the top HUD_H pixels of the panel
+<span class="nc" id="L329">        g.setColor(new Color(24, 24, 24));</span>
+<span class="nc" id="L330">        g.fillRect(0, 0, getWidth(), HUD_H);</span>
+
+<span class="nc" id="L332">        g.setColor(Color.WHITE);</span>
+<span class="nc" id="L333">        g.setFont(getFont().deriveFont(Font.BOLD, 16f));</span>
+
+<span class="nc" id="L335">        String left   = &quot;Score: &quot; + scoreboard.score()</span>
+<span class="nc" id="L336">                + &quot;   Required left: &quot; + scoreboard.requiredRemaining();</span>
+<span class="nc" id="L337">        String middle = &quot;Time: &quot; + scoreboard.elapsedPretty();</span>
+<span class="nc" id="L338">        String right  = state.status().name();</span>
+
+<span class="nc" id="L340">        int baselineY = HUD_H - 10;  // a bit above the bottom of the bar</span>
+
+        // left text
+<span class="nc" id="L343">        g.drawString(left, 10, baselineY);</span>
+
+        // centered middle text
+<span class="nc" id="L346">        int midX = getWidth() / 2;</span>
+<span class="nc" id="L347">        int midW = g.getFontMetrics().stringWidth(middle);</span>
+<span class="nc" id="L348">        g.drawString(middle, midX - midW / 2, baselineY);</span>
+
+        // right-aligned status
+<span class="nc" id="L351">        int rightW = g.getFontMetrics().stringWidth(right);</span>
+<span class="nc" id="L352">        g.drawString(right, getWidth() - rightW - 10, baselineY);</span>
+<span class="nc" id="L353">    }</span>
+
+    /**
+     * Loads an image from the classpath.
+     *
+     * @param resourcePath path inside resources
+     * @return loaded image
+     * @throws RuntimeException if the image cannot be loaded
+     */
+    private BufferedImage loadImage(String resourcePath) {
+        try {
+<span class="fc" id="L364">            URL url = getClass().getResource(resourcePath);</span>
+<span class="pc bpc" id="L365" title="1 of 2 branches missed.">            if (url == null) {</span>
+<span class="nc" id="L366">                throw new IllegalStateException(&quot;Image resource not found: &quot; + resourcePath);</span>
+            }
+<span class="fc" id="L368">            return ImageIO.read(url);</span>
+<span class="nc" id="L369">        } catch (Exception e) {</span>
+<span class="nc" id="L370">            throw new RuntimeException(&quot;Failed to load image: &quot; + resourcePath, e);</span>
+        }
+    }
+
+    /**
+     * Draws item and character sprites in a cell.
+     * Items go under characters.
+     *
+     * @param g   graphics context
+     * @param cell cell to draw
+     * @param px  x in pixels
+     * @param py  y in pixels
+     */
+    private void drawCellSprites(Graphics2D g, Cell cell, int px, int py) {
+        // --- items first (under characters) ---
+<span class="nc" id="L385">        var item = cell.item();</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">        if (item instanceof RegularReward) {</span>
+<span class="nc" id="L387">            g.drawImage(imgRegularReward, px, py, TILE, TILE, null);</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">        } else if (item instanceof BonusReward) {</span>
+<span class="nc" id="L389">            g.drawImage(imgBonusReward, px, py, TILE, TILE, null);</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">        } else if (item instanceof Punishment) {</span>
+<span class="nc" id="L391">            g.drawImage(imgPunishment, px, py, TILE, TILE, null);</span>
+        }
+
+        // --- characters on top ---
+        // Enemy under Player so Player appears “in front”
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        if (cell.hasEnemy()) {</span>
+<span class="nc" id="L397">            g.drawImage(imgEnemy, px, py, TILE, TILE, null);</span>
+        }
+<span class="nc bnc" id="L399" title="All 2 branches missed.">        if (cell.hasPlayer()) {</span>
+<span class="nc" id="L400">            g.drawImage(imgPlayer, px, py, TILE, TILE, null);</span>
+        }
+<span class="nc" id="L402">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

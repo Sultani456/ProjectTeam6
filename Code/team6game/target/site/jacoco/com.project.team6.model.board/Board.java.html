@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Board.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board</a> &gt; <span class="el_source">Board.java</span></div><h1>Board.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board;
+
+import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
+import com.project.team6.model.board.utilities.TickSummary;
+import com.project.team6.model.characters.*;
+import com.project.team6.model.characters.enemies.*;
+import com.project.team6.model.collectibles.rewards.*;
+import com.project.team6.model.collectibles.*;
+
+import java.util.*;
+
+/**
+ * Main model for the grid world.
+ * Owns cells, player, enemies, rewards, and punishments.
+ * Contains only game logic and no Swing code.
+ */
+public final class Board {
+
+    private final int rows;
+    private final int cols;
+    private final Cell[][] grid;
+
+    private final Position start;
+    private final Position exit;
+
+    private final Player player;
+<span class="fc" id="L29">    private final List&lt;MovingEnemy&gt; enemies = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L30">    private final List&lt;RegularReward&gt; regularRewards = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L31">    private final List&lt;Punishment&gt; punishments = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L32">    private final List&lt;BonusReward&gt; bonusRewards = new ArrayList&lt;&gt;();</span>
+
+    /** Optional explosion position for game over rendering. */
+    private Position explosionPos;
+
+    // -----------------------------------------------------------------
+    // Construction
+    // -----------------------------------------------------------------
+
+    /**
+     * Builds a board from a generated output.
+     * Fills the grid with terrain and places the player at start.
+     *
+     * @param output generated terrain, start, and exit
+     * @throws NullPointerException if output is null
+     */
+<span class="fc" id="L48">    public Board(BoardGenerator.Output output) {</span>
+<span class="fc" id="L49">        Objects.requireNonNull(output);</span>
+<span class="fc" id="L50">        this.rows = output.rows();</span>
+<span class="fc" id="L51">        this.cols = output.cols();</span>
+<span class="fc" id="L52">        this.start = output.start();</span>
+<span class="fc" id="L53">        this.exit = output.exit();</span>
+
+<span class="fc" id="L55">        this.grid = new Cell[rows][cols];</span>
+<span class="fc" id="L56">        Cell.Terrain[][] terrain = output.terrain();</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        for (int y = 0; y &lt; rows; y++) {</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">            for (int x = 0; x &lt; cols; x++) {</span>
+<span class="fc" id="L59">                grid[y][x] = new Cell(terrain[y][x]);</span>
+            }
+        }
+
+        // Create Player at start and register into the Cell.
+<span class="fc" id="L64">        this.player = new Player(start);</span>
+<span class="fc" id="L65">        cellAt(start).addOccupant(player);</span>
+<span class="fc" id="L66">    }</span>
+
+    // -----------------------------------------------------------------
+    // Basic accessors
+    // -----------------------------------------------------------------
+
+    /** @return number of rows in the board */
+<span class="fc" id="L73">    public int rows() { return rows; }</span>
+
+    /** @return number of columns in the board */
+<span class="fc" id="L76">    public int cols() { return cols; }</span>
+
+    /**
+     * Returns a shallow copy of the grid array.
+     * Inner rows are shared.
+     *
+     * @return cloned top level grid array
+     */
+<span class="fc" id="L84">    public Cell[][] grid() {return grid.clone();}</span>
+
+    /** @return start position */
+<span class="fc" id="L87">    public Position start() { return start; }</span>
+
+    /** @return exit position */
+<span class="fc" id="L90">    public Position exit()  { return exit;  }</span>
+
+    /** @return the single player object */
+<span class="fc" id="L93">    public Player player() { return player; }</span>
+
+    /** @return position of explosion if set, otherwise null */
+<span class="fc" id="L96">    public Position explosionPos() {return explosionPos;}</span>
+
+    /**
+     * Gets the cell at a position.
+     *
+     * @param p position inside the board
+     * @return the cell reference
+     */
+    public Cell cellAt(Position p) {
+<span class="fc" id="L105">        return grid[p.y()][p.x()];</span>
+    }
+
+    /**
+     * Checks if a position is inside the grid bounds.
+     *
+     * @param p position to check
+     * @return true if inside, false otherwise
+     */
+    public boolean isInBounds(Position p) {
+<span class="fc" id="L115">        int x = p.x(), y = p.y();</span>
+<span class="pc bpc" id="L116" title="3 of 8 branches missed.">        return x &gt;= 0 &amp;&amp; x &lt; cols &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; rows;</span>
+    }
+
+    /**
+     * Computes Chebyshev distance between two positions.
+     *
+     * @param a first position
+     * @param b second position
+     * @return max of horizontal and vertical differences
+     */
+    public static int chebyshev(Position a, Position b) {
+<span class="fc" id="L127">        return Math.max(Math.abs(a.x() - b.x()), Math.abs(a.y() - b.y()));</span>
+    }
+
+    // -----------------------------------------------------------------
+    // Registration helpers used by Spawner
+    // -----------------------------------------------------------------
+
+    /**
+     * Adds a regular reward to the board and places it into its cell.
+     *
+     * @param r reward to register
+     */
+    public void registerRegularReward(RegularReward r) {
+<span class="fc" id="L140">        regularRewards.add(r);</span>
+<span class="fc" id="L141">        cellAt(r.position()).setItem(r);</span>
+<span class="fc" id="L142">    }</span>
+
+    /**
+     * Adds a bonus reward to the board and places it into its cell.
+     *
+     * @param b bonus to register
+     */
+    public void registerBonusReward(BonusReward b) {
+<span class="fc" id="L150">        bonusRewards.add(b);</span>
+<span class="fc" id="L151">        cellAt(b.position()).setItem(b);</span>
+<span class="fc" id="L152">    }</span>
+
+    /**
+     * Adds a punishment to the board and places it into its cell.
+     *
+     * @param p punishment to register
+     */
+    public void registerPunishment(Punishment p) {
+<span class="fc" id="L160">        punishments.add(p);</span>
+<span class="fc" id="L161">        cellAt(p.position()).setItem(p);</span>
+<span class="fc" id="L162">    }</span>
+
+    /**
+     * Adds an enemy to the board and places it into its cell.
+     *
+     * @param e enemy to register
+     */
+    public void registerEnemy(MovingEnemy e) {
+<span class="fc" id="L170">        enemies.add(e);</span>
+<span class="fc" id="L171">        cellAt(e.position()).addOccupant(e);</span>
+<span class="fc" id="L172">    }</span>
+
+    /**
+     * Exposes the list of regular rewards as an unmodifiable view.
+     *
+     * @return list of regular rewards
+     */
+    public List&lt;RegularReward&gt; regularRewards() {
+<span class="fc" id="L180">        return Collections.unmodifiableList(regularRewards);</span>
+    }
+
+    /**
+     * Checks if any bonus rewards are currently active.
+     *
+     * @return true if at least one bonus is on the board
+     */
+    public boolean hasActiveBonusRewards() {
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        return !bonusRewards.isEmpty();</span>
+    }
+
+    // -----------------------------------------------------------------
+    // Movement
+    // -----------------------------------------------------------------
+
+    /**
+     * Tries to move a character one step in a given direction.
+     * Validates bounds, terrain, and occupancy rules.
+     *
+     * @param who character to move
+     * @param dir direction to move
+     * @return move result such as MOVED, BLOCKED, or COLLISION
+     * @throws NullPointerException if who or dir is null
+     */
+    public MoveResult step(CharacterObject who, Direction dir) {
+<span class="fc" id="L206">        Objects.requireNonNull(who);</span>
+<span class="fc" id="L207">        Objects.requireNonNull(dir);</span>
+
+<span class="fc" id="L209">        Position from = who.position();</span>
+<span class="fc" id="L210">        Position to   = new Position(from.x() + dir.dx, from.y() + dir.dy);</span>
+
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (!isInBounds(to)) {</span>
+<span class="fc" id="L213">            return MoveResult.BLOCKED;</span>
+        }
+
+<span class="fc" id="L216">        Cell target = cellAt(to);</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        if (!target.isWalkableTerrain()) {</span>
+<span class="fc" id="L218">            return MoveResult.BLOCKED;</span>
+        }
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        if (!target.isEnterableFor(who)) {</span>
+<span class="fc" id="L221">            return MoveResult.BLOCKED;</span>
+        }
+
+<span class="fc" id="L224">        boolean collision = target.hasEnemy();</span>
+
+        // Move occupant between cells
+<span class="fc" id="L227">        cellAt(from).removeOccupant(who);</span>
+<span class="fc" id="L228">        target.addOccupant(who);</span>
+<span class="fc" id="L229">        who.setPosition(to);</span>
+
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        return collision ? MoveResult.COLLISION : MoveResult.MOVED;</span>
+    }
+
+    // -----------------------------------------------------------------
+    // Tick: enemies + bonus lifetime
+    // -----------------------------------------------------------------
+
+    /**
+     * Advances the world by one tick.
+     * Enemies move and bonus rewards age and expire.
+     *
+     * @param playerPos current player position
+     * @return summary of what happened this tick
+     */
+    public TickSummary tick(Position playerPos) {
+<span class="fc" id="L246">        boolean caught = false;</span>
+
+        // enemies
+<span class="fc bfc" id="L249" title="All 2 branches covered.">        for (MovingEnemy enemy : enemies) {</span>
+<span class="fc" id="L250">            enemy.tick(this, playerPos);</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">            if (enemy.position().equals(playerPos)) {</span>
+<span class="fc" id="L252">                caught = true;</span>
+            }
+<span class="fc" id="L254">        }</span>
+
+        // bonus lifetime and expiry
+<span class="fc" id="L257">        Iterator&lt;BonusReward&gt; it = bonusRewards.iterator();</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        while (it.hasNext()) {</span>
+<span class="fc" id="L259">            BonusReward b = it.next();</span>
+<span class="fc bfc" id="L260" title="All 2 branches covered.">            if (!b.onTickAndAlive()) {</span>
+                // remove from board
+<span class="fc" id="L262">                cellAt(b.position()).setItem(null);</span>
+<span class="fc" id="L263">                it.remove();</span>
+            }
+<span class="fc" id="L265">        }</span>
+
+<span class="fc" id="L267">        return new TickSummary(caught);</span>
+    }
+
+    // -----------------------------------------------------------------
+    // Collecting / explosion
+    // -----------------------------------------------------------------
+
+    /**
+     * Collects any item at a position and returns it.
+     * Also removes it from the cell and internal lists.
+     * Caller applies score effects and informs the spawner if needed.
+     *
+     * @param p position to collect from
+     * @return present item wrapped in Optional or empty if none
+     */
+    public Optional&lt;CollectibleObject&gt; collectAt(Position p) {
+<span class="fc" id="L283">        Cell c = cellAt(p);</span>
+<span class="fc" id="L284">        CollectibleObject item = c.item();</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if (item == null) return Optional.empty();</span>
+
+<span class="fc" id="L287">        c.setItem(null);</span>
+
+<span class="fc bfc" id="L289" title="All 2 branches covered.">        if (item instanceof RegularReward rr) {</span>
+<span class="fc" id="L290">            regularRewards.remove(rr);</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        } else if (item instanceof BonusReward br) {</span>
+<span class="fc" id="L292">            bonusRewards.remove(br);</span>
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        } else if (item instanceof Punishment pu) {</span>
+<span class="fc" id="L294">            punishments.remove(pu);</span>
+        }
+
+<span class="fc" id="L297">        return Optional.of(item);</span>
+    }
+
+    /**
+     * Sets the explosion location for rendering after a loss.
+     *
+     * @param p position to mark for explosion
+     */
+    public void setExplosion(Position p) {
+<span class="fc" id="L306">        this.explosionPos = p;</span>
+<span class="fc" id="L307">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

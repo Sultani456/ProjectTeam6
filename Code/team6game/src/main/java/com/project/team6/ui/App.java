@@ -44,7 +44,7 @@ public final class App {
         int enemyMovePeriod = 10;
 
         // Barrier density for RANDOM barrier mode (fraction of interior cells)
-        double boardBarrierPercentage = 0.4;        // 0.1 to 0.4 are best
+        double boardBarrierPercentage = 0.3;        
 
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
