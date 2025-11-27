@@ -118,6 +118,19 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Make the JAR runnable by setting Main-Class -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.project.team6.ui.App</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>
