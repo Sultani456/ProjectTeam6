@@ -54,4 +54,7 @@ The HTML docs are in `target/site/apidocs`
 
 We also provide a short tutorial and demo video that shows how
 the game is played and explains the main features.
-Tutorial / demo video link: ___________
+
+Tutorial / demo video links:
+[1]  Losing scenario: <https://www.youtube.com/watch?v=Gktyp7l3N6c>  
+[2]  Winning scenario: <https://www.youtube.com/shorts/2SCb2KY5Y0M> 
