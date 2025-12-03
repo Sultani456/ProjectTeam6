@@ -1,14 +1,16 @@
 package com.project.team6.controller;
 
-import com.project.team6.model.board.*;
-import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.Board;
+import com.project.team6.model.board.Position;
+import com.project.team6.model.board.generators.Spawner;
 import com.project.team6.model.board.utilities.Direction;
 import com.project.team6.model.board.utilities.MoveResult;
 import com.project.team6.model.board.utilities.TickSummary;
-import com.project.team6.model.characters.*;
-import com.project.team6.model.collectibles.*;
-import com.project.team6.model.collectibles.rewards.*;
-import com.project.team6.model.runtime.*;
+import com.project.team6.model.characters.Player;
+import com.project.team6.model.collectibles.CollectibleObject;
+import com.project.team6.model.collectibles.rewards.BonusReward;
+import com.project.team6.model.runtime.GameState;
+import com.project.team6.model.runtime.Scoreboard;
 import com.project.team6.ui.GamePanel;
 
 import javax.swing.*;
@@ -64,7 +66,7 @@ public final class GameController {
         this.state = Objects.requireNonNull(state);
         this.view = Objects.requireNonNull(view);
 
-        this.player = board.player();
+        this.player = this.board.player();
 
         installKeyBindings();
         this.timer = new Timer(DEFAULT_TICK_MS, this::onTick);
@@ -75,7 +77,7 @@ public final class GameController {
      * Sets the state to running if needed.
      */
     public void start() {
-        if (state.status() != GameState.Status.RUNNING) {
+        if (!isRunning()) {
             state.setRunning();
         }
         scoreboard.start();
@@ -101,6 +103,7 @@ public final class GameController {
      * Supports arrow keys and WASD.
      */
     private void installKeyBindings() {
+        // Arrow keys
         bind("UP",    KeyStroke.getKeyStroke("UP"),    () -> tryPlayerMove(Direction.UP));
         bind("DOWN",  KeyStroke.getKeyStroke("DOWN"),  () -> tryPlayerMove(Direction.DOWN));
         bind("LEFT",  KeyStroke.getKeyStroke("LEFT"),  () -> tryPlayerMove(Direction.LEFT));
@@ -126,7 +129,8 @@ public final class GameController {
 
         im.put(key, name);
         am.put(name, new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 action.run();
             }
         });
@@ -139,10 +143,20 @@ public final class GameController {
      * @param direction the direction to move
      */
     private void tryPlayerMove(Direction direction) {
-        if (state.status() != GameState.Status.RUNNING) return;
+        if (!isRunning()) {
+            return;
+        }
 
         MoveResult result = board.step(player, direction);
+        handleMoveResult(result);
+    }
 
+    /**
+     * Handles the result of a player move.
+     *
+     * @param result the move result
+     */
+    private void handleMoveResult(MoveResult result) {
         switch (result) {
             case MOVED -> {
                 board.collectAt(player.position())
@@ -150,9 +164,7 @@ public final class GameController {
                 evaluateEndStates();
                 view.repaint();
             }
-            case COLLISION -> {
-                lose("You were caught!");
-            }
+            case COLLISION -> lose("You were caught!");
             case BLOCKED -> {
                 // no-op
             }
@@ -169,28 +181,20 @@ public final class GameController {
     private void applyCollectible(CollectibleObject obj) {
         int val = obj.value();
 
-        // Required reward?
         if (obj.isRequiredToWin()) {
             scoreboard.collectedRequired(val);
-        }
-        // Optional reward? (e.g., BonusReward)
-        else if (val > 0) {
+        } else if (val > 0) {
             scoreboard.collectedOptional(val);
-        }
-        // Punishment (value < 0)
-        else {
+        } else {
             scoreboard.penalize(val);
         }
 
-        // Notify spawner only if it's a bonus
         if (obj instanceof BonusReward) {
             spawner.notifyBonusCollected();
         }
 
-        // UI feedback
         view.onCollected(obj);
     }
-
 
     // ---------------------------------------------------------------
     // Tick loop
@@ -201,21 +205,30 @@ public final class GameController {
      * Advances the board, updates spawner, and checks end states.
      */
     private void onTick(ActionEvent e) {
-        if (state.status() != GameState.Status.RUNNING) return;
+        if (!isRunning()) {
+            return;
+        }
 
         Position playerPos = player.position();
         TickSummary summary = board.tick(playerPos);
 
-        // bonus spawning
         spawner.onTick();
+        handleTickSummary(summary);
 
+        view.repaint();
+    }
+
+    /**
+     * Handles tick results and checks for player being caught or win/loss.
+     *
+     * @param summary the tick summary
+     */
+    private void handleTickSummary(TickSummary summary) {
         if (summary.playerCaught()) {
             lose("You were caught!");
         } else {
             evaluateEndStates();
         }
-
-        view.repaint();
     }
 
     // ---------------------------------------------------------------
@@ -228,7 +241,9 @@ public final class GameController {
      * Loss occurs if the score drops below zero.
      */
     private void evaluateEndStates() {
-        if (state.status() != GameState.Status.RUNNING) return;
+        if (!isRunning()) {
+            return;
+        }
 
         boolean allRequiredCollected = scoreboard.requiredRemaining() == 0;
         boolean atExit = player.position().equals(board.exit());
@@ -238,7 +253,6 @@ public final class GameController {
                     + "   Score " + scoreboard.score());
         }
 
-        // Optional: lose when score < 0
         if (scoreboard.score() < 0) {
             lose("Score below zero!");
         }
@@ -251,7 +265,9 @@ public final class GameController {
      * @param msg the message to show
      */
     private void win(String msg) {
-        if (state.status() != GameState.Status.RUNNING) return;
+        if (!isRunning()) {
+            return;
+        }
         state.setWon();
         stop();
         view.onGameOver(msg);
@@ -264,10 +280,21 @@ public final class GameController {
      * @param msg the message to show
      */
     private void lose(String msg) {
-        if (state.status() != GameState.Status.RUNNING) return;
+        if (!isRunning()) {
+            return;
+        }
         state.setLost();
         stop();
         board.setExplosion(player.position());
         view.onGameOver(msg);
+    }
+
+    /**
+     * Returns true if the game is currently running.
+     *
+     * @return true if running, false otherwise
+     */
+    private boolean isRunning() {
+        return state.status() == GameState.Status.RUNNING;
     }
 }
