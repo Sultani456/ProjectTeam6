@@ -47,6 +47,16 @@ public final class BoardGenerator {
         public Cell.Terrain[][] terrain() {return terrain;}
     }
 
+    private static final class StartExit {
+        private final Position start;
+        private final Position exit;
+
+        private StartExit(Position start, Position exit) {
+            this.start = start;
+            this.exit = exit;
+        }
+    }
+
     public Output generate(BarrierOptions opts, double boardBarrierPercentage) {
         Objects.requireNonNull(opts);
 
@@ -58,17 +68,24 @@ public final class BoardGenerator {
         };
     }
 
+    private StartExit randomStartExit(int rows, int cols) {
+        Position start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
+        Position exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
+        return new StartExit(start, exit);
+    }
+
     private Output generateNone(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
         boolean[][] barriers = new boolean[opts.rows][opts.cols];
 
-        Position start = GeneratorHelper.randomEdgeStart(opts.rows, opts.cols, rng);
-        Position exit  = GeneratorHelper.randomEdgeExit(opts.rows, opts.cols, rng);
+        StartExit startExit = randomStartExit(opts.rows, opts.cols);
 
         Cell.Terrain[][] terrain =
-                GeneratorHelper.toTerrainGrid(opts.rows, opts.cols, walls, barriers, start, exit);
-        return new Output(opts.rows, opts.cols, start, exit, terrain);
+                GeneratorHelper.toTerrainGrid(
+                        opts.rows, opts.cols, walls, barriers, startExit.start, startExit.exit
+                );
+        return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);
     }
 
     private Output generateProvided(BarrierOptions opts) {
@@ -86,12 +103,13 @@ public final class BoardGenerator {
             }
         }
 
-        Position start = GeneratorHelper.randomEdgeStart(opts.rows, opts.cols, rng);
-        Position exit  = GeneratorHelper.randomEdgeExit(opts.rows, opts.cols, rng);
+        StartExit startExit = randomStartExit(opts.rows, opts.cols);
 
         Cell.Terrain[][] terrain =
-                GeneratorHelper.toTerrainGrid(opts.rows, opts.cols, walls, barriers, start, exit);
-        return new Output(opts.rows, opts.cols, start, exit, terrain);
+                GeneratorHelper.toTerrainGrid(
+                        opts.rows, opts.cols, walls, barriers, startExit.start, startExit.exit
+                );
+        return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);
     }
 
     private Output generateFromText(BarrierOptions opts) {
@@ -131,8 +149,9 @@ public final class BoardGenerator {
         }
 
         if (start == null || exit == null) {
-            start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
-            exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
+            StartExit startExit = randomStartExit(rows, cols);
+            start = startExit.start;
+            exit  = startExit.exit;
         }
 
         Cell.Terrain[][] terrain =
@@ -149,8 +168,9 @@ public final class BoardGenerator {
         boolean[][] walls    = GeneratorHelper.perimeterWalls(rows, cols);
         boolean[][] barriers = new boolean[rows][cols];
 
-        Position start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
-        Position exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
+        StartExit startExit = randomStartExit(rows, cols);
+        Position start = startExit.start;
+        Position exit  = startExit.exit;
 
         int interior = (rows - 2) * (cols - 2);
         int targetBarriers = Math.max(0,
@@ -192,8 +212,6 @@ public final class BoardGenerator {
      * Legacy helper list.
      * This is not used by the generator flow itself. It exists as a convenience for
      * demos or manual wiring when a caller wants a fixed PROVIDED barrier set.
-     *
-     * Keeping it here avoids breaking any test or old wiring that still references it.
      *
      * @return list of positions for barriers
      */
