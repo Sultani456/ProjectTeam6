@@ -75,39 +75,18 @@ public class GameConfig {
     public static int lifeMaxTicks = secondsToTicks(lifeMaxSec);
     public static int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
 
-    public static int numPunishments = 5;
+    public static int numPunishments = 80;
     public static int punishmentPenalty = -5;
 
     public static int numEnemies = 0;
     public static int enemyMovePeriod = 10;
 
     // Barrier density for RANDOM barrier mode (fraction of interior cells)
-    public static double boardBarrierPercentage = 0.2;
+    public static double boardBarrierPercentage = 0.8;
 
     // ================================================================
     // Helper Functions
     // ================================================================
-    public static void addToBarrierList() {
-        barrierList.add(new Position(4, 2));
-        barrierList.add(new Position(13,2));
-        barrierList.add(new Position(4,4));
-        barrierList.add(new Position(5,4));
-        barrierList.add(new Position(12,4));
-        barrierList.add(new Position(13,4));
-        barrierList.add(new Position(4,6));
-        barrierList.add(new Position(8,6));
-        barrierList.add(new Position(9,6));
-        barrierList.add(new Position(10,6));
-        barrierList.add(new Position(7,7));
-        barrierList.add(new Position(8,7));
-        barrierList.add(new Position(3,8));
-        barrierList.add(new Position(4,8));
-        barrierList.add(new Position(5,8));
-        barrierList.add(new Position(12,8));
-        barrierList.add(new Position(13,8));
-        barrierList.add(new Position(14,8));
-    }
-
     public static void setBoardDimensions(int rows, int cols) {
         GameConfig.rows = rows;
         GameConfig.cols = cols;
@@ -140,6 +119,28 @@ public class GameConfig {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load image: " + resourcePath, e);
         }
+    }
+
+    @Deprecated
+    public static void addToBarrierList() {
+        barrierList.add(new Position(4, 2));
+        barrierList.add(new Position(13,2));
+        barrierList.add(new Position(4,4));
+        barrierList.add(new Position(5,4));
+        barrierList.add(new Position(12,4));
+        barrierList.add(new Position(13,4));
+        barrierList.add(new Position(4,6));
+        barrierList.add(new Position(8,6));
+        barrierList.add(new Position(9,6));
+        barrierList.add(new Position(10,6));
+        barrierList.add(new Position(7,7));
+        barrierList.add(new Position(8,7));
+        barrierList.add(new Position(3,8));
+        barrierList.add(new Position(4,8));
+        barrierList.add(new Position(5,8));
+        barrierList.add(new Position(12,8));
+        barrierList.add(new Position(13,8));
+        barrierList.add(new Position(14,8));
     }
 
 

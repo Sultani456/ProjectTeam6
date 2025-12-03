@@ -22,7 +22,7 @@ public final class Spawner {
 
 
     /** Random source for placement and timing. */
-    private final Random rng;
+    private final Random random;
 
     /** Shared reachability logic. */
     private final Reachability reachability;
@@ -54,19 +54,19 @@ public final class Spawner {
      * This helps deterministic tests.
      *
      * @param board the target board
-     * @param rng random source
+     * @param random random source
      * @throws NullPointerException if board or random is null
      */
-    public Spawner(Board board, Random rng) {
+    public Spawner(Board board, Random random) {
 
         this.board = Objects.requireNonNull(board);
-        this.rng = Objects.requireNonNull(rng);
+        this.random = Objects.requireNonNull(random);
 
         this.reachability = new Reachability(this.board);
-        this.bonusWaveSpawner = new BonusWaveSpawner(this.board, this.rng);
-        this.regularRewardSpawner = new RegularRewardSpawner(this.board, this.rng);
-        this.punishmentSpawner = new PunishmentSpawner(this.board, this.rng, this.reachability);
-        this.enemySpawner = new EnemySpawner(this.board, this.rng, this.reachability);
+        this.bonusWaveSpawner = new BonusWaveSpawner(this.board, this.random);
+        this.regularRewardSpawner = new RegularRewardSpawner(this.board, this.random);
+        this.punishmentSpawner = new PunishmentSpawner(this.board, this.random, this.reachability);
+        this.enemySpawner = new EnemySpawner(this.board, this.random, this.reachability);
     }
 
     /**
@@ -185,7 +185,7 @@ public final class Spawner {
      */
     private static final class BonusWaveSpawner {
         private final Board board;
-        private final Random rng;
+        private final Random random;
 
         /** True when bonus waves are enabled. */
         private boolean bonusEnabled = false;
@@ -195,9 +195,9 @@ public final class Spawner {
 
         private int ticksUntilNextSpawn = -1;
 
-        private BonusWaveSpawner(Board board, Random rng) {
+        private BonusWaveSpawner(Board board, Random random) {
             this.board = board;
-            this.rng = rng;
+            this.random = random;
         }
 
         private int secondsToTicks(int seconds) {
@@ -216,7 +216,7 @@ public final class Spawner {
                 return;
             }
             int range = Math.max(0, GameConfig.spawnMaxTicks - GameConfig.spawnMinTicks);
-            ticksUntilNextSpawn = GameConfig.spawnMinTicks + (range == 0 ? 0 : rng.nextInt(range + 1));
+            ticksUntilNextSpawn = GameConfig.spawnMinTicks + (range == 0 ? 0 : random.nextInt(range + 1));
         }
 
         private void disableBonuses() {
@@ -264,11 +264,11 @@ public final class Spawner {
             }
 
             int toSpawn = Math.min(bonusRemaining, free.size());
-            chooseFirstKRandomInPlace(free, toSpawn, rng);
+            chooseFirstKRandomInPlace(free, toSpawn, random);
 
             for (int i = 0; i < toSpawn; i++) {
                 Position pos = free.get(i);
-                int lifeTicks = GameConfig.lifeMinTicks + rng.nextInt(GameConfig.lifeRange);
+                int lifeTicks = GameConfig.lifeMinTicks + random.nextInt(GameConfig.lifeRange);
                 BonusReward bonus = new BonusReward(pos, lifeTicks);
                 board.registerCollectible(bonus);
             }
@@ -295,11 +295,11 @@ public final class Spawner {
      */
     private static final class RegularRewardSpawner {
         private final Board board;
-        private final Random rng;
+        private final Random random;
 
-        private RegularRewardSpawner(Board board, Random rng) {
+        private RegularRewardSpawner(Board board, Random random) {
             this.board = board;
-            this.rng = rng;
+            this.random = random;
         }
 
         private List<Position> freeFloorCells() {
@@ -315,7 +315,7 @@ public final class Spawner {
                         "Not enough free cells to place " + GameConfig.regularRewardCount + " regular rewards.");
             }
 
-            chooseFirstKRandomInPlace(free, GameConfig.regularRewardCount ,rng);
+            chooseFirstKRandomInPlace(free, GameConfig.regularRewardCount ,random);
             for (int i = 0; i < GameConfig.regularRewardCount; i++) {
                 Position p = free.get(i);
                 RegularReward r = new RegularReward(p);
@@ -333,12 +333,12 @@ public final class Spawner {
      */
     private static final class PunishmentSpawner {
         private final Board board;
-        private final Random rng;
+        private final Random random;
         private final Reachability reachability;
 
-        private PunishmentSpawner(Board board, Random rng, Reachability reachability) {
+        private PunishmentSpawner(Board board, Random random, Reachability reachability) {
             this.board = board;
-            this.rng = rng;
+            this.random = random;
             this.reachability = reachability;
         }
 
@@ -358,7 +358,7 @@ public final class Spawner {
 
             if (free.isEmpty()) return;
 
-            Collections.shuffle(free, rng);
+            Collections.shuffle(free, random);
 
             List<Position> placed = new ArrayList<>();
             Set<Position> blocked = new HashSet<>();
@@ -389,12 +389,12 @@ public final class Spawner {
      */
     private static final class EnemySpawner {
         private final Board board;
-        private final Random rng;
+        private final Random random;
         private final Reachability reachability;
 
-        private EnemySpawner(Board board, Random rng, Reachability reachability) {
+        private EnemySpawner(Board board, Random random, Reachability reachability) {
             this.board = board;
-            this.rng = rng;
+            this.random = random;
             this.reachability = reachability;
         }
 
@@ -416,7 +416,7 @@ public final class Spawner {
 
             if (free.isEmpty()) return;
 
-            Collections.shuffle(free, rng);
+            Collections.shuffle(free, random);
 
             Set<Position> placedEnemies = new HashSet<>();
             Set<Position> blocked = new HashSet<>();
