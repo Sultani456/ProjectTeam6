@@ -215,8 +215,8 @@ public final class Spawner {
                 ticksUntilNextSpawn = -1;
                 return;
             }
-            int range = Math.max(0, GameConfig.spawnMaxSec - GameConfig.spawnMinSec);
-            ticksUntilNextSpawn = GameConfig.spawnMinSec + (range == 0 ? 0 : rng.nextInt(range + 1));
+            int range = Math.max(0, GameConfig.spawnMaxTicks - GameConfig.spawnMinTicks);
+            ticksUntilNextSpawn = GameConfig.spawnMinTicks + (range == 0 ? 0 : rng.nextInt(range + 1));
         }
 
         private void disableBonuses() {
@@ -242,6 +242,9 @@ public final class Spawner {
             this.bonusEnabled = true;
             this.bonusRemaining = GameConfig.bonusRewardCount;
 
+            if (GameConfig.spawnMaxTicks < GameConfig.spawnMinTicks) GameConfig.spawnMaxTicks = GameConfig.spawnMinTicks;
+            if (GameConfig.lifeMaxTicks < GameConfig.lifeMinTicks) GameConfig.lifeMaxTicks = GameConfig.lifeMinTicks;
+
             scheduleNextBonusSpawn();
         }
 
@@ -265,7 +268,7 @@ public final class Spawner {
 
             for (int i = 0; i < toSpawn; i++) {
                 Position pos = free.get(i);
-                int lifeTicks = GameConfig.lifeMinTicks() + rng.nextInt(GameConfig.lifeRange);
+                int lifeTicks = GameConfig.lifeMinTicks + rng.nextInt(GameConfig.lifeRange);
                 BonusReward bonus = new BonusReward(pos, lifeTicks);
                 board.registerCollectible(bonus);
             }
@@ -313,7 +316,7 @@ public final class Spawner {
                         "Not enough free cells to place " + GameConfig.regularRewardCount + " regular rewards.");
             }
 
-            chooseFirstKRandomInPlace(free, rng);
+            chooseFirstKRandomInPlace(free, GameConfig.regularRewardCount ,rng);
             for (int i = 0; i < GameConfig.regularRewardCount; i++) {
                 Position p = free.get(i);
                 RegularReward r = new RegularReward(p);

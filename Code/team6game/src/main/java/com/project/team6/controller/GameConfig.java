@@ -51,8 +51,14 @@ public class GameConfig {
 
     public static int spawnMinSec = 3;
     public static int spawnMaxSec = 6;
+    public static int spawnMinTicks = secondsToTicks(spawnMinSec);
+    public static int spawnMaxTicks = secondsToTicks(spawnMaxSec);
+
     public static int lifeMinSec = 3;
     public static int lifeMaxSec = 6;
+    public static int lifeMinTicks = secondsToTicks(lifeMinSec);
+    public static int lifeMaxTicks = secondsToTicks(lifeMaxSec);
+    public static int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
 
     public static int numPunishments = 5;
     public static int punishmentPenalty = -5;
@@ -61,7 +67,7 @@ public class GameConfig {
     public static int enemyMovePeriod = 10;
 
     // Barrier density for RANDOM barrier mode (fraction of interior cells)
-    public static double boardBarrierPercentage = 0.2;
+    public static double boardBarrierPercentage = 0.8;
 
     // helper functions
     public static void addToBarrierList() {
@@ -92,6 +98,12 @@ public class GameConfig {
 
     public static void setMapResource(String newMapResource) {
         GameConfig.mapResource = newMapResource;
+    }
+
+    private static int secondsToTicks(int seconds) {
+        if (seconds <= 0) return 0;
+        double ticks = (seconds * 1000.0) / DEFAULT_TICK_MS;
+        return Math.max(1, (int) Math.round(ticks));
     }
 
 
