@@ -169,27 +169,7 @@ public final class GamePanel extends JPanel {
                     int px = originX + col * TILE;
                     int py = originY + row * TILE;
 
-                    // floor background
-                    g.setColor(FLOOR_COLOR_IMAGES);
-//                    g.setColor(FLOOR_COLOR);
-                    g.fillRect(px, py, TILE, TILE);
-
-                    // EXPLOSION EFFECT (if caught)
-                    if (board.explosionPos() != null
-                            && board.explosionPos().equals(pos)) {
-
-                        // draw powder-blue or terrain first
-                        g.setColor(FLOOR_COLOR_IMAGES);
-                        g.fillRect(px, py, TILE, TILE);
-
-                        // then explosion sprite
-                        g.drawImage(imgExplosion, px, py, TILE, TILE, null);
-
-                        // skip all other drawing for this cell
-                        continue;
-                    }
-
-                    drawCellSprites(g, cell, px, py);
+                    drawCellSprites(g, cell, px, py, pos);
                 }
             }
         } else {
@@ -347,7 +327,27 @@ public final class GamePanel extends JPanel {
      * @param px  x in pixels
      * @param py  y in pixels
      */
-    private void drawCellSprites(Graphics2D g, Cell cell, int px, int py) {
+    private void drawCellSprites(Graphics2D g, Cell cell, int px, int py, Position pos) {
+        // floor background
+        g.setColor(FLOOR_COLOR_IMAGES);
+//                    g.setColor(FLOOR_COLOR);
+        g.fillRect(px, py, TILE, TILE);
+
+        // EXPLOSION EFFECT (if caught)
+        if (board.explosionPos() != null
+                && board.explosionPos().equals(pos)) {
+
+            // draw powder-blue or terrain first
+            g.setColor(FLOOR_COLOR_IMAGES);
+            g.fillRect(px, py, TILE, TILE);
+
+            // then explosion sprite
+            g.drawImage(imgExplosion, px, py, TILE, TILE, null);
+
+            // skip all other drawing for this cell
+            return;
+        }
+
         // --- 1) Draw terrain background ---
         switch (cell.terrain()) {
             case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
