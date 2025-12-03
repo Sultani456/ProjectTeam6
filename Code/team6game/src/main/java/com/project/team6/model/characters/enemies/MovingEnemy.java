@@ -3,6 +3,7 @@ package com.project.team6.model.characters.enemies;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -44,7 +45,14 @@ public final class MovingEnemy extends Enemy {
             return;
         }
 
-        super.tick(board, playerPos);
+        Direction d = decide(board, playerPos);
+        if (d == null) {
+            return; // Stays still this tick
+        }
+
+        MoveResult result = board.step(this, d);
+
+        
         cooldown = movePeriod - 1;
     }
 

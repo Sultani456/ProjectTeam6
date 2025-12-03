@@ -1,6 +1,7 @@
 package com.project.team6.model.collectibles;
 
 import com.project.team6.model.GameObject;
+import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 
 /**

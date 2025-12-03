@@ -24,4 +24,6 @@ public abstract class Reward extends CollectibleObject {
     protected Reward(Position position, int value, boolean requiredToWin) {
         super(position, value, requiredToWin);
     }
+
+
 }

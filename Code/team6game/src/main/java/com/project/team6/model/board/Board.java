@@ -87,7 +87,7 @@ public final class Board {
     public Position start() { return start; }
 
     /** @return exit position */
-    public Position exit()  { return exit;  }
+    public Position exit()  { return exit; }
 
     /** @return the single player object */
     public Player player() { return player; }
@@ -131,34 +131,17 @@ public final class Board {
     // Registration helpers used by Spawner
     // -----------------------------------------------------------------
 
-    /**
-     * Adds a regular reward to the board and places it into its cell.
-     *
-     * @param r reward to register
-     */
-    public void registerRegularReward(RegularReward r) {
-        regularRewards.add(r);
-        cellAt(r.position()).setItem(r);
-    }
+    public void registerCollectible(CollectibleObject item) {
+        if (item instanceof RegularReward rr) {
+            regularRewards.add(rr);
+        } else if (item instanceof BonusReward br) {
+            bonusRewards.add(br);
+        } else if (item instanceof Punishment pu) {
+            punishments.add(pu);
+        }
 
-    /**
-     * Adds a bonus reward to the board and places it into its cell.
-     *
-     * @param b bonus to register
-     */
-    public void registerBonusReward(BonusReward b) {
-        bonusRewards.add(b);
-        cellAt(b.position()).setItem(b);
-    }
 
-    /**
-     * Adds a punishment to the board and places it into its cell.
-     *
-     * @param p punishment to register
-     */
-    public void registerPunishment(Punishment p) {
-        punishments.add(p);
-        cellAt(p.position()).setItem(p);
+        cellAt(item.position()).setItem(item);
     }
 
     /**
