@@ -58,9 +58,13 @@ public final class GameController {
         view.repaint();
     }
 
+    /**
+     * Stops the game loop timer.
+     * Scoreboard is stopped by GameState on win/lose.
+     */
     public void stop() {
         timer.stop();
-        scoreboard.stop();
+        // scoreboard.stop(); // removed to avoid double-stop on win/lose
     }
 
     // ---------------------------------------------------------------
@@ -111,7 +115,7 @@ public final class GameController {
     }
 
     // ---------------------------------------------------------------
-    // Collectibles (refactored)
+    // Collectibles
     // ---------------------------------------------------------------
 
     private void applyCollectible(CollectibleObject obj) {
@@ -127,69 +131,4 @@ public final class GameController {
 
         notifyBonusIfNeeded(obj);
 
-        view.onCollected(obj);
-    }
-
-    /** Extracted helper method — cleaner and more readable. */
-    private void notifyBonusIfNeeded(CollectibleObject obj) {
-        if (obj instanceof BonusReward) {
-            spawner.notifyBonusCollected();
-        }
-    }
-
-    // ---------------------------------------------------------------
-    // Tick loop
-    // ---------------------------------------------------------------
-
-    private void onTick(ActionEvent e) {
-        if (state.status() != GameState.Status.RUNNING) return;
-
-        Position playerPos = player.position();
-        TickSummary summary = board.tick(playerPos);
-
-        spawner.onTick();
-
-        if (summary.playerCaught()) {
-            lose("You were caught!");
-        } else {
-            evaluateEndStates();
-        }
-
-        view.repaint();
-    }
-
-    // ---------------------------------------------------------------
-    // Win / lose logic
-    // ---------------------------------------------------------------
-
-    private void evaluateEndStates() {
-        if (state.status() != GameState.Status.RUNNING) return;
-
-        boolean allRequiredCollected = scoreboard.requiredRemaining() == 0;
-        boolean atExit = player.position().equals(board.exit());
-
-        if (allRequiredCollected && atExit) {
-            win("You win! Time " + scoreboard.elapsedPretty()
-                    + "   Score " + scoreboard.score());
-        }
-
-        if (scoreboard.score() < 0) {
-            lose("Score below zero!");
-        }
-    }
-
-    private void win(String msg) {
-        if (state.status() != GameState.Status.RUNNING) return;
-        state.setWon();
-        stop();
-        view.onGameOver(msg);
-    }
-
-    private void lose(String msg) {
-        if (state.status() != GameState.Status.RUNNING) return;
-        state.setLost();
-        stop();
-        board.setExplosion(player.position());
-        view.onGameOver(msg);
-    }
-}
+        view.onColle
