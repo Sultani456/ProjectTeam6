@@ -13,14 +13,13 @@ import java.util.*;
 /**
  * Spawns collectibles and enemies onto a board.
  * One Spawner is used for one Board.
- * This class keeps the public API simple and delegates work to smaller components.
  */
 public final class Spawner {
 
     /** The board that receives spawns. */
     private final Board board;
 
-    /** Tick length in milliseconds. Must match the controller tick. */
+    /** Tick length in milliseconds. */
     private final int tickMillis;
 
     /** Random source for placement and timing. */
@@ -37,7 +36,7 @@ public final class Spawner {
 
     /**
      * Bonus configuration object.
-     * This reduces long parameter lists and mistakes.
+     * This reduces long parameter lists.
      */
     public static final class BonusConfig {
         private final int totalBonusesToAppear;
@@ -118,10 +117,6 @@ public final class Spawner {
         return new Spawner(board, tickMillis, new Random(seed));
     }
 
-    // ================================================================
-    // Public API 
-    // ================================================================
-
     /**
      * Configures timed bonus rewards by config object.
      *
@@ -133,8 +128,7 @@ public final class Spawner {
 
     /**
      * Configures timed bonus rewards.
-     * Quota is reduced when bonuses spawn, not when collected.
-     * This prevents endless waves if the player ignores bonuses.
+     * Quota decreases when bonuses spawn.
      */
     public void spawnBonusRewards(int totalBonusesToAppear,
                                   int pointsPer,
@@ -142,7 +136,9 @@ public final class Spawner {
                                   int spawnMaxSec,
                                   int lifeMinSec,
                                   int lifeMaxSec) {
-        bonusWaveSpawner.spawnBonusRewards(totalBonusesToAppear, pointsPer, spawnMinSec, spawnMaxSec, lifeMinSec, lifeMaxSec);
+        bonusWaveSpawner.spawnBonusRewards(
+                totalBonusesToAppear, pointsPer, spawnMinSec, spawnMaxSec, lifeMinSec, lifeMaxSec
+        );
     }
 
     /**
@@ -155,8 +151,7 @@ public final class Spawner {
 
     /**
      * Notifies the spawner that a bonus was collected.
-     * This method is kept for compatibility.
-     * Quota is tracked on spawn in this implementation.
+     * Kept for compatibility.
      */
     public void notifyBonusCollected() {
         bonusWaveSpawner.notifyBonusCollected();
@@ -192,13 +187,12 @@ public final class Spawner {
         enemySpawner.spawnEnemies(count, movePeriod);
     }
 
-    // ================================================================
-    // Shared utilities
-    // ================================================================
-
     /**
      * Partially shuffles a list so the first K elements are random.
-     * This avoids shuffling the whole list when K is small.
+     *
+     * @param list list to shuffle in place
+     * @param count how many random elements are needed
+     * @param random random source
      */
     private static void chooseFirstKRandomInPlace(List<Position> list, int count, Random random) {
         int n = list.size();
@@ -208,10 +202,6 @@ public final class Spawner {
             if (i != j) Collections.swap(list, i, j);
         }
     }
-
-    // ================================================================
-    // Component: Reachability
-    // ================================================================
 
     /**
      * Centralizes reachability checks.
@@ -242,13 +232,9 @@ public final class Spawner {
         }
     }
 
-    // ================================================================
-    // Component: Bonus waves
-    // ================================================================
-
     /**
      * Handles timed bonus waves.
-     * It only runs onTick when bonus mode is enabled.
+     * It runs onTick only when enabled.
      */
     private static final class BonusWaveSpawner {
         private final Board board;
@@ -258,10 +244,7 @@ public final class Spawner {
         /** True when bonus waves are enabled. */
         private boolean bonusEnabled = false;
 
-        /**
-         * Number of bonus items that still need to APPEAR.
-         * This number decreases when a wave spawns.
-         */
+        /** Number of bonus items that still need to appear. */
         private int bonusRemaining = 0;
 
         /** Points given per bonus. */
@@ -330,7 +313,6 @@ public final class Spawner {
                 return;
             }
 
-            // Capacity check at setup time.
             int freeCells = freeFloorCells().size();
             if (totalBonusesToAppear > freeCells) {
                 throw new IllegalArgumentException(
@@ -355,8 +337,6 @@ public final class Spawner {
 
         public void onTick() {
             if (!bonusEnabled || bonusRemaining <= 0) return;
-
-            // Do not spawn while bonuses are still active.
             if (board.hasActiveBonusRewards()) return;
 
             if (ticksUntilNextSpawn > 0) {
@@ -381,7 +361,6 @@ public final class Spawner {
                 board.registerCollectible(bonus);
             }
 
-            // Quota decreases when bonuses appear.
             bonusRemaining -= toSpawn;
             if (bonusRemaining <= 0) {
                 disableBonuses();
@@ -392,14 +371,9 @@ public final class Spawner {
         }
 
         public void notifyBonusCollected() {
-            // Kept for compatibility.
-            // Quota tracking is based on spawn in this version.
+            // Compatibility method.
         }
     }
-
-    // ================================================================
-    // Component: Regular rewards
-    // ================================================================
 
     /**
      * Handles spawning regular rewards.
@@ -435,10 +409,6 @@ public final class Spawner {
         }
     }
 
-    // ================================================================
-    // Component: Punishments
-    // ================================================================
-
     /**
      * Handles spawning punishments while preserving paths.
      */
@@ -464,7 +434,6 @@ public final class Spawner {
             Position start = board.start();
             Position exit = board.exit();
 
-            // Do not place on start or exit.
             free.remove(start);
             free.remove(exit);
 
@@ -492,10 +461,6 @@ public final class Spawner {
         }
     }
 
-    // ================================================================
-    // Component: Enemies
-    // ================================================================
-
     /**
      * Handles spawning enemies while preserving the start-to-exit path.
      */
@@ -521,7 +486,6 @@ public final class Spawner {
             Position start = board.start();
             Position exit = board.exit();
 
-            // Never allow the tile directly inside Start or Exit.
             Position blockStartFront = new Position(start.column() + 1, start.row());
             Position blockExitFront = new Position(exit.column() - 1, exit.row());
             free.remove(blockStartFront);
