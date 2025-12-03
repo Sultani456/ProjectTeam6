@@ -2,10 +2,15 @@ package com.project.team6.controller;
 
 import com.project.team6.model.board.Position;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class GameConfig {
+    private GameConfig() {}
+
     // controller
     /** Tick duration in milliseconds. */
     public static final int DEFAULT_TICK_MS = 120;
@@ -35,6 +40,16 @@ public class GameConfig {
     public static final Color BANNER_BACKGROUND = new Color(0, 0, 0, 90);
     public static final Color HUD_BACKGROUND = new Color(24, 24, 24);
 
+    // --- image assets ---
+    public static BufferedImage imgPlayer         = loadImage("/assets/player.png");
+    public static BufferedImage imgEnemy          = loadImage("/assets/enemy.png");
+    public static BufferedImage imgWall           = loadImage("/assets/wall.jpg");
+    public static BufferedImage imgStart          = loadImage("/assets/start.jpg");
+    public static BufferedImage imgExit           = loadImage("/assets/exit.jpg");
+    public static BufferedImage imgRegularReward  = loadImage("/assets/RegularReward.png");
+    public static BufferedImage imgBonusReward    = loadImage("/assets/BonusReward.jpg");
+    public static BufferedImage imgPunishment     = loadImage("/assets/punishment.png");
+    public static BufferedImage imgExplosion      = loadImage("/assets/explosion.jpg");
 
     // gameplay
     public static ArrayList<Position> barrierList = new ArrayList<>();
@@ -67,9 +82,11 @@ public class GameConfig {
     public static int enemyMovePeriod = 10;
 
     // Barrier density for RANDOM barrier mode (fraction of interior cells)
-    public static double boardBarrierPercentage = 0.8;
+    public static double boardBarrierPercentage = 0.2;
 
-    // helper functions
+    // ================================================================
+    // Helper Functions
+    // ================================================================
     public static void addToBarrierList() {
         barrierList.add(new Position(4, 2));
         barrierList.add(new Position(13,2));
@@ -104,6 +121,25 @@ public class GameConfig {
         if (seconds <= 0) return 0;
         double ticks = (seconds * 1000.0) / DEFAULT_TICK_MS;
         return Math.max(1, (int) Math.round(ticks));
+    }
+
+    /**
+     * Loads an image from the classpath.
+     *
+     * @param resourcePath path inside resources
+     * @return loaded image
+     * @throws RuntimeException if the image cannot be loaded
+     */
+    private static BufferedImage loadImage(String resourcePath) {
+        try {
+            URL url = GameConfig.class.getResource(resourcePath);
+            if (url == null) {
+                throw new IllegalStateException("Image resource not found: " + resourcePath);
+            }
+            return ImageIO.read(url);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load image: " + resourcePath, e);
+        }
     }
 
 

@@ -46,17 +46,6 @@ public final class GamePanel extends JPanel {
     private final Scoreboard scoreboard;
     private final GameState state;
 
-    // --- image assets ---
-    private BufferedImage imgPlayer;
-    private BufferedImage imgEnemy;
-    private BufferedImage imgWall;
-    private BufferedImage imgStart;
-    private BufferedImage imgExit;
-    private BufferedImage imgRegularReward;
-    private BufferedImage imgBonusReward;
-    private BufferedImage imgPunishment;
-    private BufferedImage imgExplosion;
-
     private String bannerText = null;
 
     /**
@@ -71,16 +60,6 @@ public final class GamePanel extends JPanel {
         this.board = board;
         this.scoreboard = scoreboard;
         this.state = state;
-
-        imgPlayer        = loadImage("/assets/player.png");
-        imgEnemy         = loadImage("/assets/enemy.png");
-        imgWall          = loadImage("/assets/wall.jpg");
-        imgStart         = loadImage("/assets/start.jpg");
-        imgExit          = loadImage("/assets/exit.jpg");
-        imgRegularReward = loadImage("/assets/RegularReward.png");
-        imgBonusReward   = loadImage("/assets/BonusReward.jpg");
-        imgPunishment    = loadImage("/assets/punishment.png");
-        imgExplosion     = loadImage("/assets/explosion.jpg");
 
         int w = board.cols() * GameConfig.TILE;
         int h = board.rows() * GameConfig.TILE + GameConfig.HUD_H;
@@ -235,7 +214,7 @@ public final class GamePanel extends JPanel {
                 && board.explosionPos().equals(pos)) {
 
             // then explosion sprite
-            g.drawImage(imgExplosion, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgExplosion, px, py, GameConfig.TILE, GameConfig.TILE, null);
 
             // skip all other drawing for this cell
             return;
@@ -243,9 +222,9 @@ public final class GamePanel extends JPanel {
 
         // --- 1) Draw terrain background ---
         switch (cell.terrain()) {
-            case WALL, BARRIER -> g.drawImage(imgWall, px, py, GameConfig.TILE, GameConfig.TILE, null);
-            case START        -> g.drawImage(imgStart, px, py, GameConfig.TILE, GameConfig.TILE, null);
-            case EXIT         -> g.drawImage(imgExit,  px, py, GameConfig.TILE, GameConfig.TILE, null);
+            case WALL, BARRIER -> g.drawImage(GameConfig.imgWall, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            case START        -> g.drawImage(GameConfig.imgStart, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            case EXIT         -> g.drawImage(GameConfig.imgExit,  px, py, GameConfig.TILE, GameConfig.TILE, null);
 //            default -> {
 //                g.setColor(FLOOR_COLOR_IMAGES);
 //                g.fillRect(px, py, TILE, TILE);
@@ -256,22 +235,22 @@ public final class GamePanel extends JPanel {
         // --- items first (under characters) ---
         var item = cell.item();
         if (item instanceof RegularReward) {
-            g.drawImage(imgRegularReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgRegularReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
         } else if (item instanceof BonusReward) {
-            g.drawImage(imgBonusReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgBonusReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
         } else if (item instanceof Punishment) {
-            g.drawImage(imgPunishment, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgPunishment, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 3) Draw enemies ---
         // Enemy under Player so Player appears “in front”
         if (cell.hasEnemy()) {
-            g.drawImage(imgEnemy, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgEnemy, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 4) Draw player last (on top) ---
         if (cell.hasPlayer()) {
-            g.drawImage(imgPlayer, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            g.drawImage(GameConfig.imgPlayer, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 5) Draw grid outline ---
