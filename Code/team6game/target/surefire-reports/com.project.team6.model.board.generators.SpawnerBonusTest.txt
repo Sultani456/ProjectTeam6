@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.project.team6.model.board.generators.SpawnerBonusTest
--------------------------------------------------------------------------------
-<<<<<<< HEAD
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in com.project.team6.model.board.generators.SpawnerBonusTest
-=======
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s -- in com.project.team6.model.board.generators.SpawnerBonusTest
->>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e

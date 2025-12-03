@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.project.team6.model.collectibles.CollectibleAndScoreTest
--------------------------------------------------------------------------------
-<<<<<<< HEAD
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in com.project.team6.model.collectibles.CollectibleAndScoreTest
-=======
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.project.team6.model.collectibles.CollectibleAndScoreTest
->>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e

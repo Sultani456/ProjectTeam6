@@ -1,8 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.project.team6.model.board.CellTest
--------------------------------------------------------------------------------
-<<<<<<< HEAD
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in com.project.team6.model.board.CellTest
-=======
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.project.team6.model.board.CellTest
->>>>>>> 9031f846788d7fff60737296021dc60cbeaaee3e

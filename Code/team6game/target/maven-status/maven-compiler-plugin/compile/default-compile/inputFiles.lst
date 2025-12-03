@@ -1,28 +1,28 @@
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\controller\GameController.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Board.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Cell.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\barrierProperties\BarrierMode.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\barrierProperties\BarrierOptions.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\BoardGenerator.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\helpers\GeneratorHelper.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\helpers\SpawnerHelper.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\Spawner.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Position.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\Direction.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\MoveResult.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\TickSummary.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\CharacterObject.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\enemies\Enemy.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\enemies\MovingEnemy.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\Player.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\CollectibleObject.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\Punishment.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\BonusReward.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\RegularReward.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\Reward.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\GameObject.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\runtime\GameState.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\runtime\Scoreboard.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\App.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\GameFrame.java
-C:\Users\besmi\OneDrive\Desktop\Fall 2025\CMPT 276\Project\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\GamePanel.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\controller\GameController.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Board.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Cell.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\barrierProperties\BarrierMode.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\barrierProperties\BarrierOptions.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\BoardGenerator.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\helpers\GeneratorHelper.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\helpers\SpawnerHelper.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\generators\Spawner.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\Position.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\Direction.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\MoveResult.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\board\utilities\TickSummary.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\CharacterObject.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\enemies\Enemy.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\enemies\MovingEnemy.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\characters\Player.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\CollectibleObject.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\Punishment.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\BonusReward.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\RegularReward.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\collectibles\rewards\Reward.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\GameObject.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\runtime\GameState.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\model\runtime\Scoreboard.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\App.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\GameFrame.java
+E:\project2\ProjectTeam6\Code\team6game\src\main\java\com\project\team6\ui\GamePanel.java

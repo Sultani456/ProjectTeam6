@@ -9,6 +9,12 @@ import java.time.Instant;
  */
 public final class Scoreboard {
 
+    /** Initial score for resets. */
+    private final int initialScore;
+
+    /** Initial required count for resets. */
+    private final int initialRequiredCount;
+
     /** Current score. Can be positive or negative. */
     private int score;
 
@@ -28,44 +34,74 @@ public final class Scoreboard {
      * @param requiredCount  number of required rewards on the board
      */
     public Scoreboard(int initialScore, int requiredCount) {
-        this.score = initialScore;
-        this.requiredRemaining = Math.max(0, requiredCount);
+        this.initialScore = initialScore;
+        this.initialRequiredCount = Math.max(0, requiredCount);
+        reset();
     }
 
+    // ---------------------------------------------------------------------
     // Lifecycle
+    // ---------------------------------------------------------------------
+
+    /**
+     * Resets score, required count, and timer.
+     * Use this before starting a new game with the same scoreboard.
+     */
+    public void reset() {
+        this.score = initialScore;
+        this.requiredRemaining = initialRequiredCount;
+        this.startedAt = null;
+        this.stoppedAt = null;
+    }
 
     /**
      * Starts the timer. Resets any previous stop time.
      */
-    public void start() { startedAt = Instant.now(); stoppedAt = null; }
+    public void start() {
+        startedAt = Instant.now();
+        stoppedAt = null;
+    }
 
     /**
      * Stops the timer if it is running.
+     * Safe to call multiple times.
      */
-    public void stop()  { if (startedAt != null && stoppedAt == null) stoppedAt = Instant.now(); }
+    public void stop() {
+        if (startedAt != null && stoppedAt == null) {
+            stoppedAt = Instant.now();
+        }
+    }
 
+    // ---------------------------------------------------------------------
     // Score API
+    // ---------------------------------------------------------------------
 
     /**
      * Returns the current score.
      *
      * @return score value
      */
-    public int score() { return score; }
+    public int score() {
+        return score;
+    }
 
     /**
      * Returns how many required rewards remain.
      *
      * @return remaining required count
      */
-    public int requiredRemaining() { return requiredRemaining; }
+    public int requiredRemaining() {
+        return requiredRemaining;
+    }
 
     /**
      * Adds a delta to the score.
      *
      * @param delta points to add, can be negative
      */
-    public void add(int delta) { score += delta; }
+    public void add(int delta) {
+        adjustScore(delta);
+    }
 
     /**
      * Call when a required reward is collected.
@@ -74,8 +110,10 @@ public final class Scoreboard {
      * @param value points to add
      */
     public void collectedRequired(int value) {
-        score += value;
-        if (requiredRemaining > 0) requiredRemaining--;
+        adjustScore(value);
+        if (requiredRemaining > 0) {
+            requiredRemaining--;
+        }
     }
 
     /**
@@ -84,17 +122,38 @@ public final class Scoreboard {
      *
      * @param value points to add
      */
-    public void collectedOptional(int value) { score += value; }
+    public void collectedOptional(int value) {
+        adjustScore(value);
+    }
 
     /**
      * Call when a punishment is collected.
-     * The value should be zero or negative.
+     * The value must be zero or negative.
      *
-     * @param negativeValue points to add, expected to be negative
+     * @param negativeValue points to add, expected to be <= 0
+     * @throws IllegalArgumentException if the value is positive
      */
-    public void penalize(int negativeValue) { score += negativeValue; }
+    public void penalize(int negativeValue) {
+        if (negativeValue > 0) {
+            throw new IllegalArgumentException(
+                    "Penalty value must be <= 0, got: " + negativeValue
+            );
+        }
+        adjustScore(negativeValue);
+    }
 
+    /**
+     * Internal helper to adjust the score.
+     *
+     * @param delta points to add (may be negative)
+     */
+    private void adjustScore(int delta) {
+        score += delta;
+    }
+
+    // ---------------------------------------------------------------------
     // Time
+    // ---------------------------------------------------------------------
 
     /**
      * Returns elapsed time since start.
@@ -104,7 +163,9 @@ public final class Scoreboard {
      * @return elapsed duration
      */
     public Duration elapsed() {
-        if (startedAt == null) return Duration.ZERO;
+        if (startedAt == null) {
+            return Duration.ZERO;
+        }
         Instant end = (stoppedAt != null) ? stoppedAt : Instant.now();
         return Duration.between(startedAt, end);
     }
@@ -116,9 +177,9 @@ public final class Scoreboard {
      */
     public String elapsedPretty() {
         Duration d = elapsed();
-        long s = d.getSeconds();
-        long m = s / 60;
-        long sec = s % 60;
-        return String.format("%d:%02d", m, sec);
+        long seconds = d.getSeconds();
+        long minutes = seconds / 60;
+        long sec = seconds % 60;
+        return String.format("%d:%02d", minutes, sec);
     }
 }
