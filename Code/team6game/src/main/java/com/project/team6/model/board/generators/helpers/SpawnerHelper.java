@@ -10,9 +10,7 @@ import java.util.*;
  */
 public final class SpawnerHelper {
 
-    // -----------------------------------------------------------------
-    // Reachability Functions
-    // -----------------------------------------------------------------
+    private SpawnerHelper() { }
 
     /**
      * Finds all empty floor cells.
@@ -29,13 +27,12 @@ public final class SpawnerHelper {
         List<Position> free = new ArrayList<>();
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < cols; column++) {
-                Position p = new Position(column, row);
                 Cell c = grid[row][column];
                 if (c.terrain() == Cell.Terrain.FLOOR &&
                         c.item() == null &&
                         !c.hasPlayer() &&
                         !c.hasEnemy()) {
-                    free.add(p);
+                    free.add(new Position(column, row));
                 }
             }
         }
@@ -45,16 +42,10 @@ public final class SpawnerHelper {
     /**
      * Checks if there is a path from one cell to another using BFS.
      * Treats positions in {@code blocked} as closed.
-     *
-     * @param board   the game board
-     * @param from    start position
-     * @param to      target position
-     * @param blocked set of blocked positions, may be null
-     * @return true if a path exists
      */
     public static boolean canReach(Board board, Position from,
-                            Position to,
-                            Set<Position> blocked) {
+                                   Position to,
+                                   Set<Position> blocked) {
         if (from.equals(to)) return true;
 
         int rows = board.rows();
@@ -82,18 +73,11 @@ public final class SpawnerHelper {
     /**
      * Tries to add a neighbor to the BFS queue.
      * Skips out of bounds cells, visited cells, blocked cells, and walls.
-     *
-     * @param board   the game board
-     * @param column       column index
-     * @param row       row index
-     * @param blocked set of blocked positions, may be null
-     * @param visited visited flags
-     * @param q       BFS queue
      */
     public static void tryVisit(Board board, int column, int row,
-                         Set<Position> blocked,
-                         boolean[][] visited,
-                         Deque<Position> q) {
+                                Set<Position> blocked,
+                                boolean[][] visited,
+                                Deque<Position> q) {
 
         int rows = board.rows();
         int cols = board.cols();
