@@ -171,9 +171,9 @@ public final class Scoreboard {
     }
 
     /**
-     * Returns a short mm:ss style string of elapsed time.
+     * Returns a short mm:ss style setring of elapsed time.
      *
-     * @return formatted time string
+     * @return formatted time stridng
      */
     public String elapsedPretty() {
         Duration d = elapsed();
@@ -183,3 +183,5 @@ public final class Scoreboard {
         return String.format("%d:%02d", minutes, sec);
     }
 }
+
+
