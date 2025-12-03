@@ -4,21 +4,10 @@ import com.project.team6.model.board.*;
 
 import java.util.*;
 
-/**
- * Helpers for spawning items and enemies.
- * Includes search functions for free cells and path checks.
- */
 public final class SpawnerHelper {
 
     private SpawnerHelper() { }
 
-    /**
-     * Finds all empty floor cells.
-     * A cell is free when it is floor and has no item, player, or enemy.
-     *
-     * @param board the game board
-     * @return list of positions that are free
-     */
     public static List<Position> freeFloorCells(Board board) {
         int rows = board.rows();
         int cols = board.cols();
@@ -39,10 +28,6 @@ public final class SpawnerHelper {
         return free;
     }
 
-    /**
-     * Checks if there is a path from one cell to another using BFS.
-     * Treats positions in {@code blocked} as closed.
-     */
     public static boolean canReach(Board board, Position from,
                                    Position to,
                                    Set<Position> blocked) {
@@ -50,6 +35,7 @@ public final class SpawnerHelper {
 
         int rows = board.rows();
         int cols = board.cols();
+        Cell[][] grid = board.grid();
 
         boolean[][] visited = new boolean[rows][cols];
         Deque<Position> q = new ArrayDeque<>();
@@ -61,27 +47,20 @@ public final class SpawnerHelper {
             if (p.equals(to)) return true;
 
             int column = p.column(), row = p.row();
-            tryVisit(board, column + 1, row, blocked, visited, q);
-            tryVisit(board, column - 1, row, blocked, visited, q);
-            tryVisit(board, column, row + 1, blocked, visited, q);
-            tryVisit(board, column, row - 1, blocked, visited, q);
+            tryVisit(grid, cols, rows, column + 1, row, blocked, visited, q);
+            tryVisit(grid, cols, rows, column - 1, row, blocked, visited, q);
+            tryVisit(grid, cols, rows, column, row + 1, blocked, visited, q);
+            tryVisit(grid, cols, rows, column, row - 1, blocked, visited, q);
         }
 
         return false;
     }
 
-    /**
-     * Tries to add a neighbor to the BFS queue.
-     * Skips out of bounds cells, visited cells, blocked cells, and walls.
-     */
-    public static void tryVisit(Board board, int column, int row,
-                                Set<Position> blocked,
-                                boolean[][] visited,
-                                Deque<Position> q) {
-
-        int rows = board.rows();
-        int cols = board.cols();
-        Cell[][] grid = board.grid();
+    private static void tryVisit(Cell[][] grid, int cols, int rows,
+                                 int column, int row,
+                                 Set<Position> blocked,
+                                 boolean[][] visited,
+                                 Deque<Position> q) {
 
         if (column < 0 || column >= cols || row < 0 || row >= rows) return;
         if (visited[row][column]) return;
