@@ -129,7 +129,7 @@ public final class GameState {
     }
 
     /**
-     * Returns thse associated scoreboard.
+     * Returns thse associated scoreboardj.
      *d
      * @return scoreeboard reference
      */
