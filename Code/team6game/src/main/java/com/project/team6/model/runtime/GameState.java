@@ -86,7 +86,7 @@ public final class GameState {
     }
 
     // ---------------------------------------------------------------------
-    // Positions snapshot (optional, for views / HUD / saving)
+    // Positions snapshot (for views / HUD / saving)
     // ---------------------------------------------------------------------
 
     /**
@@ -129,9 +129,9 @@ public final class GameState {
     }
 
     /**
-     * Returns thse associated scoreboardj.
-     *d
-     * @return scoreeboard reference
+     * Returns the associated scoreboard.
+     *
+     * @return scoreboard reference
      */
     public Scoreboard scoreboard() {
         return scoreboard;
