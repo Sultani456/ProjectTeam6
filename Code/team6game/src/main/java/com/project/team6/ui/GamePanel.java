@@ -159,6 +159,7 @@ public final class GamePanel extends JPanel {
         int originX = 0;
         int originY = HUD_H;
 
+        // draw sprites
         for (int row = 0; row < board.rows(); row++) {
             for (int col = 0; col < board.cols(); col++) {
                 Position pos = new Position(col, row);
@@ -177,36 +178,7 @@ public final class GamePanel extends JPanel {
 
         // banner text under the board
         if (bannerText != null && !bannerText.isBlank()) {
-            g.setFont(getFont().deriveFont(Font.BOLD, 20f));
-            String text = bannerText;
-
-            FontMetrics fm = g.getFontMetrics();
-            int textW = fm.stringWidth(text);
-            int textH = fm.getHeight();
-
-            // Board area (under the HUD)
-            int boardW = board.cols() * TILE;
-            int boardH = board.rows() * TILE;
-
-            int centerX = boardW / 2;
-            int centerY = HUD_H + boardH / 2;   // middle of the board area
-
-            int padX = 24;
-            int padY = 12;
-            int rectW = textW + padX * 2;
-            int rectH = textH + padY * 2;
-            int rectX = centerX - rectW / 2;
-            int rectY = centerY - rectH / 2;
-
-            // Translucent black background
-            g.setColor(new Color(0, 0, 0, 90));   // alpha 170 ~= 2/3 opaque
-            g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
-
-            // White text centered in the box
-            g.setColor(Color.WHITE);
-            int textX = centerX - textW / 2;
-            int textY = rectY + padY + fm.getAscent();
-            g.drawString(text, textX, textY);
+            drawBanner(g);
         }
 
         g.dispose();
@@ -376,5 +348,38 @@ public final class GamePanel extends JPanel {
             int cy = py + (TILE + ch) / 2 - 4;
             g.drawString(String.valueOf(sym), cx, cy);
         }
+    }
+
+    private void drawBanner(Graphics2D g) {
+        g.setFont(getFont().deriveFont(Font.BOLD, 20f));
+        String text = bannerText;
+
+        FontMetrics fm = g.getFontMetrics();
+        int textW = fm.stringWidth(text);
+        int textH = fm.getHeight();
+
+        // Board area (under the HUD)
+        int boardW = board.cols() * TILE;
+        int boardH = board.rows() * TILE;
+
+        int centerX = boardW / 2;
+        int centerY = HUD_H + boardH / 2;   // middle of the board area
+
+        int padX = 24;
+        int padY = 12;
+        int rectW = textW + padX * 2;
+        int rectH = textH + padY * 2;
+        int rectX = centerX - rectW / 2;
+        int rectY = centerY - rectH / 2;
+
+        // Translucent black background
+        g.setColor(new Color(0, 0, 0, 90));   // alpha 170 ~= 2/3 opaque
+        g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
+
+        // White text centered in the box
+        g.setColor(Color.WHITE);
+        int textX = centerX - textW / 2;
+        int textY = rectY + padY + fm.getAscent();
+        g.drawString(text, textX, textY);
     }
 }
