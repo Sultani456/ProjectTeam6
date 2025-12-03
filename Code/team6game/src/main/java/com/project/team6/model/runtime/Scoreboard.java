@@ -173,7 +173,7 @@ public final class Scoreboard {
     /**
      * Returns a short mm:ss style setring of elapsed time.
      *
-     * @return formatted time string
+     * @return formatted time stridng
      */
     public String elapsedPretty() {
         Duration d = elapsed();
