@@ -44,8 +44,6 @@ public class GeneratorHelper {
     public static int BFSCount(Cell.Terrain[][] terrain,
                                 Position start,
                                 boolean[][] visited) {
-        int rows = terrain.length;
-        int cols = terrain[0].length;
 
         Deque<Position> q = new ArrayDeque<>();
         q.addLast(start);
