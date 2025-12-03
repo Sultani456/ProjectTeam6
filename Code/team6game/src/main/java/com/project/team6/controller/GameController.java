@@ -274,7 +274,7 @@ public final class GameController {
     }
 
     /**
-     * Ends the game with a loss message.
+     * Ends the game with a loss message
      * Stops timers, sets an explosion, and notifies the view.
      *
      * @param msg the message to show
