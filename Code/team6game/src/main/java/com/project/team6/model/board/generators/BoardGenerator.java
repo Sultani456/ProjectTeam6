@@ -1,4 +1,4 @@
-package com.project.team6.model.board.generators; 
+package com.project.team6.model.board.generators;
 
 import com.project.team6.model.board.*;
 import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
@@ -77,7 +77,6 @@ public final class BoardGenerator {
         public Position exit() {return exit;}
         /** @return terrain grid */
         public Cell.Terrain[][] terrain() {return terrain;}
-
     }
 
     // --------------------------------------------------------------------
