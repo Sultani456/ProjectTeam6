@@ -1,96 +1,172 @@
 package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.board.Board;
-import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
-
-import java.util.Collections;
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
+import com.project.team6.model.characters.CharacterObject;
 
 /**
- * Enemy that chases the player using Manhattan distance.
- * Tries to step closer every time it moves.
- * Prefers the axis that reduces distance the most.
+ * Base enemy that moves at most one tile per tick.
+ * Subclasses define the decision rule.
  */
-public final class MovingEnemy extends Enemy {
-
-    /** Number of ticks between moves. Always >= 1. */
-    private final int movePeriod;
-
-    /** Internal counter until the next move. */
-    private int cooldown = 0;
+public abstract class Enemy extends CharacterObject {
 
     /**
-     * Creates a moving enemy.
-     *
-     * @param position   starting position
-     * @param movePeriod ticks between moves, must be >= 1
-     * @throws IllegalArgumentException if movePeriod < 1
+     * Provides a narrow view of the world for enemy AI.
+     * Hides the full Board API.
      */
-    public MovingEnemy(Position position, int movePeriod) {
-        super(position);
+    public interface EnemyContext {
+        /**
+         * Current enemy position.
+         */
+        Position enemyPosition();
 
-        if (movePeriod < 1) {
-            throw new IllegalArgumentException("movePeriod must be >= 1");
-        }
+        /**
+         * Current player position.
+         */
+        Position playerPosition();
 
-        this.movePeriod = movePeriod;
+        /**
+         * Returns true if the enemy can attempt to step in the given direction.
+         */
+        boolean canStep(Direction direction);
+
+        /**
+         * Tries to move the enemy in the given direction.
+         *
+         * @param direction direction to move
+         * @return move result from the board
+         */
+        MoveResult move(Direction direction);
     }
 
-    @Override
-    public void tick(Board board, Position playerPos) {
-        if (cooldown > 0) {
-            cooldown--;
-            return;
+    /**
+     * Adapter that wraps a Board and exposes only EnemyContext.
+     */
+    private static final class BoardEnemyContext implements EnemyContext {
+        private final Board board;
+        private final Enemy enemy;
+        private final Position playerPos;
+
+        BoardEnemyContext(Board board, Enemy enemy, Position playerPos) {
+            this.board = board;
+            this.enemy = enemy;
+            this.playerPos = playerPos;
         }
 
-        super.tick(board, playerPos);
-        cooldown = movePeriod - 1;
-    }
+        @Override
+        public Position enemyPosition() {
+            return enemy.position();
+        }
 
-    @Override
-    public Direction decide(Board board, Position playerPos) {
+        @Override
+        public Position playerPosition() {
+            return playerPos;
+        }
 
-        // renamed from "me" → "currentPos"
-        Position currentPos = position();
+        @Override
+        public boolean canStep(Direction direction) {
+            Position from = enemy.position();
+            Position to = new Position(
+                    from.column() + direction.d_column,
+                    from.row() + direction.d_row
+            );
 
-        int dColumn = Integer.compare(playerPos.column(), currentPos.column());
-        int dRow    = Integer.compare(playerPos.row(),    currentPos.row());
-
-        boolean horizFirst =
-                Math.abs(playerPos.column() - currentPos.column()) >=
-                Math.abs(playerPos.row() - currentPos.row());
-
-        Direction first =
-                horizFirst ? (dColumn > 0 ? Direction.RIGHT :
-                             dColumn < 0 ? Direction.LEFT : null)
-                           : (dRow > 0 ? Direction.DOWN :
-                             dRow < 0 ? Direction.UP   : null);
-
-        Direction second =
-                horizFirst ? (dRow > 0 ? Direction.DOWN :
-                             dRow < 0 ? Direction.UP   : null)
-                           : (dColumn > 0 ? Direction.RIGHT :
-                             dColumn < 0 ? Direction.LEFT : null);
-
-        Direction[] order = order4(first, second);
-
-        for (Direction d : order) {
-            if (d == null) continue;
-            Position to = new Position(currentPos.column() + d.d_column,
-                                       currentPos.row()    + d.d_row);
-            if (board.isInBounds(to) && board.cellAt(to).isWalkableTerrain()) {
-                return d;
+            if (!board.isInBounds(to)) {
+                return false;
             }
+
+            Cell cell = board.cellAt(to);
+            // Keep same logic as before: walkable terrain check used in MovingEnemy
+            return cell.isWalkableTerrain();
         }
-        return null;
+
+        @Override
+        public MoveResult move(Direction direction) {
+            return board.step(enemy, direction);
+        }
     }
 
-    private static Direction[] order4(Direction a, Direction b) {
-        Direction[] all = { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };
-        java.util.LinkedHashSet<Direction> set = new java.util.LinkedHashSet<>();
-        if (a != null) set.add(a);
-        if (b != null) set.add(b);
-        Collections.addAll(set, all);
-        return set.toArray(new Direction[0]);
+    /**
+     * Creates an enemy at a starting position.
+     *
+     * @param position initial location
+     */
+    protected Enemy(Position position) {
+        super(position);
+    }
+
+    /**
+     * Runs once per tick from game code.
+     * Wraps the board in an EnemyContext and delegates to context-based tick.
+     *
+     * @param board     current board
+     * @param playerPos player position
+     */
+    public final void tick(Board board, Position playerPos) {
+        EnemyContext ctx = new BoardEnemyContext(board, this, playerPos);
+        tick(ctx);
+    }
+
+    /**
+     * Context-based tick used by subclasses.
+     *
+     * @param ctx enemy context
+     */
+    protected void tick(EnemyContext ctx) {
+        Direction d = decide(ctx);
+        if (d == null) {
+            return; // Stays still this tick
+        }
+
+        MoveResult result = ctx.move(d);
+        onPostStep(ctx, result);
+    }
+
+    /**
+     * Legacy helper for code/tests that still call decide(board, playerPos).
+     * Wraps the Board into an EnemyContext and forwards to the new API.
+     */
+    public final Direction decide(Board board, Position playerPos) {
+        EnemyContext ctx = new BoardEnemyContext(board, this, playerPos);
+        return decide(ctx);
+    }
+
+    /**
+     * Hook for reacting to a move attempt result with context.
+     * Subclasses may override.
+     *
+     * @param ctx    enemy context
+     * @param result move result
+     */
+    protected void onPostStep(EnemyContext ctx, MoveResult result) {
+        // default: no-op
+    }
+
+    /**
+     * Chooses a movement direction.
+     * May return null to stay still.
+     *
+     * @param ctx enemy context
+     * @return direction to move or null
+     */
+    protected abstract Direction decide(EnemyContext ctx);
+
+    /**
+     * Enemies can walk on normal terrain but not START/EXIT or occupied tiles.
+     */
+    @Override
+    public boolean canEnter(Cell cell) {
+        if (!cell.isWalkableTerrain()) return false;
+        if (cell.terrain() == Cell.Terrain.START || cell.terrain() == Cell.Terrain.EXIT) return false;
+        return cell.enemy() == null;
+    }
+
+    /** ASCII symbol for enemies. */
+    @Override
+    public char symbol() {
+        return 'B';
     }
 }
