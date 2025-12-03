@@ -49,13 +49,16 @@ public final class MovingEnemy extends Enemy {
 
     @Override
     public Direction decide(Board board, Position playerPos) {
-        Position me = position();
-        int dColumn = Integer.compare(playerPos.column(), me.column());
-        int dRow    = Integer.compare(playerPos.row(),    me.row());
+
+        // renamed from "me" → "currentPos"
+        Position currentPos = position();
+
+        int dColumn = Integer.compare(playerPos.column(), currentPos.column());
+        int dRow    = Integer.compare(playerPos.row(),    currentPos.row());
 
         boolean horizFirst =
-                Math.abs(playerPos.column() - me.column()) >=
-                Math.abs(playerPos.row() - me.row());
+                Math.abs(playerPos.column() - currentPos.column()) >=
+                Math.abs(playerPos.row() - currentPos.row());
 
         Direction first =
                 horizFirst ? (dColumn > 0 ? Direction.RIGHT :
@@ -73,7 +76,8 @@ public final class MovingEnemy extends Enemy {
 
         for (Direction d : order) {
             if (d == null) continue;
-            Position to = new Position(me.column() + d.d_column, me.row() + d.d_row);
+            Position to = new Position(currentPos.column() + d.d_column,
+                                       currentPos.row()    + d.d_row);
             if (board.isInBounds(to) && board.cellAt(to).isWalkableTerrain()) {
                 return d;
             }
