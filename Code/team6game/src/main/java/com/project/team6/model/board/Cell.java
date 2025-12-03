@@ -18,7 +18,7 @@ public final class Cell {
      * Types of terrain a cell can have.
      * WALL and BARRIER are not walkable.
      */
-    public enum Terrain { FLOOR, WALL, BARRIER, START, EXIT }
+    public static enum Terrain { FLOOR, WALL, BARRIER, START, EXIT }
 
     private final Terrain terrain;
     private CollectibleObject item; // optional
@@ -100,28 +100,6 @@ public final class Cell {
      */
     public boolean isWalkableTerrain() {
         return terrain != Terrain.WALL && terrain != Terrain.BARRIER;
-    }
-
-    /**
-     * Checks if a character may enter this cell.
-     * Players cannot stack with another player.
-     * Enemies cannot enter start or exit and cannot stack with another enemy.
-     *
-     * @param who the character that wants to enter
-     * @return true if entry is allowed
-     */
-    public boolean isEnterableFor(CharacterObject who) {
-        if (!isWalkableTerrain() || who == null) return false;
-        if (who instanceof Player) return playerOcc == null;
-
-        if (who instanceof Enemy)  {
-            if (terrain == Terrain.START || terrain == Terrain.EXIT) {
-                return false;
-            }
-
-            return enemyOcc  == null;
-        }
-        return false;
     }
 
     // --- Occupancy management

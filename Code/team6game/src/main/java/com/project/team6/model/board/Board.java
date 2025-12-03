@@ -217,7 +217,8 @@ public final class Board {
         if (!target.isWalkableTerrain()) {
             return MoveResult.BLOCKED;
         }
-        if (!target.isEnterableFor(who)) {
+
+        if (!who.canEnter(target)) {
             return MoveResult.BLOCKED;
         }
 

@@ -1,6 +1,7 @@
 package com.project.team6.model.characters;
 
 import com.project.team6.model.GameObject;
+import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
 
 /**
@@ -36,4 +37,7 @@ public abstract class CharacterObject extends GameObject {
      */
     @Override
     public abstract char symbol();
+
+    public abstract boolean canEnter(Cell cell);
+
 }

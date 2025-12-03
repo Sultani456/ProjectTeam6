@@ -51,6 +51,15 @@ public abstract class Enemy extends CharacterObject {
      */
     public abstract Direction decide(Board board, Position playerPos);
 
+    @Override
+    public boolean canEnter(Cell cell) {
+        if (!cell.isWalkableTerrain()) return false;
+
+        if (cell.terrain() == Cell.Terrain.START || cell.terrain() == Cell.Terrain.EXIT) return false;
+
+        return cell.enemy() == null;
+    }
+
     /**
      * Returns the ASCII symbol used for enemies.
      *

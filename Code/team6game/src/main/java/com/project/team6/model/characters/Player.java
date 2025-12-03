@@ -1,5 +1,6 @@
 package com.project.team6.model.characters;
 
+import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
 
 /**
@@ -21,4 +22,10 @@ public class Player extends CharacterObject {
      * @return 'P'
      */
     @Override public char symbol() { return 'P'; }
+
+    @Override
+    public boolean canEnter(Cell cell) {
+        if (!cell.isWalkableTerrain()) {return false;}
+        return cell.player() == null;
+    }
 }
