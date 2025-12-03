@@ -9,95 +9,45 @@ import com.project.team6.model.collectibles.Punishment;
 
 import java.util.*;
 
-/**
- * Controls how items and enemies appear on the board.
- * Handles regular rewards, punishments, enemies, and timed bonus rewards.
- * One spawner is used for one board.
- */
 public final class Spawner {
 
-    /**
-     * The board that receives spawns.
-     */
     private final Board board;
-
-    /**
-     * Tick length in milliseconds. Must match the controller tick.
-     */
     private final int tickMillis;
-
-    /** Random source for placement and timing. */
     private final Random rng;
 
-    // -----------------------------------------------------------------
     // Bonus-reward configuration
-    // -----------------------------------------------------------------
-
-    /** True when bonus waves are enabled. */
     private boolean bonusEnabled = false;
 
     /**
-     * Number of bonus items that still need to be collected.
-     * Each wave tries to show this many, if enough free cells exist.
-     * This value goes down only when the player collects a bonus.
+     * Number of bonus items that still need to APPEAR.
+     * Each wave spawns up to this number (or available free cells).
+     * This value goes down when a wave is spawned.
      */
     private int bonusRemaining = 0;
 
-    /** Points awarded for each bonus. */
     private int bonusPointsPer = 0;
 
-    /** Minimum and maximum delay in ticks before a bonus wave spawns. */
     private int spawnMinTicks = 0;
     private int spawnMaxTicks = 0;
 
-    /** Minimum and maximum lifetime in ticks for a bonus. */
     private int lifeMinTicks = 0;
     private int lifeMaxTicks = 0;
 
-    /** Countdown in ticks until the next bonus wave is allowed. */
     private int ticksUntilNextSpawn = -1;
 
-    /**
-     * Creates a spawner for a board.
-     *
-     * @param board      the target board
-     * @param tickMillis tick duration in milliseconds
-     * @throws NullPointerException if board is null
-     */
     public Spawner(Board board, int tickMillis) {
         this(board, tickMillis, new Random());
     }
 
-    /**
-     * Creates a spawner for a board with an injected Random.
-     * Useful for deterministic tests.
-     *
-     * @param board      the target board
-     * @param tickMillis tick duration in milliseconds
-     * @param rng        random source
-     * @throws NullPointerException if board or rng is null
-     */
     public Spawner(Board board, int tickMillis, Random rng) {
         this.board = Objects.requireNonNull(board);
         this.tickMillis = tickMillis;
         this.rng = Objects.requireNonNull(rng);
     }
 
-    /**
-     * Factory for tests that need deterministic spawning.
-     *
-     * @param board      the target board
-     * @param tickMillis tick duration
-     * @param seed       random seed
-     * @return Spawner with fixed Random
-     */
     public static Spawner withSeed(Board board, int tickMillis, long seed) {
         return new Spawner(board, tickMillis, new Random(seed));
     }
-
-    // ================================================================
-    // Bonus spawning (config + per-tick)
-    // ================================================================
 
     private int secondsToTicks(int seconds) {
         if (seconds <= 0) return 0;
@@ -170,15 +120,23 @@ public final class Spawner {
             board.registerCollectible(bonus);
         }
 
+        // Decrease quota on spawn so ignoring bonuses cannot create infinite waves
+        bonusRemaining -= toSpawn;
+        if (bonusRemaining <= 0) {
+            bonusEnabled = false;
+            ticksUntilNextSpawn = -1;
+            return;
+        }
+
         scheduleNextBonusSpawn();
     }
 
+    /**
+     * Compatibility method.
+     * Quota is now decreased when bonuses SPAWN, not when they are collected.
+     */
     public void notifyBonusCollected() {
-        if (!bonusEnabled) return;
-        if (bonusRemaining > 0) bonusRemaining--;
-        if (bonusRemaining <= 0) {
-            bonusEnabled = false;
-        }
+        // no-op by design
     }
 
     private void scheduleNextBonusSpawn() {
@@ -189,10 +147,6 @@ public final class Spawner {
         int range = Math.max(0, spawnMaxTicks - spawnMinTicks);
         ticksUntilNextSpawn = spawnMinTicks + (range == 0 ? 0 : rng.nextInt(range + 1));
     }
-
-    // ================================================================
-    // Regular rewards
-    // ================================================================
 
     public void spawnRegularRewards(int count, int pointsPer) {
         if (count <= 0) return;
@@ -210,10 +164,6 @@ public final class Spawner {
             board.registerCollectible(r);
         }
     }
-
-    // ================================================================
-    // Punishments: keep safe paths
-    // ================================================================
 
     public void spawnPunishments(int count, int penaltyPer) {
         if (count <= 0) return;
@@ -256,10 +206,6 @@ public final class Spawner {
             if (placed.size() >= count) break outer;
         }
     }
-
-    // ================================================================
-    // Enemies
-    // ================================================================
 
     public void spawnEnemies(int count, int movePeriod) {
         if (count <= 0) return;
