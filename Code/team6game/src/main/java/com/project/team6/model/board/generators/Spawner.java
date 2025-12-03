@@ -1,7 +1,6 @@
 package com.project.team6.model.board.generators;
 
 import com.project.team6.model.board.Board;
-import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.generators.helpers.SpawnerHelper;
 import com.project.team6.model.characters.enemies.MovingEnemy;
