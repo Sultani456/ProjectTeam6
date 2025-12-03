@@ -15,13 +15,75 @@ public final class BoardGenerator {
     /** Random source for start/exit and random barriers. */
     private final Random rng;
 
+    /** Policy for choosing start and exit positions. */
+    private final StartExitSelector startExitSelector;
+
+    /**
+     * Selects start and exit positions for a given board size.
+     * This is intentionally small so policies can be swapped in tests or future modes.
+     */
+    public interface StartExitSelector {
+        StartExit select(int rows, int cols);
+    }
+
+    private static final class StartExit {
+        private final Position start;
+        private final Position exit;
+
+        private StartExit(Position start, Position exit) {
+            this.start = start;
+            this.exit = exit;
+        }
+    }
+
+    private static final class RandomEdgeStartExitSelector implements StartExitSelector {
+        private final Random rng;
+
+        private RandomEdgeStartExitSelector(Random rng) {
+            this.rng = rng;
+        }
+
+        @Override
+        public StartExit select(int rows, int cols) {
+            Position start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
+            Position exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
+            return new StartExit(start, exit);
+        }
+    }
+
+    /**
+     * Default constructor for production use.
+     * Uses a new Random instance and the default random edge policy.
+     */
     public BoardGenerator() {
         this(new Random());
     }
 
+    /**
+     * Constructor that accepts a Random.
+     * Uses the default random edge policy with that Random.
+     *
+     * @param rng random source
+     */
     public BoardGenerator(Random rng) {
-        this.rng = Objects.requireNonNull(rng);
+        this(rng, new RandomEdgeStartExitSelector(Objects.requireNonNull(rng)));
     }
+
+    /**
+     * Constructor that accepts both a Random and a start/exit policy.
+     * This keeps the generator deterministic and also decouples the policy.
+     *
+     * @param rng random source used for random barriers
+     * @param startExitSelector policy for choosing start and exit
+     */
+    public BoardGenerator(Random rng, StartExitSelector startExitSelector) {
+        this.rng = Objects.requireNonNull(rng);
+        this.startExitSelector = Objects.requireNonNull(startExitSelector);
+    }
+
+    // --------------------------------------------------------------------
+    // Output type
+    // --------------------------------------------------------------------
 
     public static final class Output {
         private final int rows;
@@ -47,15 +109,9 @@ public final class BoardGenerator {
         public Cell.Terrain[][] terrain() {return terrain;}
     }
 
-    private static final class StartExit {
-        private final Position start;
-        private final Position exit;
-
-        private StartExit(Position start, Position exit) {
-            this.start = start;
-            this.exit = exit;
-        }
-    }
+    // --------------------------------------------------------------------
+    // Public API
+    // --------------------------------------------------------------------
 
     public Output generate(BarrierOptions opts, double boardBarrierPercentage) {
         Objects.requireNonNull(opts);
@@ -68,18 +124,20 @@ public final class BoardGenerator {
         };
     }
 
-    private StartExit randomStartExit(int rows, int cols) {
-        Position start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
-        Position exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
-        return new StartExit(start, exit);
+    private StartExit chooseStartExit(int rows, int cols) {
+        return startExitSelector.select(rows, cols);
     }
+
+    // --------------------------------------------------------------------
+    // NONE
+    // --------------------------------------------------------------------
 
     private Output generateNone(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
         boolean[][] barriers = new boolean[opts.rows][opts.cols];
 
-        StartExit startExit = randomStartExit(opts.rows, opts.cols);
+        StartExit startExit = chooseStartExit(opts.rows, opts.cols);
 
         Cell.Terrain[][] terrain =
                 GeneratorHelper.toTerrainGrid(
@@ -87,6 +145,10 @@ public final class BoardGenerator {
                 );
         return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);
     }
+
+    // --------------------------------------------------------------------
+    // PROVIDED
+    // --------------------------------------------------------------------
 
     private Output generateProvided(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
@@ -103,7 +165,7 @@ public final class BoardGenerator {
             }
         }
 
-        StartExit startExit = randomStartExit(opts.rows, opts.cols);
+        StartExit startExit = chooseStartExit(opts.rows, opts.cols);
 
         Cell.Terrain[][] terrain =
                 GeneratorHelper.toTerrainGrid(
@@ -111,6 +173,10 @@ public final class BoardGenerator {
                 );
         return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);
     }
+
+    // --------------------------------------------------------------------
+    // TEXT
+    // --------------------------------------------------------------------
 
     private Output generateFromText(BarrierOptions opts) {
         Objects.requireNonNull(opts.mapResource,
@@ -149,7 +215,7 @@ public final class BoardGenerator {
         }
 
         if (start == null || exit == null) {
-            StartExit startExit = randomStartExit(rows, cols);
+            StartExit startExit = chooseStartExit(rows, cols);
             start = startExit.start;
             exit  = startExit.exit;
         }
@@ -158,6 +224,10 @@ public final class BoardGenerator {
                 GeneratorHelper.toTerrainGrid(rows, cols, walls, barriers, start, exit);
         return new Output(rows, cols, start, exit, terrain);
     }
+
+    // --------------------------------------------------------------------
+    // RANDOM
+    // --------------------------------------------------------------------
 
     private Output generateRandomWithConstraints(BarrierOptions opts,
                                                  double boardBarrierPercentage) {
@@ -168,7 +238,7 @@ public final class BoardGenerator {
         boolean[][] walls    = GeneratorHelper.perimeterWalls(rows, cols);
         boolean[][] barriers = new boolean[rows][cols];
 
-        StartExit startExit = randomStartExit(rows, cols);
+        StartExit startExit = chooseStartExit(rows, cols);
         Position start = startExit.start;
         Position exit  = startExit.exit;
 
