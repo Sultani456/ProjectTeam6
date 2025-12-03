@@ -40,19 +40,21 @@ public final class SpawnerHelper {
         boolean[][] visited = new boolean[rows][cols];
         boolean[][] blockedGrid = toBlockedGrid(blocked, rows, cols);
 
-        Deque<Position> q = new ArrayDeque<>();
-        q.add(from);
+        ArrayDeque<Integer> q = new ArrayDeque<>();
+        q.addLast(pack(from.column(), from.row(), cols));
         visited[from.row()][from.column()] = true;
 
         while (!q.isEmpty()) {
-            Position p = q.removeFirst();
-            if (p.equals(to)) return true;
+            int packed = q.removeFirst();
+            int column = unpackColumn(packed, cols);
+            int row = unpackRow(packed, cols);
 
-            int column = p.column(), row = p.row();
-            tryVisit(grid, cols, rows, column + 1, row, blockedGrid, visited, q);
-            tryVisit(grid, cols, rows, column - 1, row, blockedGrid, visited, q);
-            tryVisit(grid, cols, rows, column, row + 1, blockedGrid, visited, q);
-            tryVisit(grid, cols, rows, column, row - 1, blockedGrid, visited, q);
+            if (column == to.column() && row == to.row()) return true;
+
+            tryVisitPacked(grid, cols, rows, column + 1, row, blockedGrid, visited, q);
+            tryVisitPacked(grid, cols, rows, column - 1, row, blockedGrid, visited, q);
+            tryVisitPacked(grid, cols, rows, column, row + 1, blockedGrid, visited, q);
+            tryVisitPacked(grid, cols, rows, column, row - 1, blockedGrid, visited, q);
         }
 
         return false;
@@ -71,11 +73,11 @@ public final class SpawnerHelper {
         return blockedGrid;
     }
 
-    private static void tryVisit(Cell[][] grid, int cols, int rows,
-                                 int column, int row,
-                                 boolean[][] blockedGrid,
-                                 boolean[][] visited,
-                                 Deque<Position> q) {
+    private static void tryVisitPacked(Cell[][] grid, int cols, int rows,
+                                       int column, int row,
+                                       boolean[][] blockedGrid,
+                                       boolean[][] visited,
+                                       ArrayDeque<Integer> q) {
 
         if (column < 0 || column >= cols || row < 0 || row >= rows) return;
         if (visited[row][column]) return;
@@ -85,6 +87,18 @@ public final class SpawnerHelper {
         if (!c.isWalkableTerrain()) return;
 
         visited[row][column] = true;
-        q.addLast(new Position(column, row));
+        q.addLast(pack(column, row, cols));
+    }
+
+    private static int pack(int column, int row, int cols) {
+        return row * cols + column;
+    }
+
+    private static int unpackColumn(int packed, int cols) {
+        return packed % cols;
+    }
+
+    private static int unpackRow(int packed, int cols) {
+        return packed / cols;
     }
 }
