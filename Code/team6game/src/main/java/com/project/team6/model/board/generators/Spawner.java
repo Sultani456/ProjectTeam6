@@ -21,7 +21,6 @@ public final class Spawner {
      */
     private final Board board;
 
-
     /**
      * Tick length in milliseconds. Must match the controller tick.
      */
@@ -58,10 +57,6 @@ public final class Spawner {
     /** Countdown in ticks until the next bonus wave is allowed. */
     private int ticksUntilNextSpawn = -1;
 
-    // ================================================================
-    // Constructor, getters, setters
-    // ================================================================
-
     /**
      * Creates a spawner for a board.
      *
@@ -70,41 +65,46 @@ public final class Spawner {
      * @throws NullPointerException if board is null
      */
     public Spawner(Board board, int tickMillis) {
-        this.board = Objects.requireNonNull(board);
+        this(board, tickMillis, new Random());
+    }
 
+    /**
+     * Creates a spawner for a board with an injected Random.
+     * Useful for deterministic tests.
+     *
+     * @param board      the target board
+     * @param tickMillis tick duration in milliseconds
+     * @param rng        random source
+     * @throws NullPointerException if board or rng is null
+     */
+    public Spawner(Board board, int tickMillis, Random rng) {
+        this.board = Objects.requireNonNull(board);
         this.tickMillis = tickMillis;
-        this.rng = new Random();
+        this.rng = Objects.requireNonNull(rng);
+    }
+
+    /**
+     * Factory for tests that need deterministic spawning.
+     *
+     * @param board      the target board
+     * @param tickMillis tick duration
+     * @param seed       random seed
+     * @return Spawner with fixed Random
+     */
+    public static Spawner withSeed(Board board, int tickMillis, long seed) {
+        return new Spawner(board, tickMillis, new Random(seed));
     }
 
     // ================================================================
     // Bonus spawning (config + per-tick)
     // ================================================================
 
-    /**
-     * Converts seconds to ticks using the configured tick length.
-     *
-     * @param seconds whole or fractional seconds
-     * @return number of ticks, at least 1 when seconds is positive
-     */
     private int secondsToTicks(int seconds) {
         if (seconds <= 0) return 0;
         double ticks = (seconds * 1000.0) / tickMillis;
         return Math.max(1, (int) Math.round(ticks));
     }
 
-    /**
-     * Sets up timed bonus rewards with a fixed total quota.
-     * The spawner shows a wave with {@code bonusRemaining} items each time.
-     * When a bonus is collected, call {@link #notifyBonusCollected()}.
-     *
-     * @param totalBonusesToAppear total number that can ever be collected
-     * @param pointsPer            points for each bonus
-     * @param spawnMinSec          earliest spawn delay in seconds
-     * @param spawnMaxSec          latest spawn delay in seconds
-     * @param lifeMinSec           minimum lifetime in seconds
-     * @param lifeMaxSec           maximum lifetime in seconds
-     * @throws IllegalArgumentException if {@code totalBonusesToAppear} is larger than free cells
-     */
     public void spawnBonusRewards(int totalBonusesToAppear,
                                   int pointsPer,
                                   int spawnMinSec,
@@ -117,7 +117,6 @@ public final class Spawner {
             return;
         }
 
-        // Check capacity once up front
         int freeCells = SpawnerHelper.freeFloorCells(board).size();
         if (totalBonusesToAppear > freeCells) {
             throw new IllegalArgumentException(
@@ -144,14 +143,8 @@ public final class Spawner {
         scheduleNextBonusSpawn();
     }
 
-    /**
-     * Runs once per tick from the controller after the board tick.
-     * Spawns a new bonus wave when allowed and when no bonuses are active.
-     */
     public void onTick() {
         if (!bonusEnabled || bonusRemaining <= 0) return;
-
-        // Do not spawn while a wave is still visible
         if (board.hasActiveBonusRewards()) return;
 
         if (ticksUntilNextSpawn > 0) {
@@ -159,7 +152,6 @@ public final class Spawner {
             return;
         }
 
-        // Time to spawn
         List<Position> free = SpawnerHelper.freeFloorCells(board);
         if (free.isEmpty()) {
             scheduleNextBonusSpawn();
@@ -178,14 +170,9 @@ public final class Spawner {
             board.registerCollectible(bonus);
         }
 
-        // Quota decreases only on collection
         scheduleNextBonusSpawn();
     }
 
-    /**
-     * Tell the spawner that a bonus was collected.
-     * Disables further waves when the quota reaches zero.
-     */
     public void notifyBonusCollected() {
         if (!bonusEnabled) return;
         if (bonusRemaining > 0) bonusRemaining--;
@@ -194,10 +181,6 @@ public final class Spawner {
         }
     }
 
-    /**
-     * Chooses the next delay before a wave can appear.
-     * Uses the min and max spawn ticks.
-     */
     private void scheduleNextBonusSpawn() {
         if (!bonusEnabled || bonusRemaining <= 0) {
             ticksUntilNextSpawn = -1;
@@ -211,13 +194,6 @@ public final class Spawner {
     // Regular rewards
     // ================================================================
 
-    /**
-     * Places regular rewards on free floor cells.
-     *
-     * @param count     how many to add
-     * @param pointsPer points for each reward
-     * @throws IllegalStateException if there are not enough free cells
-     */
     public void spawnRegularRewards(int count, int pointsPer) {
         if (count <= 0) return;
 
@@ -239,15 +215,6 @@ public final class Spawner {
     // Punishments: keep safe paths
     // ================================================================
 
-    /**
-     * Places punishments while keeping key paths reachable.
-     * Start to exit stays reachable.
-     * Each regular reward stays reachable from start.
-     * Start and exit cells are never used.
-     *
-     * @param count      how many to add
-     * @param penaltyPer points lost for each punishment
-     */
     public void spawnPunishments(int count, int penaltyPer) {
         if (count <= 0) return;
 
@@ -255,7 +222,6 @@ public final class Spawner {
         Position start = board.start();
         Position exit = board.exit();
 
-        // Do not allow punishments directly on start or exit
         free.remove(start);
         free.remove(exit);
 
@@ -267,16 +233,13 @@ public final class Spawner {
         outer:
         for (Position candidate : free) {
 
-            // Assume we place a punishment here
             Set<Position> blocked = new HashSet<>(placed);
             blocked.add(candidate);
 
-            // 1) Start to exit must remain reachable
             if (!SpawnerHelper.canReach(board, start, exit, blocked)) {
                 continue;
             }
 
-            // 2) Each regular reward must remain reachable from start
             boolean ok = true;
             for (RegularReward rr : board.regularRewards()) {
                 if (!SpawnerHelper.canReach(board, start, rr.position(), blocked)) {
@@ -286,7 +249,6 @@ public final class Spawner {
             }
             if (!ok) continue;
 
-            // Passed checks, place punishment
             Punishment p = new Punishment(candidate, penaltyPer);
             board.registerCollectible(p);
             placed.add(candidate);
@@ -299,14 +261,6 @@ public final class Spawner {
     // Enemies
     // ================================================================
 
-    /**
-     * Places moving enemies on free floor cells.
-     * Allows enemies near start and exit but not on the first interior tiles.
-     * Keeps a valid path from start to exit after each placement.
-     *
-     * @param count      how many enemies to add
-     * @param movePeriod ticks between enemy moves
-     */
     public void spawnEnemies(int count, int movePeriod) {
         if (count <= 0) return;
 
@@ -314,7 +268,6 @@ public final class Spawner {
         Position start = board.start();
         Position exit  = board.exit();
 
-        // Never allow the tile directly inside Start or Exit
         Position blockStartFront = new Position(start.column() + 1, start.row());
         Position blockExitFront  = new Position(exit.column() - 1,  exit.row());
         free.remove(blockStartFront);
@@ -324,22 +277,19 @@ public final class Spawner {
 
         Collections.shuffle(free, rng);
 
-        // Track placed enemies and validate reachability incrementally
         Set<Position> placedEnemies = new HashSet<>();
 
         int placed = 0;
         for (Position pos : free) {
             if (placed >= count) break;
 
-            // Treat enemy cells as blocked for path checks
             Set<Position> blocked = new HashSet<>(placedEnemies);
             blocked.add(pos);
 
             if (!SpawnerHelper.canReach(board, start, exit, blocked)) {
-                continue; // would block Start -> Exit path
+                continue;
             }
 
-            // Safe to place
             MovingEnemy e = new MovingEnemy(pos, movePeriod);
             board.registerEnemy(e);
             placedEnemies.add(pos);
