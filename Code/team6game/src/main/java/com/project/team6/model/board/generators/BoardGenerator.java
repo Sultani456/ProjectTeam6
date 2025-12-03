@@ -15,32 +15,14 @@ public final class BoardGenerator {
     /** Random source for start/exit and random barriers. */
     private final Random rng;
 
-    /**
-     * Default constructor for production use.
-     * Uses a new Random instance.
-     */
     public BoardGenerator() {
         this(new Random());
     }
 
-    /**
-     * Constructor that accepts a Random.
-     * Useful for deterministic tests.
-     *
-     * @param rng random source
-     */
     public BoardGenerator(Random rng) {
         this.rng = Objects.requireNonNull(rng);
     }
 
-    // --------------------------------------------------------------------
-    // Output type
-    // --------------------------------------------------------------------
-
-    /**
-     * Result of terrain generation.
-     * Holds size, start and exit, and the terrain grid.
-     */
     public static final class Output {
         private final int rows;
         private final int cols;
@@ -48,15 +30,6 @@ public final class BoardGenerator {
         private final Position exit;
         private final Cell.Terrain[][] terrain;
 
-        /**
-         * Creates an output record.
-         *
-         * @param rows     number of rows
-         * @param cols     number of columns
-         * @param start    start position
-         * @param exit     exit position
-         * @param terrain  terrain grid
-         */
         public Output(int rows, int cols,
                       Position start, Position exit,
                       Cell.Terrain[][] terrain) {
@@ -67,30 +40,13 @@ public final class BoardGenerator {
             this.terrain = terrain;
         }
 
-        /** @return number of rows */
         public int rows() {return rows;}
-        /** @return number of columns */
         public int cols() {return cols;}
-        /** @return start position */
         public Position start() {return start;}
-        /** @return exit position */
         public Position exit() {return exit;}
-        /** @return terrain grid */
         public Cell.Terrain[][] terrain() {return terrain;}
     }
 
-    // --------------------------------------------------------------------
-    // Public API
-    // --------------------------------------------------------------------
-
-    /**
-     * Generates a terrain layout based on options.
-     *
-     * @param opts options for barriers and size
-     * @param boardBarrierPercentage target fraction of interior barriers for RANDOM mode
-     * @return generated output
-     * @throws NullPointerException if opts is null
-     */
     public Output generate(BarrierOptions opts, double boardBarrierPercentage) {
         Objects.requireNonNull(opts);
 
@@ -102,14 +58,6 @@ public final class BoardGenerator {
         };
     }
 
-    // --------------------------------------------------------------------
-    // NONE: just perimeter walls, empty interior
-    // --------------------------------------------------------------------
-
-    /**
-     * Makes a board with only perimeter walls.
-     * Interior has no barriers.
-     */
     private Output generateNone(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
@@ -123,14 +71,6 @@ public final class BoardGenerator {
         return new Output(opts.rows, opts.cols, start, exit, terrain);
     }
 
-    // --------------------------------------------------------------------
-    // PROVIDED: perimeter and programmer provided barrier list
-    // --------------------------------------------------------------------
-
-    /**
-     * Makes a board with perimeter walls and a provided barrier list.
-     * Ignores any barrier placed on the perimeter.
-     */
     private Output generateProvided(BarrierOptions opts) {
         GeneratorHelper.validateSize(opts.rows, opts.cols);
         boolean[][] walls    = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
@@ -140,7 +80,6 @@ public final class BoardGenerator {
             for (Position p : opts.barrierPositions) {
                 if (p.column() <= 0 || p.column() >= opts.cols - 1 ||
                         p.row() <= 0 || p.row() >= opts.rows - 1) {
-                    // ignore perimeter; those are already walls
                     continue;
                 }
                 barriers[p.row()][p.column()] = true;
@@ -155,17 +94,6 @@ public final class BoardGenerator {
         return new Output(opts.rows, opts.cols, start, exit, terrain);
     }
 
-    // --------------------------------------------------------------------
-    // TEXT: read terrain from a level file on the classpath
-    // --------------------------------------------------------------------
-
-    /**
-     * Loads terrain from a text map.
-     * Uses characters to set walls, barriers, start, and exit.
-     *
-     * @throws NullPointerException if mapResource is null
-     * @throws IllegalArgumentException if the map is empty or lines have different length
-     */
     private Output generateFromText(BarrierOptions opts) {
         Objects.requireNonNull(opts.mapResource,
                 "TEXT mode requires a mapResource (e.g., \"maps/level1.txt\")");
@@ -203,7 +131,6 @@ public final class BoardGenerator {
         }
 
         if (start == null || exit == null) {
-            // fall back to random edges if not provided in file
             start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
             exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
         }
@@ -213,18 +140,6 @@ public final class BoardGenerator {
         return new Output(rows, cols, start, exit, terrain);
     }
 
-    // --------------------------------------------------------------------
-    // RANDOM: perimeter and random internal barriers with constraints
-    // --------------------------------------------------------------------
-
-    /**
-     * Makes random interior barriers while keeping the board playable.
-     * Keeps distance from start and exit and checks connectivity.
-     *
-     * @param opts options for size
-     * @param boardBarrierPercentage target interior fraction for barriers
-     * @return generated output
-     */
     private Output generateRandomWithConstraints(BarrierOptions opts,
                                                  double boardBarrierPercentage) {
         int rows = opts.rows;
@@ -255,16 +170,14 @@ public final class BoardGenerator {
 
             Position p = new Position(column, row);
 
-            // keep at least Chebyshev 2 away from start and exit
             if (Board.chebyshev(p, start) < 2 || Board.chebyshev(p, exit) < 2) {
                 continue;
             }
 
-            // tentatively place barrier
             barriers[row][column] = true;
 
             if (!GeneratorHelper.isBarrierConfigurationValid(walls, barriers, start, exit)) {
-                barriers[row][column] = false; // revert
+                barriers[row][column] = false;
             } else {
                 placed++;
             }
@@ -276,10 +189,15 @@ public final class BoardGenerator {
     }
 
     /**
-     * Returns a fixed list of barrier positions for the PROVIDED mode.
+     * Legacy helper list.
+     * This is not used by the generator flow itself. It exists as a convenience for
+     * demos or manual wiring when a caller wants a fixed PROVIDED barrier set.
+     *
+     * Keeping it here avoids breaking any test or old wiring that still references it.
      *
      * @return list of positions for barriers
      */
+    @Deprecated
     public static ArrayList<Position> barrierList() {
         ArrayList<Position> list = new ArrayList<>();
         list.add(new Position(4, 2));
@@ -300,16 +218,9 @@ public final class BoardGenerator {
         list.add(new Position(12,8));
         list.add(new Position(13,8));
         list.add(new Position(14,8));
-
         return list;
     }
 
-    /**
-     * Factory for tests that need deterministic layouts.
-     *
-     * @param seed random seed
-     * @return BoardGenerator with fixed Random
-     */
     public static BoardGenerator withSeed(long seed) {
         return new BoardGenerator(new Random(seed));
     }
