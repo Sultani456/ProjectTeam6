@@ -2,11 +2,10 @@ package com.project.team6.model.characters.enemies;
 
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.utilities.Direction;
-<<<<<<< HEAD
+
 import com.project.team6.model.board.Position;
-=======
+
 import com.project.team6.model.board.utilities.MoveResult;
->>>>>>> 43705cf614d1407f01f537d204a9fa199406da74
 
 import java.util.Collections;
 

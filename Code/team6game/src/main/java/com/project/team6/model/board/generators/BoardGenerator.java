@@ -1,5 +1,6 @@
 package com.project.team6.model.board.generators; 
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.*;
 import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
 import com.project.team6.model.board.generators.helpers.GeneratorHelper;
@@ -128,7 +129,7 @@ public final class BoardGenerator {
             case NONE      -> generateNone(opts);
             case PROVIDED  -> generateProvided(opts);
             case TEXT      -> generateFromText(opts);
-            case RANDOM    -> generateRandomWithConstraints(opts, boardBarrierPercentage);
+            case RANDOM    -> generateRandomWithConstraints(opts);
         };
     }
 
@@ -237,8 +238,7 @@ public final class BoardGenerator {
     // RANDOM
     // --------------------------------------------------------------------
 
-    private Output generateRandomWithConstraints(BarrierOptions opts,
-                                                 double boardBarrierPercentage) {
+    private Output generateRandomWithConstraints(BarrierOptions opts) {
         int rows = opts.rows;
         int cols = opts.cols;
         GeneratorHelper.validateSize(rows, cols);
@@ -252,7 +252,7 @@ public final class BoardGenerator {
 
         int interior = (rows - 2) * (cols - 2);
         int targetBarriers = Math.max(0,
-                (int) Math.round(interior * boardBarrierPercentage));
+                (int) Math.round(interior * GameConfig.boardBarrierPercentage));
 
         int placed = 0;
         int attempts = 0;

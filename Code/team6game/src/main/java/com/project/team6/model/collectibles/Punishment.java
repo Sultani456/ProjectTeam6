@@ -1,5 +1,6 @@
 package com.project.team6.model.collectibles;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Position;
 
 /**
@@ -13,10 +14,9 @@ public final class Punishment extends CollectibleObject {
      * The penalty is clamped to zero or below.
      *
      * @param position tile where the item is placed
-     * @param penalty  negative points applied on collection
      */
-    public Punishment(Position position, int penalty) {
-        super(position, Math.min(0, penalty), false); // ensure non-positive
+    public Punishment(Position position) {
+        super(position, Math.min(0, GameConfig.punishmentPenalty), false); // ensure non-positive
     }
 
     /**

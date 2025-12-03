@@ -1,5 +1,6 @@
 package com.project.team6.model.board.generators;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.generators.helpers.SpawnerHelper;
@@ -17,7 +18,7 @@ import java.util.*;
 public final class Spawner {
 
     private final Board board;
-    private final int tickMillis;
+
 
     /** Random source for placement and timing. */
     private final Random rng;
@@ -29,72 +30,37 @@ public final class Spawner {
     private final PunishmentSpawner punishmentSpawner;
     private final EnemySpawner enemySpawner;
 
-    // ============================
-    // Bonus config object (from v3)
-    // ============================
 
-    public static final class BonusConfig {
-        private final int totalBonusesToAppear;
-        private final int pointsPer;
-        private final int spawnMinSec;
-        private final int spawnMaxSec;
-        private final int lifeMinSec;
-        private final int lifeMaxSec;
-
-        public BonusConfig(int totalBonusesToAppear,
-                           int pointsPer,
-                           int spawnMinSec,
-                           int spawnMaxSec,
-                           int lifeMinSec,
-                           int lifeMaxSec) {
-            this.totalBonusesToAppear = totalBonusesToAppear;
-            this.pointsPer = pointsPer;
-            this.spawnMinSec = spawnMinSec;
-            this.spawnMaxSec = spawnMaxSec;
-            this.lifeMinSec = lifeMinSec;
-            this.lifeMaxSec = lifeMaxSec;
-        }
-    }
 
     // ================================================================
     // Constructor
     // ================================================================
-
-    public Spawner(Board board, int tickMillis) {
-        this(board, tickMillis, new Random());
+    public Spawner(Board board) {
+        this(board, new Random());
     }
 
-    public Spawner(Board board, int tickMillis, Random rng) {
+    public Spawner(Board board, Random rng) {
+
         this.board = Objects.requireNonNull(board);
-        this.tickMillis = tickMillis;
         this.rng = Objects.requireNonNull(rng);
 
         this.reachability = new Reachability(this.board);
-        this.bonusWaveSpawner = new BonusWaveSpawner(this.board, this.tickMillis, this.rng);
+        this.bonusWaveSpawner = new BonusWaveSpawner(this.board, this.rng);
         this.regularRewardSpawner = new RegularRewardSpawner(this.board, this.rng);
         this.punishmentSpawner = new PunishmentSpawner(this.board, this.rng, this.reachability);
         this.enemySpawner = new EnemySpawner(this.board, this.rng, this.reachability);
     }
 
-    public static Spawner withSeed(Board board, int tickMillis, long seed) {
-        return new Spawner(board, tickMillis, new Random(seed));
+    public static Spawner withSeed(Board board, long seed) {
+        return new Spawner(board, new Random(seed));
     }
 
     // ================================================================
     // Public API (unchanged signatures)
     // ================================================================
 
-    public void spawnBonusRewards(BonusConfig config) {
-        bonusWaveSpawner.spawnBonusRewards(config);
-    }
-
-    public void spawnBonusRewards(int totalBonusesToAppear,
-                                  int pointsPer,
-                                  int spawnMinSec,
-                                  int spawnMaxSec,
-                                  int lifeMinSec,
-                                  int lifeMaxSec) {
-        bonusWaveSpawner.spawnBonusRewards(totalBonusesToAppear, pointsPer, spawnMinSec, spawnMaxSec, lifeMinSec, lifeMaxSec);
+    public void spawnBonusRewards() {
+        bonusWaveSpawner.spawnBonusRewards();
     }
 
     public void onTick() {
@@ -105,16 +71,16 @@ public final class Spawner {
         bonusWaveSpawner.notifyBonusCollected();
     }
 
-    public void spawnRegularRewards(int count, int pointsPer) {
-        regularRewardSpawner.spawnRegularRewards(count, pointsPer);
+    public void spawnRegularRewards() {
+        regularRewardSpawner.spawnRegularRewards();
     }
 
-    public void spawnPunishments(int count, int penaltyPer) {
-        punishmentSpawner.spawnPunishments(count, penaltyPer);
+    public void spawnPunishments() {
+        punishmentSpawner.spawnPunishments();
     }
 
-    public void spawnEnemies(int count, int movePeriod) {
-        enemySpawner.spawnEnemies(count, movePeriod);
+    public void spawnEnemies() {
+        enemySpawner.spawnEnemies();
     }
 
     // ================================================================
@@ -152,7 +118,6 @@ public final class Spawner {
 
     private static final class BonusWaveSpawner {
         private final Board board;
-        private final int tickMillis;
         private final Random rng;
 
         private boolean bonusEnabled = false;
@@ -163,25 +128,16 @@ public final class Spawner {
          */
         private int bonusRemaining = 0;
 
-        private int bonusPointsPer = 0;
-
-        private int spawnMinTicks = 0;
-        private int spawnMaxTicks = 0;
-
-        private int lifeMinTicks = 0;
-        private int lifeMaxTicks = 0;
-
         private int ticksUntilNextSpawn = -1;
 
-        private BonusWaveSpawner(Board board, int tickMillis, Random rng) {
+        private BonusWaveSpawner(Board board, Random rng) {
             this.board = board;
-            this.tickMillis = tickMillis;
             this.rng = rng;
         }
 
         private int secondsToTicks(int seconds) {
             if (seconds <= 0) return 0;
-            double ticks = (seconds * 1000.0) / tickMillis;
+            double ticks = (seconds * 1000.0) / GameConfig.DEFAULT_TICK_MS;
             return Math.max(1, (int) Math.round(ticks));
         }
 
@@ -194,8 +150,8 @@ public final class Spawner {
                 ticksUntilNextSpawn = -1;
                 return;
             }
-            int range = Math.max(0, spawnMaxTicks - spawnMinTicks);
-            ticksUntilNextSpawn = spawnMinTicks + (range == 0 ? 0 : rng.nextInt(range + 1));
+            int range = Math.max(0, GameConfig.spawnMaxSec - GameConfig.spawnMinSec);
+            ticksUntilNextSpawn = GameConfig.spawnMinSec + (range == 0 ? 0 : rng.nextInt(range + 1));
         }
 
         private static void chooseFirstKRandomInPlace(List<Position> list, int count, Random rng) {
@@ -207,50 +163,23 @@ public final class Spawner {
             }
         }
 
-        public void spawnBonusRewards(BonusConfig config) {
-            Objects.requireNonNull(config);
-            spawnBonusRewards(config.totalBonusesToAppear,
-                    config.pointsPer,
-                    config.spawnMinSec,
-                    config.spawnMaxSec,
-                    config.lifeMinSec,
-                    config.lifeMaxSec);
-        }
 
-        public void spawnBonusRewards(int totalBonusesToAppear,
-                                      int pointsPer,
-                                      int spawnMinSec,
-                                      int spawnMaxSec,
-                                      int lifeMinSec,
-                                      int lifeMaxSec) {
-            if (totalBonusesToAppear <= 0) {
+        public void spawnBonusRewards() {
+            if (GameConfig.bonusRewardCount <= 0) {
                 bonusEnabled = false;
                 bonusRemaining = 0;
                 return;
             }
 
             int freeCells = freeFloorCells().size();
-            if (totalBonusesToAppear > freeCells) {
+            if (GameConfig.bonusRewardCount > freeCells) {
                 throw new IllegalArgumentException(
-                        "totalBonusesToAppear (" + totalBonusesToAppear +
+                        "GameConfig.bonusRewardCount (" + GameConfig.bonusRewardCount +
                                 ") is larger than free floor cells (" + freeCells + ")");
             }
 
             this.bonusEnabled = true;
-            this.bonusRemaining = totalBonusesToAppear;
-            this.bonusPointsPer = pointsPer;
-
-            this.spawnMinTicks = secondsToTicks(spawnMinSec);
-            this.spawnMaxTicks = secondsToTicks(spawnMaxSec);
-            this.lifeMinTicks = secondsToTicks(lifeMinSec);
-            this.lifeMaxTicks = secondsToTicks(lifeMaxSec);
-
-            if (spawnMaxTicks < spawnMinTicks) {
-                spawnMaxTicks = spawnMinTicks;
-            }
-            if (lifeMaxTicks < lifeMinTicks) {
-                lifeMaxTicks = lifeMinTicks;
-            }
+            this.bonusRemaining = GameConfig.bonusRewardCount;
 
             scheduleNextBonusSpawn();
         }
@@ -273,11 +202,11 @@ public final class Spawner {
             int toSpawn = Math.min(bonusRemaining, free.size());
             chooseFirstKRandomInPlace(free, toSpawn, rng);
 
-            int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
+            int lifeRange = Math.max(1, GameConfig.lifeMaxSec - GameConfig.lifeMinSec + 1);
             for (int i = 0; i < toSpawn; i++) {
                 Position pos = free.get(i);
-                int lifeTicks = lifeMinTicks + rng.nextInt(lifeRange);
-                BonusReward bonus = new BonusReward(pos, bonusPointsPer, lifeTicks);
+                int lifeTicks = GameConfig.lifeMinSec + rng.nextInt(lifeRange);
+                BonusReward bonus = new BonusReward(pos, lifeTicks);
                 board.registerCollectible(bonus);
             }
 
@@ -313,28 +242,28 @@ public final class Spawner {
             return SpawnerHelper.freeFloorCells(board);
         }
 
-        private static void chooseFirstKRandomInPlace(List<Position> list, int count, Random rng) {
+        private static void chooseFirstKRandomInPlace(List<Position> list, Random rng) {
             int n = list.size();
-            int k = Math.min(count, n);
+            int k = Math.min(GameConfig.regularRewardCount, n);
             for (int i = 0; i < k; i++) {
                 int j = i + rng.nextInt(n - i);
                 if (i != j) Collections.swap(list, i, j);
             }
         }
 
-        public void spawnRegularRewards(int count, int pointsPer) {
-            if (count <= 0) return;
+        public void spawnRegularRewards() {
+            if (GameConfig.regularRewardCount <= 0) return;
 
             List<Position> free = freeFloorCells();
-            if (free.size() < count) {
+            if (free.size() < GameConfig.regularRewardCount) {
                 throw new IllegalStateException(
-                        "Not enough free cells to place " + count + " regular rewards.");
+                        "Not enough free cells to place " + GameConfig.regularRewardCount + " regular rewards.");
             }
 
-            chooseFirstKRandomInPlace(free, count, rng);
-            for (int i = 0; i < count; i++) {
+            chooseFirstKRandomInPlace(free, rng);
+            for (int i = 0; i < GameConfig.regularRewardCount; i++) {
                 Position p = free.get(i);
-                RegularReward r = new RegularReward(p, pointsPer);
+                RegularReward r = new RegularReward(p);
                 board.registerCollectible(r);
             }
         }
@@ -359,8 +288,7 @@ public final class Spawner {
             return SpawnerHelper.freeFloorCells(board);
         }
 
-        public void spawnPunishments(int count, int penaltyPer) {
-            if (count <= 0) return;
+        public void spawnPunishments() {
 
             List<Position> free = freeFloorCells();
             Position start = board.start();
@@ -389,11 +317,11 @@ public final class Spawner {
                     continue;
                 }
 
-                Punishment p = new Punishment(candidate, penaltyPer);
+                Punishment p = new Punishment(candidate);
                 board.registerCollectible(p);
                 placed.add(candidate);
 
-                if (placed.size() >= count) break outer;
+                if (placed.size() >= GameConfig.numPunishments) break;
             }
         }
     }
@@ -417,9 +345,7 @@ public final class Spawner {
             return SpawnerHelper.freeFloorCells(board);
         }
 
-        public void spawnEnemies(int count, int movePeriod) {
-            if (count <= 0) return;
-
+        public void spawnEnemies() {
             List<Position> free = freeFloorCells();
             Position start = board.start();
             Position exit  = board.exit();
@@ -438,7 +364,7 @@ public final class Spawner {
 
             int placed = 0;
             for (Position pos : free) {
-                if (placed >= count) break;
+                if (placed >= GameConfig.numEnemies) break;
 
                 blocked.clear();
                 blocked.addAll(placedEnemies);
@@ -448,7 +374,7 @@ public final class Spawner {
                     continue;
                 }
 
-                MovingEnemy e = new MovingEnemy(pos, movePeriod);
+                MovingEnemy e = new MovingEnemy(pos, GameConfig.enemyMovePeriod);
                 board.registerEnemy(e);
                 placedEnemies.add(pos);
                 placed++;

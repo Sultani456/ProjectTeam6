@@ -1,5 +1,6 @@
 package com.project.team6.model.collectibles.rewards;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Position;
 
 /**
@@ -15,11 +16,10 @@ public final class BonusReward extends Reward {
      * Creates a bonus reward.
      *
      * @param position       board position of the bonus
-     * @param value          score value when collected
      * @param lifetimeTicks  ticks to live. 0 or less means persistent
      */
-    public BonusReward(Position position, int value, int lifetimeTicks) {
-        super(position, value, /*requiredToWin=*/false);
+    public BonusReward(Position position, int lifetimeTicks) {
+        super(position, GameConfig.bonusPoints, /*requiredToWin=*/false);
         this.lifetimeTicks = lifetimeTicks;
     }
 

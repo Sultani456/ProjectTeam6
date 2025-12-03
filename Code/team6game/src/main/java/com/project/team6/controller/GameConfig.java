@@ -13,6 +13,7 @@ public class GameConfig {
     // rendering
     public static final int TILE = 36;         // size of one board tile in pixels
     public static final int HUD_H = 36;        // height of HUD strip at bottom
+
     // --- colours for background / grid / floor ---
     public static final Color BACKGROUND_COLOR = Color.BLACK;
     public static final Color FLOOR_COLOR      = new Color(28, 28, 30);
@@ -42,10 +43,10 @@ public class GameConfig {
     public static int rows = 24;
     public static int cols = 24;
 
-    public static int regularRewardCount = 15;
+    public static int regularRewardCount = 10;
     public static int regularPoints = 10;
 
-    public static int bonusRewardCount = 5;
+    public static int bonusRewardCount = 2;
     public static int bonusPoints = 20;
 
     public static int spawnMinSec = 3;
@@ -53,10 +54,10 @@ public class GameConfig {
     public static int lifeMinSec = 3;
     public static int lifeMaxSec = 6;
 
-    public static int numPunishments = 8;
+    public static int numPunishments = 5;
     public static int punishmentPenalty = -5;
 
-    public static int numEnemies = 5;
+    public static int numEnemies = 0;
     public static int enemyMovePeriod = 10;
 
     // Barrier density for RANDOM barrier mode (fraction of interior cells)
