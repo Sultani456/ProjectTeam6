@@ -249,16 +249,11 @@ public final class GamePanel extends JPanel {
     private void drawCellSpritesForImages(Graphics2D g, Cell cell, int px, int py, Position pos) {
         // floor background
         g.setColor(FLOOR_COLOR_IMAGES);
-//                    g.setColor(FLOOR_COLOR);
         g.fillRect(px, py, TILE, TILE);
 
         // EXPLOSION EFFECT (if caught)
         if (board.explosionPos() != null
                 && board.explosionPos().equals(pos)) {
-
-            // draw powder-blue or terrain first
-            g.setColor(FLOOR_COLOR_IMAGES);
-            g.fillRect(px, py, TILE, TILE);
 
             // then explosion sprite
             g.drawImage(imgExplosion, px, py, TILE, TILE, null);
@@ -272,10 +267,10 @@ public final class GamePanel extends JPanel {
             case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
             case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
             case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
-            default -> {
-                g.setColor(FLOOR_COLOR_IMAGES);
-                g.fillRect(px, py, TILE, TILE);
-            }
+//            default -> {
+//                g.setColor(FLOOR_COLOR_IMAGES);
+//                g.fillRect(px, py, TILE, TILE);
+//            }
         }
 
         // --- 2) Draw collectibles ---
