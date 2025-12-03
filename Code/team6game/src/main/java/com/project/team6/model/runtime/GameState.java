@@ -131,7 +131,7 @@ public final class GameState {
     /**
      * Returns the associated scoreboard.
      *
-     * @return scoreboard reference
+     * @return scoreeboard reference
      */
     public Scoreboard scoreboard() {
         return scoreboard;
