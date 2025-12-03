@@ -22,6 +22,7 @@ import java.util.Objects;
  */
 public final class GameController {
 
+    /** Tick duration in milliseconds. */
     public static final int DEFAULT_TICK_MS = 120;
 
     private final Board board;
@@ -89,7 +90,9 @@ public final class GameController {
 
         inputMap.put(key, name);
         actionMap.put(name, new AbstractAction() {
-            @Override public void actionPerformed(ActionEvent e) { action.run(); }
+            @Override public void actionPerformed(ActionEvent e) {
+                action.run();
+            }
         });
     }
 
@@ -110,7 +113,7 @@ public final class GameController {
                 view.repaint();
             }
             case COLLISION -> lose("You were caught!");
-            // BLOCKED case removed: blocked moves just do nothing
+            // BLOCKED moves: do nothing (no separate branch needed)
         }
     }
 
@@ -119,6 +122,12 @@ public final class GameController {
     // ---------------------------------------------------------------
 
     private void applyCollectible(CollectibleObject obj) {
+        updateScoreForCollectible(obj);
+        handleCollectibleEvents(obj);
+    }
+
+    /** Handles only score and required-count changes. */
+    private void updateScoreForCollectible(CollectibleObject obj) {
         int val = obj.value();
 
         if (obj.isRequiredToWin()) {
@@ -128,12 +137,15 @@ public final class GameController {
         } else {
             scoreboard.penalize(val);
         }
+    }
 
+    /** Handles non-score side effects (spawner + UI). */
+    private void handleCollectibleEvents(CollectibleObject obj) {
         notifyBonusIfNeeded(obj);
-
         view.onCollected(obj);
     }
 
+    /** Small helper for bonus-specific spawning logic. */
     private void notifyBonusIfNeeded(CollectibleObject obj) {
         if (obj instanceof BonusReward) {
             spawner.notifyBonusCollected();
