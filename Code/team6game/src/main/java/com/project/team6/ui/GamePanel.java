@@ -159,71 +159,18 @@ public final class GamePanel extends JPanel {
         int originX = 0;
         int originY = HUD_H;
 
-        if (renderMode == RenderMode.IMAGES) {
-            // ===== IMAGE MODE =====
-            for (int row = 0; row < board.rows(); row++) {
-                for (int col = 0; col < board.cols(); col++) {
-                    Position pos = new Position(col, row);
-                    Cell cell = board.cellAt(pos);
+        for (int row = 0; row < board.rows(); row++) {
+            for (int col = 0; col < board.cols(); col++) {
+                Position pos = new Position(col, row);
+                Cell cell = board.cellAt(pos);
 
-                    int px = originX + col * TILE;
-                    int py = originY + row * TILE;
+                int px = originX + col * TILE;
+                int py = originY + row * TILE;
 
-                    drawCellSprites(g, cell, px, py, pos);
-                }
-            }
-        } else {
-            // ===== SYMBOL MODE (old ASCII-style rendering) =====
-            for (int row = 0; row < board.rows(); row++) {
-                for (int col = 0; col < board.cols(); col++) {
-                    Position pos = new Position(col, row);
-                    Cell cell    = board.cellAt(pos);
-
-                    int px = originX + col * TILE;
-                    int py = originY + row * TILE;
-
-                    // background per terrain (optional – you can simplify if you like)
-                    switch (cell.terrain()) {
-                        case WALL, BARRIER -> g.setColor(new Color(55, 55, 55));
-                        case START         -> g.setColor(new Color(0, 128, 0));
-                        case EXIT          -> g.setColor(new Color(128, 0, 0));
-                        default            -> g.setColor(FLOOR_COLOR);
-                    }
-                    g.fillRect(px, py, TILE, TILE);
-
-                    // grid outline
-                    g.setColor(GRID_COLOR);
-                    g.drawRect(px, py, TILE, TILE);
-
-                    // ASCII symbol from Cell.symbol()
-                    char sym = cell.symbol();
-                    if (sym != ' ') {
-                        // choose colour based on symbol
-                        Color fg = switch (sym) {
-                            case 'P' -> new Color(90, 210, 250);   // player
-                            case 'B' -> new Color(210, 90, 120);   // enemy / bad guy
-                            case '.' -> new Color(255, 255, 200);  // regular reward
-                            case 'o' -> new Color(255, 210, 120);  // bonus reward
-                            case '*' -> new Color(255, 120, 120);  // punishment
-                            case 'C' -> new Color(255, 255, 255);  // collision
-                            case 'X' -> new Color(160, 160, 160);  // wall
-                            case '#' -> new Color(200, 200, 200);  // barrier
-                            case 'S' -> new Color(120, 255, 120);  // start
-                            case 'E' -> new Color(255, 120, 120);  // exit
-                            default  -> Color.WHITE;
-                        };
-
-                        g.setColor(fg);
-                        g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));
-
-                        FontMetrics fm = g.getFontMetrics();
-                        int cw = fm.charWidth(sym);
-                        int ch = fm.getAscent();
-
-                        int cx = px + (TILE - cw) / 2;
-                        int cy = py + (TILE + ch) / 2 - 4;
-                        g.drawString(String.valueOf(sym), cx, cy);
-                    }
+                if (renderMode == RenderMode.IMAGES) {
+                    drawCellSpritesForImages(g, cell, px, py, pos);
+                } else {        // RenderMode.SYMBOLS
+                    drawCellSpritesForSymbols(g, cell, px, py, pos);
                 }
             }
         }
@@ -327,7 +274,7 @@ public final class GamePanel extends JPanel {
      * @param px  x in pixels
      * @param py  y in pixels
      */
-    private void drawCellSprites(Graphics2D g, Cell cell, int px, int py, Position pos) {
+    private void drawCellSpritesForImages(Graphics2D g, Cell cell, int px, int py, Position pos) {
         // floor background
         g.setColor(FLOOR_COLOR_IMAGES);
 //                    g.setColor(FLOOR_COLOR);
@@ -384,5 +331,50 @@ public final class GamePanel extends JPanel {
         // --- 5) Draw grid outline ---
         g.setColor(GRID_COLOR);
         g.drawRect(px, py, TILE, TILE);
+    }
+
+    private void drawCellSpritesForSymbols(Graphics2D g, Cell cell, int px, int py, Position pos) {
+        // background per terrain
+        switch (cell.terrain()) {
+            case WALL, BARRIER -> g.setColor(new Color(55, 55, 55));
+            case START         -> g.setColor(new Color(0, 128, 0));
+            case EXIT          -> g.setColor(new Color(128, 0, 0));
+            default            -> g.setColor(FLOOR_COLOR);
+        }
+        g.fillRect(px, py, TILE, TILE);
+
+        // grid outline
+        g.setColor(GRID_COLOR);
+        g.drawRect(px, py, TILE, TILE);
+
+        // ASCII symbol from Cell.symbol()
+        char sym = cell.symbol();
+        if (sym != ' ') {
+            // choose colour based on symbol
+            Color fg = switch (sym) {
+                case 'P' -> new Color(90, 210, 250);   // player
+                case 'B' -> new Color(210, 90, 120);   // enemy / bad guy
+                case '.' -> new Color(255, 255, 200);  // regular reward
+                case 'o' -> new Color(255, 210, 120);  // bonus reward
+                case '*' -> new Color(255, 120, 120);  // punishment
+                case 'C' -> new Color(255, 255, 255);  // collision
+                case 'X' -> new Color(160, 160, 160);  // wall
+                case '#' -> new Color(200, 200, 200);  // barrier
+                case 'S' -> new Color(120, 255, 120);  // start
+                case 'E' -> new Color(255, 120, 120);  // exit
+                default  -> Color.WHITE;
+            };
+
+            g.setColor(fg);
+            g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));
+
+            FontMetrics fm = g.getFontMetrics();
+            int cw = fm.charWidth(sym);
+            int ch = fm.getAscent();
+
+            int cx = px + (TILE - cw) / 2;
+            int cy = py + (TILE + ch) / 2 - 4;
+            g.drawString(String.valueOf(sym), cx, cy);
+        }
     }
 }
