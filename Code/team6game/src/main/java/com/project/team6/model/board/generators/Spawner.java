@@ -86,7 +86,7 @@ public final class Spawner {
 
     /**
      * Configures timed bonus rewards.
-     * Quota decreases when bonuses spawn.
+     * Quota decreases when bonuses are collected.
      */
     public void spawnBonusRewards() {
         bonusWaveSpawner.spawnBonusRewards();
@@ -273,17 +273,16 @@ public final class Spawner {
                 board.registerCollectible(bonus);
             }
 
-            bonusRemaining -= toSpawn;
-            if (bonusRemaining <= 0) {
-                disableBonuses();
-                return;
-            }
-
             scheduleNextBonusSpawn();
         }
 
         public void notifyBonusCollected() {
-            // Compatibility method.
+            if (!bonusEnabled || bonusRemaining <= 0) return;
+
+            bonusRemaining--;
+            if (bonusRemaining <= 0) {
+                disableBonuses();
+            }
         }
     }
 
