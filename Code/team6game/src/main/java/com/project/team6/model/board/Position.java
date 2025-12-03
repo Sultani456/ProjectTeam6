@@ -33,38 +33,6 @@ public final class Position {
     public int row() { return row; }
 
     /**
-     * Computes Manhattan distance to another position.
-     *
-     * @param other target position
-     * @return |x1 - x2| + |y1 - y2|
-     */
-    public int manhattanTo(Position other) { return Math.abs(column - other.column) + Math.abs(row - other.row); }
-
-    /**
-     * Returns a new position translated by a delta.
-     *
-     * @param dx change in x
-     * @param dy change in y
-     * @return new position at (x + dx, y + dy)
-     */
-    public Position translate(int dx, int dy) { return new Position(column + dx, row + dy); }
-
-    /**
-     * Returns the four direct neighbors.
-     * Order is right, left, down, up.
-     *
-     * @return list of positions adjacent in 4 directions
-     */
-    public List<Position> neighbors4() {
-        return List.of(
-                new Position(column + 1, row),
-                new Position(column - 1, row),
-                new Position(column, row + 1),
-                new Position(column, row - 1)
-        );
-    }
-
-    /**
      * Checks structural equality by column and row.
      *
      * @param o other object
@@ -75,13 +43,6 @@ public final class Position {
         if (!(o instanceof Position p)) return false;
         return column == p.column && row == p.row;
     }
-
-    /**
-     * Hash code based on row and column.
-     *
-     * @return hash value
-     */
-    @Override public int hashCode() { return Objects.hash(column, row); }
 
     /**
      * Returns a short string form.
