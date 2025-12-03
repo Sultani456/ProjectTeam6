@@ -62,6 +62,25 @@ public final class GamePanel extends JPanel {
     private static final Color FLOOR_COLOR_IMAGES = new Color(180,200,225);
     private static final Color GRID_COLOR       = new Color(20, 20, 22);
 
+    private static final Color SYMBOLBACKGROUND_WALL_COLOR = new Color(55, 55, 55);
+    private static final Color SYMBOLBACKGROUND_START_COLOR = new Color(0, 128, 0);
+    private static final Color SYMBOLBACKGROUND_EXIT_COLOR = new Color(128, 0, 0);
+
+    private static final Color SYMBOL_PLAYER_COLOR = new Color(90, 210, 250);
+    private static final Color SYMBOL_ENEMY_COLOR = new Color(210, 90, 120);
+    private static final Color SYMBOL_REGULARREWARD_COLOR = new Color(255, 255, 200);
+    private static final Color SYMBOL_BONUSREWARD_COLOR = new Color(255, 210, 120);
+    private static final Color SYMBOL_PUNISHMENT_COLOR = new Color(255, 120, 120);
+    private static final Color SYMBOL_COLLISION_COLOR = new Color(255, 255, 255);
+    private static final Color SYMBOL_WALL_COLOR = new Color(160, 160, 160);
+    private static final Color SYMBOL_BARRIER_COLOR = new Color(200, 200, 200);
+    private static final Color SYMBOL_START_COLOR = new Color(120, 255, 120);
+    private static final Color SYMBOL_EXIT_COLOR = new Color(255, 120, 120);
+
+    private static final Color BANNER_BACKGROUND = new Color(0, 0, 0, 90);
+
+    private static final Color HUD_BACKGROUND = new Color(24, 24, 24);
+
     // model references
     private final Board board;
     private final Scoreboard scoreboard;
@@ -159,160 +178,26 @@ public final class GamePanel extends JPanel {
         int originX = 0;
         int originY = HUD_H;
 
-        if (renderMode == RenderMode.IMAGES) {
-            // ===== IMAGE MODE =====
-            for (int row = 0; row < board.rows(); row++) {
-                for (int col = 0; col < board.cols(); col++) {
-                    Position pos = new Position(col, row);
-                    Cell cell = board.cellAt(pos);
+        // draw sprites
+        for (int row = 0; row < board.rows(); row++) {
+            for (int col = 0; col < board.cols(); col++) {
+                Position pos = new Position(col, row);
+                Cell cell = board.cellAt(pos);
 
-                    int px = originX + col * TILE;
-                    int py = originY + row * TILE;
+                int px = originX + col * TILE;
+                int py = originY + row * TILE;
 
-                    // floor background
-                    g.setColor(FLOOR_COLOR_IMAGES);
-//                    g.setColor(FLOOR_COLOR);
-                    g.fillRect(px, py, TILE, TILE);
-
-                    // EXPLOSION EFFECT (if caught)
-                    if (board.explosionPos() != null
-                            && board.explosionPos().equals(pos)) {
-
-                        // draw powder-blue or terrain first
-                        g.setColor(FLOOR_COLOR_IMAGES);
-                        g.fillRect(px, py, TILE, TILE);
-
-                        // then explosion sprite
-                        g.drawImage(imgExplosion, px, py, TILE, TILE, null);
-
-                        // skip all other drawing for this cell
-                        continue;
-                    }
-
-                    // --- 1) Draw terrain background ---
-                    switch (cell.terrain()) {
-                        case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
-                        case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
-                        case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
-                        default -> {
-                            g.setColor(FLOOR_COLOR_IMAGES);
-                            g.fillRect(px, py, TILE, TILE);
-                        }
-                    }
-
-                    // --- 2) Draw collectibles ---
-                    var item = cell.item();
-                    if (item instanceof RegularReward) {
-                        g.drawImage(imgRegularReward, px, py, TILE, TILE, null);
-                    } else if (item instanceof BonusReward) {
-                        g.drawImage(imgBonusReward, px, py, TILE, TILE, null);
-                    } else if (item instanceof Punishment) {
-                        g.drawImage(imgPunishment, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 3) Draw enemies ---
-                    if (cell.hasEnemy()) {
-                        g.drawImage(imgEnemy, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 4) Draw player last (on top) ---
-                    if (cell.hasPlayer()) {
-                        g.drawImage(imgPlayer, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 5) Draw grid outline ---
-                    g.setColor(GRID_COLOR);
-                    g.drawRect(px, py, TILE, TILE);
-                }
-            }
-        } else {
-            // ===== SYMBOL MODE (old ASCII-style rendering) =====
-            for (int row = 0; row < board.rows(); row++) {
-                for (int col = 0; col < board.cols(); col++) {
-                    Position pos = new Position(col, row);
-                    Cell cell    = board.cellAt(pos);
-
-                    int px = originX + col * TILE;
-                    int py = originY + row * TILE;
-
-                    // background per terrain (optional – you can simplify if you like)
-                    switch (cell.terrain()) {
-                        case WALL, BARRIER -> g.setColor(new Color(55, 55, 55));
-                        case START         -> g.setColor(new Color(0, 128, 0));
-                        case EXIT          -> g.setColor(new Color(128, 0, 0));
-                        default            -> g.setColor(FLOOR_COLOR);
-                    }
-                    g.fillRect(px, py, TILE, TILE);
-
-                    // grid outline
-                    g.setColor(GRID_COLOR);
-                    g.drawRect(px, py, TILE, TILE);
-
-                    // ASCII symbol from Cell.symbol()
-                    char sym = cell.symbol();
-                    if (sym != ' ') {
-                        // choose colour based on symbol
-                        Color fg = switch (sym) {
-                            case 'P' -> new Color(90, 210, 250);   // player
-                            case 'B' -> new Color(210, 90, 120);   // enemy / bad guy
-                            case '.' -> new Color(255, 255, 200);  // regular reward
-                            case 'o' -> new Color(255, 210, 120);  // bonus reward
-                            case '*' -> new Color(255, 120, 120);  // punishment
-                            case 'C' -> new Color(255, 255, 255);  // collision
-                            case 'X' -> new Color(160, 160, 160);  // wall
-                            case '#' -> new Color(200, 200, 200);  // barrier
-                            case 'S' -> new Color(120, 255, 120);  // start
-                            case 'E' -> new Color(255, 120, 120);  // exit
-                            default  -> Color.WHITE;
-                        };
-
-                        g.setColor(fg);
-                        g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));
-
-                        FontMetrics fm = g.getFontMetrics();
-                        int cw = fm.charWidth(sym);
-                        int ch = fm.getAscent();
-
-                        int cx = px + (TILE - cw) / 2;
-                        int cy = py + (TILE + ch) / 2 - 4;
-                        g.drawString(String.valueOf(sym), cx, cy);
-                    }
+                if (renderMode == RenderMode.IMAGES) {
+                    drawCellSpritesForImages(g, cell, px, py, pos);
+                } else {        // RenderMode.SYMBOLS
+                    drawCellSpritesForSymbols(g, cell, px, py, pos);
                 }
             }
         }
 
         // banner text under the board
         if (bannerText != null && !bannerText.isBlank()) {
-            g.setFont(getFont().deriveFont(Font.BOLD, 20f));
-            String text = bannerText;
-
-            FontMetrics fm = g.getFontMetrics();
-            int textW = fm.stringWidth(text);
-            int textH = fm.getHeight();
-
-            // Board area (under the HUD)
-            int boardW = board.cols() * TILE;
-            int boardH = board.rows() * TILE;
-
-            int centerX = boardW / 2;
-            int centerY = HUD_H + boardH / 2;   // middle of the board area
-
-            int padX = 24;
-            int padY = 12;
-            int rectW = textW + padX * 2;
-            int rectH = textH + padY * 2;
-            int rectX = centerX - rectW / 2;
-            int rectY = centerY - rectH / 2;
-
-            // Translucent black background
-            g.setColor(new Color(0, 0, 0, 90));   // alpha 170 ~= 2/3 opaque
-            g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
-
-            // White text centered in the box
-            g.setColor(Color.WHITE);
-            int textX = centerX - textW / 2;
-            int textY = rectY + padY + fm.getAscent();
-            g.drawString(text, textX, textY);
+            drawBanner(g);
         }
 
         g.dispose();
@@ -326,7 +211,7 @@ public final class GamePanel extends JPanel {
      */
     private void paintHud(Graphics2D g) {
         // HUD strip occupies the top HUD_H pixels of the panel
-        g.setColor(new Color(24, 24, 24));
+        g.setColor(HUD_BACKGROUND);
         g.fillRect(0, 0, getWidth(), HUD_H);
 
         g.setColor(Color.WHITE);
@@ -380,7 +265,34 @@ public final class GamePanel extends JPanel {
      * @param px  x in pixels
      * @param py  y in pixels
      */
-    private void drawCellSprites(Graphics2D g, Cell cell, int px, int py) {
+    private void drawCellSpritesForImages(Graphics2D g, Cell cell, int px, int py, Position pos) {
+        // floor background
+        g.setColor(FLOOR_COLOR_IMAGES);
+        g.fillRect(px, py, TILE, TILE);
+
+        // EXPLOSION EFFECT (if caught)
+        if (board.explosionPos() != null
+                && board.explosionPos().equals(pos)) {
+
+            // then explosion sprite
+            g.drawImage(imgExplosion, px, py, TILE, TILE, null);
+
+            // skip all other drawing for this cell
+            return;
+        }
+
+        // --- 1) Draw terrain background ---
+        switch (cell.terrain()) {
+            case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
+            case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
+            case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
+//            default -> {
+//                g.setColor(FLOOR_COLOR_IMAGES);
+//                g.fillRect(px, py, TILE, TILE);
+//            }
+        }
+
+        // --- 2) Draw collectibles ---
         // --- items first (under characters) ---
         var item = cell.item();
         if (item instanceof RegularReward) {
@@ -391,13 +303,97 @@ public final class GamePanel extends JPanel {
             g.drawImage(imgPunishment, px, py, TILE, TILE, null);
         }
 
-        // --- characters on top ---
+        // --- 3) Draw enemies ---
         // Enemy under Player so Player appears “in front”
         if (cell.hasEnemy()) {
             g.drawImage(imgEnemy, px, py, TILE, TILE, null);
         }
+
+        // --- 4) Draw player last (on top) ---
         if (cell.hasPlayer()) {
             g.drawImage(imgPlayer, px, py, TILE, TILE, null);
         }
+
+        // --- 5) Draw grid outline ---
+        g.setColor(GRID_COLOR);
+        g.drawRect(px, py, TILE, TILE);
+    }
+
+    private void drawCellSpritesForSymbols(Graphics2D g, Cell cell, int px, int py, Position pos) {
+        // background per terrain
+        switch (cell.terrain()) {
+            case WALL, BARRIER -> g.setColor(SYMBOLBACKGROUND_WALL_COLOR);
+            case START         -> g.setColor(SYMBOLBACKGROUND_START_COLOR);
+            case EXIT          -> g.setColor(SYMBOLBACKGROUND_EXIT_COLOR);
+            default            -> g.setColor(FLOOR_COLOR);
+        }
+        g.fillRect(px, py, TILE, TILE);
+
+        // grid outline
+        g.setColor(GRID_COLOR);
+        g.drawRect(px, py, TILE, TILE);
+
+        // ASCII symbol from Cell.symbol()
+        char sym = cell.symbol();
+        if (sym != ' ') {
+            // choose colour based on symbol
+            Color fg = switch (sym) {
+                case 'P' ->   SYMBOL_PLAYER_COLOR;           // player
+                case 'B' ->   SYMBOL_ENEMY_COLOR;            // enemy / bad guy
+                case '.' ->   SYMBOL_REGULARREWARD_COLOR;    // regular reward
+                case 'o' ->   SYMBOL_BONUSREWARD_COLOR;      // bonus reward
+                case '*' ->   SYMBOL_PUNISHMENT_COLOR;       // punishment
+                case 'C' ->   SYMBOL_COLLISION_COLOR;        // collision
+                case 'X' ->   SYMBOL_WALL_COLOR;             // wall
+                case '#' ->   SYMBOL_BARRIER_COLOR;          // barrier
+                case 'S' ->   SYMBOL_START_COLOR;            // start
+                case 'E' ->   SYMBOL_EXIT_COLOR;             // exit
+                default  -> Color.WHITE;
+            };
+
+            g.setColor(fg);
+            g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));
+
+            FontMetrics fm = g.getFontMetrics();
+            int cw = fm.charWidth(sym);
+            int ch = fm.getAscent();
+
+            int cx = px + (TILE - cw) / 2;
+            int cy = py + (TILE + ch) / 2 - 4;
+            g.drawString(String.valueOf(sym), cx, cy);
+        }
+    }
+
+    private void drawBanner(Graphics2D g) {
+        g.setFont(getFont().deriveFont(Font.BOLD, 20f));
+        String text = bannerText;
+
+        FontMetrics fm = g.getFontMetrics();
+        int textW = fm.stringWidth(text);
+        int textH = fm.getHeight();
+
+        // Board area (under the HUD)
+        int boardW = board.cols() * TILE;
+        int boardH = board.rows() * TILE;
+
+        int centerX = boardW / 2;
+        int centerY = HUD_H + boardH / 2;   // middle of the board area
+
+        int padX = 24;
+        int padY = 12;
+        int rectW = textW + padX * 2;
+        int rectH = textH + padY * 2;
+        int rectX = centerX - rectW / 2;
+        int rectY = centerY - rectH / 2;
+
+        // Translucent black background
+        g.setColor(BANNER_BACKGROUND);   // alpha 170 ~= 2/3 opaque
+        g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
+
+        // White text centered in the box
+        g.setColor(Color.WHITE);
+        int textX = centerX - textW / 2;
+        int textY = rectY + padY + fm.getAscent();
+        g.drawString(text, textX, textY);
     }
 }

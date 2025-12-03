@@ -29,24 +29,7 @@ public abstract class Enemy extends CharacterObject {
      * @param board     current board
      * @param playerPos player position
      */
-    public void tick(Board board, Position playerPos) {
-        Direction d = decide(board, playerPos);
-        if (d == null) {
-            return; // Stays still this tick
-        }
-
-        MoveResult result = board.step(this, d);
-        onPostStep(board, result);
-    }
-
-    /**
-     * Hook for reacting to a move attempt result.
-     * Subclasses may override.
-     *
-     * @param board  current board
-     * @param result move result
-     */
-    protected void onPostStep(Board board, MoveResult result) { }
+    public abstract void tick(Board board, Position playerPos);
 
     /**
      * Chooses a movement direction.

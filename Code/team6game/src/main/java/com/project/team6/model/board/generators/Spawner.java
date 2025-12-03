@@ -1,7 +1,6 @@
 package com.project.team6.model.board.generators;
 
 import com.project.team6.model.board.Board;
-import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.generators.helpers.SpawnerHelper;
 import com.project.team6.model.characters.enemies.MovingEnemy;
@@ -22,14 +21,6 @@ public final class Spawner {
      */
     private final Board board;
 
-    /** Total rows in the board. */
-    private final int rows;
-
-    /** Total columns in the board. */
-    private final int cols;
-
-    /** Direct reference to the board grid. */
-    private final Cell[][] grid;
 
     /**
      * Tick length in milliseconds. Must match the controller tick.
@@ -80,9 +71,6 @@ public final class Spawner {
      */
     public Spawner(Board board, int tickMillis) {
         this.board = Objects.requireNonNull(board);
-        this.rows = board.rows();
-        this.cols = board.cols();
-        this.grid = board.grid();
 
         this.tickMillis = tickMillis;
         this.rng = new Random();
@@ -187,7 +175,7 @@ public final class Spawner {
             Position pos = free.get(i);
             int lifeTicks = lifeMinTicks + rng.nextInt(lifeRange);
             BonusReward bonus = new BonusReward(pos, bonusPointsPer, lifeTicks);
-            board.registerBonusReward(bonus);
+            board.registerCollectible(bonus);
         }
 
         // Quota decreases only on collection
@@ -243,7 +231,7 @@ public final class Spawner {
         for (int i = 0; i < count; i++) {
             Position p = free.get(i);
             RegularReward r = new RegularReward(p, pointsPer);
-            board.registerRegularReward(r);
+            board.registerCollectible(r);
         }
     }
 
@@ -300,7 +288,7 @@ public final class Spawner {
 
             // Passed checks, place punishment
             Punishment p = new Punishment(candidate, penaltyPer);
-            board.registerPunishment(p);
+            board.registerCollectible(p);
             placed.add(candidate);
 
             if (placed.size() >= count) break outer;
