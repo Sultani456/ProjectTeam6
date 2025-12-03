@@ -1,139 +1,111 @@
 package com.project.team6.model.runtime;
 
-import com.project.team6.model.board.Position;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
- * Holds the current game status.
- * The controller updates it. Views read it.
+ * Tracks score, required collectibles, and elapsed time.
+ * The controller starts and stops it. Collectibles update the score here.
  */
-public final class GameState {
+public final class Scoreboard {
+
+    /** Current score. Can be positive or negative. */
+    private int score;
+
+    /** How many required rewards are still needed to win. */
+    private int requiredRemaining;
+
+    /** When the timer started. Null if not started yet. */
+    private Instant startedAt;
+
+    /** When the timer stopped. Null if still running. */
+    private Instant stoppedAt;
 
     /**
-     * Overall state of the game.
-     */
-    public enum Status { RUNNING, WON, LOST }
-
-    /** Current status flag. Starts in running state. */
-    private Status status = Status.RUNNING;
-
-    /** Player position snapshot. */
-    private Position player;
-
-    /** Enemy position snapshots. */
-    private final Set<Position> enemies = new HashSet<>();
-
-    /** Scoreboard for time and score (kept for reference, not lifecycle). */
-    private final Scoreboard scoreboard;
-
-    /**
-     * Creates a game state snapshot.
+     * Creates a scoreboard.
      *
-     * @param playerStart starting player position
-     * @param enemyStarts starting enemy positions, may be null
-     * @param scoreboard  scoreboard reference
-     * @throws NullPointerException if playerStart or scoreboard is null
+     * @param initialScore   starting score
+     * @param requiredCount  number of required rewards on the board
      */
-    public GameState(Position playerStart,
-                     Collection<Position> enemyStarts,
-                     Scoreboard scoreboard) {
-        this.player = Objects.requireNonNull(playerStart, "playerStart");
-        if (enemyStarts != null) {
-            this.enemies.addAll(enemyStarts);
-        }
-        this.scoreboard = Objects.requireNonNull(scoreboard, "scoreboard");
+    public Scoreboard(int initialScore, int requiredCount) {
+        this.score = initialScore;
+        this.requiredRemaining = Math.max(0, requiredCount);
     }
 
     // ---------------------------------------------------------------------
-    // Status
+    // Reset (new)
     // ---------------------------------------------------------------------
 
     /**
-     * Returns the current status.
-     *
-     * @return RUNNING, WON, or LOST
+     * Resets score, required count, and timer fields so the scoreboard
+     * can be reused for a new playthrough.
      */
-    public Status status() {
-        return status;
-    }
-
-    /**
-     * Sets the game to running.
-     */
-    public void setRunning() {
-        status = Status.RUNNING;
-    }
-
-    /**
-     * Marks the game as won.
-     * The controller is responsible for stopping timers.
-     */
-    public void setWon() {
-        status = Status.WON;
-    }
-
-    /**
-     * Marks the game as lost.
-     * The controller is responsible for stopping timers.
-     */
-    public void setLost() {
-        status = Status.LOST;
+    public void reset(int initialScore, int requiredCount) {
+        this.score = initialScore;
+        this.requiredRemaining = Math.max(0, requiredCount);
+        this.startedAt = null;
+        this.stoppedAt = null;
     }
 
     // ---------------------------------------------------------------------
-    // Positions snapshot (for views / HUD / saving)
+    // Lifecycle
     // ---------------------------------------------------------------------
 
-    /**
-     * Returns the last recorded player position.
-     *
-     * @return player position snapshot
-     */
-    public Position player() {
-        return player;
+    /** Starts the timer. Resets any previous stop time. */
+    public void start() {
+        startedAt = Instant.now();
+        stoppedAt = null;
     }
 
-    /**
-     * Updates the stored player position.
-     *
-     * @param newPos new player position
-     */
-    public void setPlayer(Position newPos) {
-        this.player = Objects.requireNonNull(newPos, "newPos");
-    }
-
-    /**
-     * Returns an unmodifiable view of enemy positions.
-     *
-     * @return enemy position snapshots
-     */
-    public Set<Position> enemies() {
-        return Collections.unmodifiableSet(enemies);
-    }
-
-    /**
-     * Replaces all enemy snapshots with the given collection.
-     *
-     * @param newEnemies new enemy positions, may be null
-     */
-    public void setEnemies(Collection<Position> newEnemies) {
-        enemies.clear();
-        if (newEnemies != null) {
-            enemies.addAll(newEnemies);
+    /** Stops the timer if it is running. */
+    public void stop() {
+        if (startedAt != null && stoppedAt == null) {
+            stoppedAt = Instant.now();
         }
     }
 
-    /**
-     * Returns the associated scoreboard.
-     *
-     * @return scoreboard reference
-     */
-    public Scoreboard scoreboard() {
-        return scoreboard;
+    // ---------------------------------------------------------------------
+    // Score API
+    // ---------------------------------------------------------------------
+
+    public int score() { return score; }
+
+    public int requiredRemaining() { return requiredRemaining; }
+
+    /** Adds a delta to the score. */
+    public void add(int delta) { score += delta; }
+
+    /** Required reward collected. */
+    public void collectedRequired(int value) {
+        score += value;
+        if (requiredRemaining > 0) requiredRemaining--;
+    }
+
+    /** Optional reward collected. */
+    public void collectedOptional(int value) {
+        score += value;
+    }
+
+    /** Punishment applied. */
+    public void penalize(int negativeValue) {
+        score += negativeValue;
+    }
+
+    // ---------------------------------------------------------------------
+    // Time
+    // ---------------------------------------------------------------------
+
+    public Duration elapsed() {
+        if (startedAt == null) return Duration.ZERO;
+        Instant end = (stoppedAt != null) ? stoppedAt : Instant.now();
+        return Duration.between(startedAt, end);
+    }
+
+    public String elapsedPretty() {
+        Duration d = elapsed();
+        long s = d.getSeconds();
+        long m = s / 60;
+        long sec = s % 60;
+        return String.format("%d:%02d", m, sec);
     }
 }
