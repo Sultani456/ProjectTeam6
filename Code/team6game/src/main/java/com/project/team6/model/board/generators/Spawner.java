@@ -79,9 +79,12 @@ public final class Spawner {
         return Math.max(1, (int) Math.round(ticks));
     }
 
+    private List<Position> freeFloorCells() {
+        return SpawnerHelper.freeFloorCells(board);
+    }
+
     public void spawnBonusRewards(BonusConfig config) {
         Objects.requireNonNull(config);
-
         spawnBonusRewards(config.totalBonusesToAppear,
                 config.pointsPer,
                 config.spawnMinSec,
@@ -102,7 +105,7 @@ public final class Spawner {
             return;
         }
 
-        int freeCells = SpawnerHelper.freeFloorCells(board).size();
+        int freeCells = freeFloorCells().size();
         if (totalBonusesToAppear > freeCells) {
             throw new IllegalArgumentException(
                     "totalBonusesToAppear (" + totalBonusesToAppear +
@@ -137,7 +140,7 @@ public final class Spawner {
             return;
         }
 
-        List<Position> free = SpawnerHelper.freeFloorCells(board);
+        List<Position> free = freeFloorCells();
         if (free.isEmpty()) {
             scheduleNextBonusSpawn();
             return;
@@ -186,10 +189,27 @@ public final class Spawner {
         }
     }
 
+    private boolean canReach(Position start, Position goal, Set<Position> blocked) {
+        return SpawnerHelper.canReach(board, start, goal, blocked);
+    }
+
+    private boolean canReachStartToExit(Position start, Position exit, Set<Position> blocked) {
+        return canReach(start, exit, blocked);
+    }
+
+    private boolean canReachAllRegularRewards(Position start, Set<Position> blocked) {
+        for (RegularReward rr : board.regularRewards()) {
+            if (!canReach(start, rr.position(), blocked)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void spawnRegularRewards(int count, int pointsPer) {
         if (count <= 0) return;
 
-        List<Position> free = SpawnerHelper.freeFloorCells(board);
+        List<Position> free = freeFloorCells();
         if (free.size() < count) {
             throw new IllegalStateException(
                     "Not enough free cells to place " + count + " regular rewards.");
@@ -206,7 +226,7 @@ public final class Spawner {
     public void spawnPunishments(int count, int penaltyPer) {
         if (count <= 0) return;
 
-        List<Position> free = SpawnerHelper.freeFloorCells(board);
+        List<Position> free = freeFloorCells();
         Position start = board.start();
         Position exit = board.exit();
 
@@ -218,24 +238,20 @@ public final class Spawner {
         Collections.shuffle(free, rng);
 
         List<Position> placed = new ArrayList<>();
+        Set<Position> blocked = new HashSet<>();
+
         outer:
         for (Position candidate : free) {
-
-            Set<Position> blocked = new HashSet<>(placed);
+            blocked.clear();
+            blocked.addAll(placed);
             blocked.add(candidate);
 
-            if (!SpawnerHelper.canReach(board, start, exit, blocked)) {
+            if (!canReachStartToExit(start, exit, blocked)) {
                 continue;
             }
-
-            boolean ok = true;
-            for (RegularReward rr : board.regularRewards()) {
-                if (!SpawnerHelper.canReach(board, start, rr.position(), blocked)) {
-                    ok = false;
-                    break;
-                }
+            if (!canReachAllRegularRewards(start, blocked)) {
+                continue;
             }
-            if (!ok) continue;
 
             Punishment p = new Punishment(candidate, penaltyPer);
             board.registerCollectible(p);
@@ -248,7 +264,7 @@ public final class Spawner {
     public void spawnEnemies(int count, int movePeriod) {
         if (count <= 0) return;
 
-        List<Position> free = SpawnerHelper.freeFloorCells(board);
+        List<Position> free = freeFloorCells();
         Position start = board.start();
         Position exit  = board.exit();
 
@@ -262,15 +278,17 @@ public final class Spawner {
         Collections.shuffle(free, rng);
 
         Set<Position> placedEnemies = new HashSet<>();
+        Set<Position> blocked = new HashSet<>();
 
         int placed = 0;
         for (Position pos : free) {
             if (placed >= count) break;
 
-            Set<Position> blocked = new HashSet<>(placedEnemies);
+            blocked.clear();
+            blocked.addAll(placedEnemies);
             blocked.add(pos);
 
-            if (!SpawnerHelper.canReach(board, start, exit, blocked)) {
+            if (!canReachStartToExit(start, exit, blocked)) {
                 continue;
             }
 
