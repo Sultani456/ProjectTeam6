@@ -290,7 +290,7 @@ public final class GameController {
     }
 
     /**
-     * Returns true if the game is currently running
+     * Returns true if the game is currently running.
      *
      * @return true if running, false otherwise
      */
