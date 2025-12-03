@@ -171,7 +171,7 @@ public final class Scoreboard {
     }
 
     /**
-     * Returns a short mm:ss style string of elapsed time.
+     * Returns a short mm:ss style setring of elapsed time.
      *
      * @return formatted time string
      */
