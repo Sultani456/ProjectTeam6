@@ -62,6 +62,25 @@ public final class GamePanel extends JPanel {
     private static final Color FLOOR_COLOR_IMAGES = new Color(180,200,225);
     private static final Color GRID_COLOR       = new Color(20, 20, 22);
 
+    private static final Color SYMBOLBACKGROUND_WALL_COLOR = new Color(55, 55, 55);
+    private static final Color SYMBOLBACKGROUND_START_COLOR = new Color(0, 128, 0);
+    private static final Color SYMBOLBACKGROUND_EXIT_COLOR = new Color(128, 0, 0);
+
+    private static final Color SYMBOL_PLAYER_COLOR = new Color(90, 210, 250);
+    private static final Color SYMBOL_ENEMY_COLOR = new Color(210, 90, 120);
+    private static final Color SYMBOL_REGULARREWARD_COLOR = new Color(255, 255, 200);
+    private static final Color SYMBOL_BONUSREWARD_COLOR = new Color(255, 210, 120);
+    private static final Color SYMBOL_PUNISHMENT_COLOR = new Color(255, 120, 120);
+    private static final Color SYMBOL_COLLISION_COLOR = new Color(255, 255, 255);
+    private static final Color SYMBOL_WALL_COLOR = new Color(160, 160, 160);
+    private static final Color SYMBOL_BARRIER_COLOR = new Color(200, 200, 200);
+    private static final Color SYMBOL_START_COLOR = new Color(120, 255, 120);
+    private static final Color SYMBOL_EXIT_COLOR = new Color(255, 120, 120);
+
+    private static final Color BANNER_BACKGROUND = new Color(0, 0, 0, 90);
+
+    private static final Color HUD_BACKGROUND = new Color(24, 24, 24);
+
     // model references
     private final Board board;
     private final Scoreboard scoreboard;
@@ -192,7 +211,7 @@ public final class GamePanel extends JPanel {
      */
     private void paintHud(Graphics2D g) {
         // HUD strip occupies the top HUD_H pixels of the panel
-        g.setColor(new Color(24, 24, 24));
+        g.setColor(HUD_BACKGROUND);
         g.fillRect(0, 0, getWidth(), HUD_H);
 
         g.setColor(Color.WHITE);
@@ -303,9 +322,9 @@ public final class GamePanel extends JPanel {
     private void drawCellSpritesForSymbols(Graphics2D g, Cell cell, int px, int py, Position pos) {
         // background per terrain
         switch (cell.terrain()) {
-            case WALL, BARRIER -> g.setColor(new Color(55, 55, 55));
-            case START         -> g.setColor(new Color(0, 128, 0));
-            case EXIT          -> g.setColor(new Color(128, 0, 0));
+            case WALL, BARRIER -> g.setColor(SYMBOLBACKGROUND_WALL_COLOR);
+            case START         -> g.setColor(SYMBOLBACKGROUND_START_COLOR);
+            case EXIT          -> g.setColor(SYMBOLBACKGROUND_EXIT_COLOR);
             default            -> g.setColor(FLOOR_COLOR);
         }
         g.fillRect(px, py, TILE, TILE);
@@ -319,16 +338,16 @@ public final class GamePanel extends JPanel {
         if (sym != ' ') {
             // choose colour based on symbol
             Color fg = switch (sym) {
-                case 'P' -> new Color(90, 210, 250);   // player
-                case 'B' -> new Color(210, 90, 120);   // enemy / bad guy
-                case '.' -> new Color(255, 255, 200);  // regular reward
-                case 'o' -> new Color(255, 210, 120);  // bonus reward
-                case '*' -> new Color(255, 120, 120);  // punishment
-                case 'C' -> new Color(255, 255, 255);  // collision
-                case 'X' -> new Color(160, 160, 160);  // wall
-                case '#' -> new Color(200, 200, 200);  // barrier
-                case 'S' -> new Color(120, 255, 120);  // start
-                case 'E' -> new Color(255, 120, 120);  // exit
+                case 'P' ->   SYMBOL_PLAYER_COLOR;           // player
+                case 'B' ->   SYMBOL_ENEMY_COLOR;            // enemy / bad guy
+                case '.' ->   SYMBOL_REGULARREWARD_COLOR;    // regular reward
+                case 'o' ->   SYMBOL_BONUSREWARD_COLOR;      // bonus reward
+                case '*' ->   SYMBOL_PUNISHMENT_COLOR;       // punishment
+                case 'C' ->   SYMBOL_COLLISION_COLOR;        // collision
+                case 'X' ->   SYMBOL_WALL_COLOR;             // wall
+                case '#' ->   SYMBOL_BARRIER_COLOR;          // barrier
+                case 'S' ->   SYMBOL_START_COLOR;            // start
+                case 'E' ->   SYMBOL_EXIT_COLOR;             // exit
                 default  -> Color.WHITE;
             };
 
@@ -368,7 +387,7 @@ public final class GamePanel extends JPanel {
         int rectY = centerY - rectH / 2;
 
         // Translucent black background
-        g.setColor(new Color(0, 0, 0, 90));   // alpha 170 ~= 2/3 opaque
+        g.setColor(BANNER_BACKGROUND);   // alpha 170 ~= 2/3 opaque
         g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
 
         // White text centered in the box
