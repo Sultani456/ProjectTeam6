@@ -13,6 +13,8 @@ public final class Spawner {
 
     private final Board board;
     private final int tickMillis;
+
+    /** Random source for placement and timing. */
     private final Random rng;
 
     // Bonus-reward configuration
@@ -20,8 +22,7 @@ public final class Spawner {
 
     /**
      * Number of bonus items that still need to APPEAR.
-     * Each wave spawns up to this number (or available free cells).
-     * This value goes down when a wave is spawned.
+     * Decreases when a wave is spawned.
      */
     private int bonusRemaining = 0;
 
@@ -34,6 +35,29 @@ public final class Spawner {
     private int lifeMaxTicks = 0;
 
     private int ticksUntilNextSpawn = -1;
+
+    public static final class BonusConfig {
+        private final int totalBonusesToAppear;
+        private final int pointsPer;
+        private final int spawnMinSec;
+        private final int spawnMaxSec;
+        private final int lifeMinSec;
+        private final int lifeMaxSec;
+
+        public BonusConfig(int totalBonusesToAppear,
+                           int pointsPer,
+                           int spawnMinSec,
+                           int spawnMaxSec,
+                           int lifeMinSec,
+                           int lifeMaxSec) {
+            this.totalBonusesToAppear = totalBonusesToAppear;
+            this.pointsPer = pointsPer;
+            this.spawnMinSec = spawnMinSec;
+            this.spawnMaxSec = spawnMaxSec;
+            this.lifeMinSec = lifeMinSec;
+            this.lifeMaxSec = lifeMaxSec;
+        }
+    }
 
     public Spawner(Board board, int tickMillis) {
         this(board, tickMillis, new Random());
@@ -53,6 +77,17 @@ public final class Spawner {
         if (seconds <= 0) return 0;
         double ticks = (seconds * 1000.0) / tickMillis;
         return Math.max(1, (int) Math.round(ticks));
+    }
+
+    public void spawnBonusRewards(BonusConfig config) {
+        Objects.requireNonNull(config);
+
+        spawnBonusRewards(config.totalBonusesToAppear,
+                config.pointsPer,
+                config.spawnMinSec,
+                config.spawnMaxSec,
+                config.lifeMinSec,
+                config.lifeMaxSec);
     }
 
     public void spawnBonusRewards(int totalBonusesToAppear,
@@ -108,11 +143,10 @@ public final class Spawner {
             return;
         }
 
-        Collections.shuffle(free, rng);
-
         int toSpawn = Math.min(bonusRemaining, free.size());
-        int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
+        chooseFirstKRandomInPlace(free, toSpawn, rng);
 
+        int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
         for (int i = 0; i < toSpawn; i++) {
             Position pos = free.get(i);
             int lifeTicks = lifeMinTicks + rng.nextInt(lifeRange);
@@ -120,7 +154,6 @@ public final class Spawner {
             board.registerCollectible(bonus);
         }
 
-        // Decrease quota on spawn so ignoring bonuses cannot create infinite waves
         bonusRemaining -= toSpawn;
         if (bonusRemaining <= 0) {
             bonusEnabled = false;
@@ -131,12 +164,8 @@ public final class Spawner {
         scheduleNextBonusSpawn();
     }
 
-    /**
-     * Compatibility method.
-     * Quota is now decreased when bonuses SPAWN, not when they are collected.
-     */
     public void notifyBonusCollected() {
-        // no-op by design
+        // no-op by design (quota decreases on spawn)
     }
 
     private void scheduleNextBonusSpawn() {
@@ -148,6 +177,15 @@ public final class Spawner {
         ticksUntilNextSpawn = spawnMinTicks + (range == 0 ? 0 : rng.nextInt(range + 1));
     }
 
+    private static void chooseFirstKRandomInPlace(List<Position> list, int count, Random rng) {
+        int n = list.size();
+        int k = Math.min(count, n);
+        for (int i = 0; i < k; i++) {
+            int j = i + rng.nextInt(n - i);
+            if (i != j) Collections.swap(list, i, j);
+        }
+    }
+
     public void spawnRegularRewards(int count, int pointsPer) {
         if (count <= 0) return;
 
@@ -157,7 +195,7 @@ public final class Spawner {
                     "Not enough free cells to place " + count + " regular rewards.");
         }
 
-        Collections.shuffle(free, rng);
+        chooseFirstKRandomInPlace(free, count, rng);
         for (int i = 0; i < count; i++) {
             Position p = free.get(i);
             RegularReward r = new RegularReward(p, pointsPer);
