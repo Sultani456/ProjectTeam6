@@ -49,7 +49,7 @@ final class GameControllerEndStatesTest {
         Scoreboard scoreboard = new Scoreboard(initialScore, requiredCount);
         GameState state = new GameState(board.start(), List.of(), scoreboard);
 
-        Spawner spawner = new Spawner(board, GameController.DEFAULT_TICK_MS);
+        Spawner spawner = new Spawner(board, GameConfig.DEFAULT_TICK_MS);
         GamePanel view = new GamePanel(board, scoreboard, state);
 
         GameController controller = new GameController(board, spawner, scoreboard, state, view);

@@ -1,6 +1,6 @@
 package com.project.team6.model.board.generators;
 
-import com.project.team6.controller.GameController;
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 import com.project.team6.testutil.TestBoards;
@@ -17,7 +17,7 @@ final class SpawnerBonusEdgeCasesTest {
     @Test
     void zeroTotalDisablesBonuses() {
         Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameController.DEFAULT_TICK_MS);
+        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
 
         sp.spawnBonusRewards(0, 10, 1, 1, 1, 1);
 
@@ -31,7 +31,7 @@ final class SpawnerBonusEdgeCasesTest {
     @Test
     void fixedDelayAndLifetime_spawnOnce_thenExpire_noImmediateRespawn() {
         Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameController.DEFAULT_TICK_MS);
+        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
 
         // Nonzero delay to prevent instant respawn; lifetime is exactly 1 second.
         sp.spawnBonusRewards(
@@ -42,7 +42,7 @@ final class SpawnerBonusEdgeCasesTest {
         );
 
         // Count down the delay
-        int delayTicks = secondsToTicks(10, GameController.DEFAULT_TICK_MS);
+        int delayTicks = secondsToTicks(10, GameConfig.DEFAULT_TICK_MS);
         for (int i = 0; i < delayTicks; i++) {
             b.tick(b.player().position());
             sp.onTick();
@@ -55,7 +55,7 @@ final class SpawnerBonusEdgeCasesTest {
         assertTrue(before > 0);
 
         // Let them expire (lifetime 1s). After enough ticks, they should be gone.
-        int lifeTicks = secondsToTicks(1, GameController.DEFAULT_TICK_MS);
+        int lifeTicks = secondsToTicks(1, GameConfig.DEFAULT_TICK_MS);
         for (int i = 0; i < lifeTicks; i++) {
             b.tick(b.player().position());
             sp.onTick();

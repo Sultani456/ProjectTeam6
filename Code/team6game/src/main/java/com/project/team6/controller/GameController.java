@@ -22,9 +22,6 @@ import java.util.Objects;
  */
 public final class GameController {
 
-    /** Tick duration in milliseconds. */
-    public static final int DEFAULT_TICK_MS = 120;
-
     private final Board board;
     private final Spawner spawner;
     private final Scoreboard scoreboard;
@@ -47,7 +44,7 @@ public final class GameController {
         this.player = board.player();
 
         installKeyBindings();
-        this.timer = new Timer(DEFAULT_TICK_MS, this::onTick);
+        this.timer = new Timer(GameConfig.DEFAULT_TICK_MS, this::onTick);
     }
 
     public void start() {

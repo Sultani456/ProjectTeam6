@@ -1,5 +1,6 @@
 package com.project.team6.model.board.generators; 
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.*;
 import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
 import com.project.team6.model.board.generators.helpers.GeneratorHelper;
@@ -88,18 +89,17 @@ public final class BoardGenerator {
      * Generates a terrain layout based on options.
      *
      * @param opts options for barriers and size
-     * @param boardBarrierPercentage target fraction of interior barriers for RANDOM mode
      * @return generated output
      * @throws NullPointerException if opts is null
      */
-    public Output generate(BarrierOptions opts, double boardBarrierPercentage) {
+    public Output generate(BarrierOptions opts) {
         Objects.requireNonNull(opts);
 
         return switch (opts.barrierMode) {
             case NONE      -> generateNone(opts);
             case PROVIDED  -> generateProvided(opts);
             case TEXT      -> generateFromText(opts);
-            case RANDOM    -> generateRandomWithConstraints(opts, boardBarrierPercentage);
+            case RANDOM    -> generateRandomWithConstraints(opts, GameConfig.boardBarrierPercentage);
         };
     }
 
@@ -274,35 +274,6 @@ public final class BoardGenerator {
         Cell.Terrain[][] terrain =
                 GeneratorHelper.toTerrainGrid(rows, cols, walls, barriers, start, exit);
         return new Output(rows, cols, start, exit, terrain);
-    }
-
-    /**
-     * Returns a fixed list of barrier positions for the PROVIDED mode.
-     *
-     * @return list of positions for barriers
-     */
-    public static ArrayList<Position> barrierList() {
-        ArrayList<Position> list = new ArrayList<>();
-        list.add(new Position(4, 2));
-        list.add(new Position(13,2));
-        list.add(new Position(4,4));
-        list.add(new Position(5,4));
-        list.add(new Position(12,4));
-        list.add(new Position(13,4));
-        list.add(new Position(4,6));
-        list.add(new Position(8,6));
-        list.add(new Position(9,6));
-        list.add(new Position(10,6));
-        list.add(new Position(7,7));
-        list.add(new Position(8,7));
-        list.add(new Position(3,8));
-        list.add(new Position(4,8));
-        list.add(new Position(5,8));
-        list.add(new Position(12,8));
-        list.add(new Position(13,8));
-        list.add(new Position(14,8));
-
-        return list;
     }
 
     /**

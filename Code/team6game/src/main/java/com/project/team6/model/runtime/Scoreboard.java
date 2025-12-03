@@ -1,5 +1,7 @@
 package com.project.team6.model.runtime;
 
+import com.project.team6.controller.GameConfig;
+
 import java.time.Duration;
 import java.time.Instant;
 
@@ -10,7 +12,7 @@ import java.time.Instant;
 public final class Scoreboard {
 
     /** Initial score for resets. */
-    private final int initialScore;
+    private final int initialScore = 0;
 
     /** Initial required count for resets. */
     private final int initialRequiredCount;
@@ -31,11 +33,9 @@ public final class Scoreboard {
      * Creates a scoreboard.
      *
      * @param initialScore   starting score
-     * @param requiredCount  number of required rewards on the board
      */
-    public Scoreboard(int initialScore, int requiredCount) {
-        this.initialScore = initialScore;
-        this.initialRequiredCount = Math.max(0, requiredCount);
+    public Scoreboard() {
+        this.initialRequiredCount = Math.max(0, GameConfig.regularRewardCount);
         reset();
     }
 

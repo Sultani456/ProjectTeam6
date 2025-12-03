@@ -1,5 +1,6 @@
 package com.project.team6.model.board.generators;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.generators.helpers.SpawnerHelper;
@@ -8,6 +9,8 @@ import com.project.team6.model.collectibles.rewards.*;
 import com.project.team6.model.collectibles.Punishment;
 
 import java.util.*;
+
+import static com.project.team6.controller.GameConfig.regularRewardCount;
 
 /**
  * Controls how items and enemies appear on the board.
@@ -66,13 +69,12 @@ public final class Spawner {
      * Creates a spawner for a board.
      *
      * @param board      the target board
-     * @param tickMillis tick duration in milliseconds
      * @throws NullPointerException if board is null
      */
-    public Spawner(Board board, int tickMillis) {
+    public Spawner(Board board) {
         this.board = Objects.requireNonNull(board);
 
-        this.tickMillis = tickMillis;
+        this.tickMillis = GameConfig.DEFAULT_TICK_MS;
         this.rng = new Random();
     }
 
@@ -97,21 +99,10 @@ public final class Spawner {
      * The spawner shows a wave with {@code bonusRemaining} items each time.
      * When a bonus is collected, call {@link #notifyBonusCollected()}.
      *
-     * @param totalBonusesToAppear total number that can ever be collected
-     * @param pointsPer            points for each bonus
-     * @param spawnMinSec          earliest spawn delay in seconds
-     * @param spawnMaxSec          latest spawn delay in seconds
-     * @param lifeMinSec           minimum lifetime in seconds
-     * @param lifeMaxSec           maximum lifetime in seconds
-     * @throws IllegalArgumentException if {@code totalBonusesToAppear} is larger than free cells
+     * @throws IllegalArgumentException if {@code GameConfig.bonusRewardCount} is larger than free cells
      */
-    public void spawnBonusRewards(int totalBonusesToAppear,
-                                  int pointsPer,
-                                  int spawnMinSec,
-                                  int spawnMaxSec,
-                                  int lifeMinSec,
-                                  int lifeMaxSec) {
-        if (totalBonusesToAppear <= 0) {
+    public void spawnBonusRewards() {
+        if (GameConfig.bonusRewardCount <= 0) {
             bonusEnabled = false;
             bonusRemaining = 0;
             return;
@@ -119,20 +110,20 @@ public final class Spawner {
 
         // Check capacity once up front
         int freeCells = SpawnerHelper.freeFloorCells(board).size();
-        if (totalBonusesToAppear > freeCells) {
+        if (GameConfig.bonusRewardCount > freeCells) {
             throw new IllegalArgumentException(
-                    "totalBonusesToAppear (" + totalBonusesToAppear +
+                    "GameConfig.bonusRewardCount (" + GameConfig.bonusRewardCount +
                             ") is larger than free floor cells (" + freeCells + ")");
         }
 
         this.bonusEnabled = true;
-        this.bonusRemaining = totalBonusesToAppear;
-        this.bonusPointsPer = pointsPer;
+        this.bonusRemaining = GameConfig.bonusRewardCount;
+        this.bonusPointsPer = GameConfig.bonusPoints;
 
-        this.spawnMinTicks = secondsToTicks(spawnMinSec);
-        this.spawnMaxTicks = secondsToTicks(spawnMaxSec);
-        this.lifeMinTicks = secondsToTicks(lifeMinSec);
-        this.lifeMaxTicks = secondsToTicks(lifeMaxSec);
+        this.spawnMinTicks = secondsToTicks(GameConfig.spawnMinSec);
+        this.spawnMaxTicks = secondsToTicks(GameConfig.spawnMaxSec);
+        this.lifeMinTicks = secondsToTicks(GameConfig.lifeMinSec);
+        this.lifeMaxTicks = secondsToTicks(GameConfig.lifeMaxSec);
 
         if (spawnMaxTicks < spawnMinTicks) {
             spawnMaxTicks = spawnMinTicks;
@@ -214,23 +205,20 @@ public final class Spawner {
     /**
      * Places regular rewards on free floor cells.
      *
-     * @param count     how many to add
-     * @param pointsPer points for each reward
      * @throws IllegalStateException if there are not enough free cells
      */
-    public void spawnRegularRewards(int count, int pointsPer) {
-        if (count <= 0) return;
+    public void spawnRegularRewards() {
 
         List<Position> free = SpawnerHelper.freeFloorCells(board);
-        if (free.size() < count) {
+        if (free.size() < GameConfig.regularRewardCount) {
             throw new IllegalStateException(
-                    "Not enough free cells to place " + count + " regular rewards.");
+                    "Not enough free cells to place " + GameConfig.regularRewardCount + " regular rewards.");
         }
 
         Collections.shuffle(free, rng);
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < GameConfig.regularRewardCount; i++) {
             Position p = free.get(i);
-            RegularReward r = new RegularReward(p, pointsPer);
+            RegularReward r = new RegularReward(p);
             board.registerCollectible(r);
         }
     }
@@ -245,12 +233,8 @@ public final class Spawner {
      * Each regular reward stays reachable from start.
      * Start and exit cells are never used.
      *
-     * @param count      how many to add
-     * @param penaltyPer points lost for each punishment
      */
-    public void spawnPunishments(int count, int penaltyPer) {
-        if (count <= 0) return;
-
+    public void spawnPunishments() {
         List<Position> free = SpawnerHelper.freeFloorCells(board);
         Position start = board.start();
         Position exit = board.exit();
@@ -287,11 +271,11 @@ public final class Spawner {
             if (!ok) continue;
 
             // Passed checks, place punishment
-            Punishment p = new Punishment(candidate, penaltyPer);
+            Punishment p = new Punishment(candidate, GameConfig.punishmentPenalty);
             board.registerCollectible(p);
             placed.add(candidate);
 
-            if (placed.size() >= count) break outer;
+            if (placed.size() >= GameConfig.numPunishments) break outer;
         }
     }
 
@@ -304,12 +288,8 @@ public final class Spawner {
      * Allows enemies near start and exit but not on the first interior tiles.
      * Keeps a valid path from start to exit after each placement.
      *
-     * @param count      how many enemies to add
-     * @param movePeriod ticks between enemy moves
      */
-    public void spawnEnemies(int count, int movePeriod) {
-        if (count <= 0) return;
-
+    public void spawnEnemies() {
         List<Position> free = SpawnerHelper.freeFloorCells(board);
         Position start = board.start();
         Position exit  = board.exit();
@@ -329,7 +309,7 @@ public final class Spawner {
 
         int placed = 0;
         for (Position pos : free) {
-            if (placed >= count) break;
+            if (placed >= GameConfig.numEnemies) break;
 
             // Treat enemy cells as blocked for path checks
             Set<Position> blocked = new HashSet<>(placedEnemies);
@@ -340,7 +320,7 @@ public final class Spawner {
             }
 
             // Safe to place
-            MovingEnemy e = new MovingEnemy(pos, movePeriod);
+            MovingEnemy e = new MovingEnemy(pos, GameConfig.enemyMovePeriod);
             board.registerEnemy(e);
             placedEnemies.add(pos);
             placed++;

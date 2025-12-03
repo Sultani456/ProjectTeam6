@@ -1,5 +1,6 @@
 package com.project.team6.ui;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.*;
 import com.project.team6.model.collectibles.*;
 import com.project.team6.model.collectibles.rewards.*;
@@ -37,49 +38,8 @@ public final class GamePanel extends JPanel {
         repaint();
     }
 
-    /**
-     * Switches between images and symbols.
-     * Triggers a repaint.
-     */
-    public void toggleRenderMode() {
-        this.renderMode = (renderMode == RenderMode.IMAGES)
-                ? RenderMode.SYMBOLS
-                : RenderMode.IMAGES;
-        repaint();
-    }
-
     // default to images
     private RenderMode renderMode = RenderMode.IMAGES;
-
-    private static final int TILE = 36;         // size of one board tile in pixels
-    private static final int HUD_H = 36;        // height of HUD strip at bottom
-
-
-    // --- colours for background / grid / floor ---
-    private static final Color BACKGROUND_COLOR = Color.BLACK;
-
-    private static final Color FLOOR_COLOR      = new Color(28, 28, 30);
-    private static final Color FLOOR_COLOR_IMAGES = new Color(180,200,225);
-    private static final Color GRID_COLOR       = new Color(20, 20, 22);
-
-    private static final Color SYMBOLBACKGROUND_WALL_COLOR = new Color(55, 55, 55);
-    private static final Color SYMBOLBACKGROUND_START_COLOR = new Color(0, 128, 0);
-    private static final Color SYMBOLBACKGROUND_EXIT_COLOR = new Color(128, 0, 0);
-
-    private static final Color SYMBOL_PLAYER_COLOR = new Color(90, 210, 250);
-    private static final Color SYMBOL_ENEMY_COLOR = new Color(210, 90, 120);
-    private static final Color SYMBOL_REGULARREWARD_COLOR = new Color(255, 255, 200);
-    private static final Color SYMBOL_BONUSREWARD_COLOR = new Color(255, 210, 120);
-    private static final Color SYMBOL_PUNISHMENT_COLOR = new Color(255, 120, 120);
-    private static final Color SYMBOL_COLLISION_COLOR = new Color(255, 255, 255);
-    private static final Color SYMBOL_WALL_COLOR = new Color(160, 160, 160);
-    private static final Color SYMBOL_BARRIER_COLOR = new Color(200, 200, 200);
-    private static final Color SYMBOL_START_COLOR = new Color(120, 255, 120);
-    private static final Color SYMBOL_EXIT_COLOR = new Color(255, 120, 120);
-
-    private static final Color BANNER_BACKGROUND = new Color(0, 0, 0, 90);
-
-    private static final Color HUD_BACKGROUND = new Color(24, 24, 24);
 
     // model references
     private final Board board;
@@ -122,10 +82,10 @@ public final class GamePanel extends JPanel {
         imgPunishment    = loadImage("/assets/punishment.png");
         imgExplosion     = loadImage("/assets/explosion.jpg");
 
-        int w = board.cols() * TILE;
-        int h = board.rows() * TILE + HUD_H;
+        int w = board.cols() * GameConfig.TILE;
+        int h = board.rows() * GameConfig.TILE + GameConfig.HUD_H;
         setPreferredSize(new Dimension(w, h));
-        setBackground(BACKGROUND_COLOR);
+        setBackground(GameConfig.BACKGROUND_COLOR);
         setFocusable(true);
         requestFocusInWindow();
     }
@@ -168,7 +128,7 @@ public final class GamePanel extends JPanel {
                 RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         // background
-        g.setColor(BACKGROUND_COLOR);
+        g.setColor(GameConfig.BACKGROUND_COLOR);
         g.fillRect(0, 0, getWidth(), getHeight());
 
         // HUD at top
@@ -176,7 +136,7 @@ public final class GamePanel extends JPanel {
 
         // board starts under HUD
         int originX = 0;
-        int originY = HUD_H;
+        int originY = GameConfig.HUD_H;
 
         // draw sprites
         for (int row = 0; row < board.rows(); row++) {
@@ -184,8 +144,8 @@ public final class GamePanel extends JPanel {
                 Position pos = new Position(col, row);
                 Cell cell = board.cellAt(pos);
 
-                int px = originX + col * TILE;
-                int py = originY + row * TILE;
+                int px = originX + col * GameConfig.TILE;
+                int py = originY + row * GameConfig.TILE;
 
                 if (renderMode == RenderMode.IMAGES) {
                     drawCellSpritesForImages(g, cell, px, py, pos);
@@ -211,8 +171,8 @@ public final class GamePanel extends JPanel {
      */
     private void paintHud(Graphics2D g) {
         // HUD strip occupies the top HUD_H pixels of the panel
-        g.setColor(HUD_BACKGROUND);
-        g.fillRect(0, 0, getWidth(), HUD_H);
+        g.setColor(GameConfig.HUD_BACKGROUND);
+        g.fillRect(0, 0, getWidth(), GameConfig.HUD_H);
 
         g.setColor(Color.WHITE);
         g.setFont(getFont().deriveFont(Font.BOLD, 16f));
@@ -222,7 +182,7 @@ public final class GamePanel extends JPanel {
         String middle = "Time: " + scoreboard.elapsedPretty();
         String right  = state.status().name();
 
-        int baselineY = HUD_H - 10;  // a bit above the bottom of the bar
+        int baselineY = GameConfig.HUD_H - 10;  // a bit above the bottom of the bar
 
         // left text
         g.drawString(left, 10, baselineY);
@@ -267,15 +227,15 @@ public final class GamePanel extends JPanel {
      */
     private void drawCellSpritesForImages(Graphics2D g, Cell cell, int px, int py, Position pos) {
         // floor background
-        g.setColor(FLOOR_COLOR_IMAGES);
-        g.fillRect(px, py, TILE, TILE);
+        g.setColor(GameConfig.FLOOR_COLOR_IMAGES);
+        g.fillRect(px, py, GameConfig.TILE, GameConfig.TILE);
 
         // EXPLOSION EFFECT (if caught)
         if (board.explosionPos() != null
                 && board.explosionPos().equals(pos)) {
 
             // then explosion sprite
-            g.drawImage(imgExplosion, px, py, TILE, TILE, null);
+            g.drawImage(imgExplosion, px, py, GameConfig.TILE, GameConfig.TILE, null);
 
             // skip all other drawing for this cell
             return;
@@ -283,9 +243,9 @@ public final class GamePanel extends JPanel {
 
         // --- 1) Draw terrain background ---
         switch (cell.terrain()) {
-            case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
-            case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
-            case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
+            case WALL, BARRIER -> g.drawImage(imgWall, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            case START        -> g.drawImage(imgStart, px, py, GameConfig.TILE, GameConfig.TILE, null);
+            case EXIT         -> g.drawImage(imgExit,  px, py, GameConfig.TILE, GameConfig.TILE, null);
 //            default -> {
 //                g.setColor(FLOOR_COLOR_IMAGES);
 //                g.fillRect(px, py, TILE, TILE);
@@ -296,70 +256,70 @@ public final class GamePanel extends JPanel {
         // --- items first (under characters) ---
         var item = cell.item();
         if (item instanceof RegularReward) {
-            g.drawImage(imgRegularReward, px, py, TILE, TILE, null);
+            g.drawImage(imgRegularReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
         } else if (item instanceof BonusReward) {
-            g.drawImage(imgBonusReward, px, py, TILE, TILE, null);
+            g.drawImage(imgBonusReward, px, py, GameConfig.TILE, GameConfig.TILE, null);
         } else if (item instanceof Punishment) {
-            g.drawImage(imgPunishment, px, py, TILE, TILE, null);
+            g.drawImage(imgPunishment, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 3) Draw enemies ---
         // Enemy under Player so Player appears “in front”
         if (cell.hasEnemy()) {
-            g.drawImage(imgEnemy, px, py, TILE, TILE, null);
+            g.drawImage(imgEnemy, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 4) Draw player last (on top) ---
         if (cell.hasPlayer()) {
-            g.drawImage(imgPlayer, px, py, TILE, TILE, null);
+            g.drawImage(imgPlayer, px, py, GameConfig.TILE, GameConfig.TILE, null);
         }
 
         // --- 5) Draw grid outline ---
-        g.setColor(GRID_COLOR);
-        g.drawRect(px, py, TILE, TILE);
+        g.setColor(GameConfig.GRID_COLOR);
+        g.drawRect(px, py, GameConfig.TILE, GameConfig.TILE);
     }
 
     private void drawCellSpritesForSymbols(Graphics2D g, Cell cell, int px, int py, Position pos) {
         // background per terrain
         switch (cell.terrain()) {
-            case WALL, BARRIER -> g.setColor(SYMBOLBACKGROUND_WALL_COLOR);
-            case START         -> g.setColor(SYMBOLBACKGROUND_START_COLOR);
-            case EXIT          -> g.setColor(SYMBOLBACKGROUND_EXIT_COLOR);
-            default            -> g.setColor(FLOOR_COLOR);
+            case WALL, BARRIER -> g.setColor(GameConfig.SYMBOLBACKGROUND_WALL_COLOR);
+            case START         -> g.setColor(GameConfig.SYMBOLBACKGROUND_START_COLOR);
+            case EXIT          -> g.setColor(GameConfig.SYMBOLBACKGROUND_EXIT_COLOR);
+            default            -> g.setColor(GameConfig.FLOOR_COLOR);
         }
-        g.fillRect(px, py, TILE, TILE);
+        g.fillRect(px, py, GameConfig.TILE, GameConfig.TILE);
 
         // grid outline
-        g.setColor(GRID_COLOR);
-        g.drawRect(px, py, TILE, TILE);
+        g.setColor(GameConfig.GRID_COLOR);
+        g.drawRect(px, py, GameConfig.TILE, GameConfig.TILE);
 
         // ASCII symbol from Cell.symbol()
         char sym = cell.symbol();
         if (sym != ' ') {
             // choose colour based on symbol
             Color fg = switch (sym) {
-                case 'P' ->   SYMBOL_PLAYER_COLOR;           // player
-                case 'B' ->   SYMBOL_ENEMY_COLOR;            // enemy / bad guy
-                case '.' ->   SYMBOL_REGULARREWARD_COLOR;    // regular reward
-                case 'o' ->   SYMBOL_BONUSREWARD_COLOR;      // bonus reward
-                case '*' ->   SYMBOL_PUNISHMENT_COLOR;       // punishment
-                case 'C' ->   SYMBOL_COLLISION_COLOR;        // collision
-                case 'X' ->   SYMBOL_WALL_COLOR;             // wall
-                case '#' ->   SYMBOL_BARRIER_COLOR;          // barrier
-                case 'S' ->   SYMBOL_START_COLOR;            // start
-                case 'E' ->   SYMBOL_EXIT_COLOR;             // exit
+                case 'P' ->   GameConfig.SYMBOL_PLAYER_COLOR;           // player
+                case 'B' ->   GameConfig.SYMBOL_ENEMY_COLOR;            // enemy / bad guy
+                case '.' ->   GameConfig.SYMBOL_REGULARREWARD_COLOR;    // regular reward
+                case 'o' ->   GameConfig.SYMBOL_BONUSREWARD_COLOR;      // bonus reward
+                case '*' ->   GameConfig.SYMBOL_PUNISHMENT_COLOR;       // punishment
+                case 'C' ->   GameConfig.SYMBOL_COLLISION_COLOR;        // collision
+                case 'X' ->   GameConfig.SYMBOL_WALL_COLOR;             // wall
+                case '#' ->   GameConfig.SYMBOL_BARRIER_COLOR;          // barrier
+                case 'S' ->   GameConfig.SYMBOL_START_COLOR;            // start
+                case 'E' ->   GameConfig.SYMBOL_EXIT_COLOR;             // exit
                 default  -> Color.WHITE;
             };
 
             g.setColor(fg);
-            g.setFont(getFont().deriveFont(Font.BOLD, (float) (TILE * 0.6)));
+            g.setFont(getFont().deriveFont(Font.BOLD, (float) (GameConfig.TILE * 0.6)));
 
             FontMetrics fm = g.getFontMetrics();
             int cw = fm.charWidth(sym);
             int ch = fm.getAscent();
 
-            int cx = px + (TILE - cw) / 2;
-            int cy = py + (TILE + ch) / 2 - 4;
+            int cx = px + (GameConfig.TILE - cw) / 2;
+            int cy = py + (GameConfig.TILE + ch) / 2 - 4;
             g.drawString(String.valueOf(sym), cx, cy);
         }
     }
@@ -373,11 +333,11 @@ public final class GamePanel extends JPanel {
         int textH = fm.getHeight();
 
         // Board area (under the HUD)
-        int boardW = board.cols() * TILE;
-        int boardH = board.rows() * TILE;
+        int boardW = board.cols() * GameConfig.TILE;
+        int boardH = board.rows() * GameConfig.TILE;
 
         int centerX = boardW / 2;
-        int centerY = HUD_H + boardH / 2;   // middle of the board area
+        int centerY = GameConfig.HUD_H + boardH / 2;   // middle of the board area
 
         int padX = 24;
         int padY = 12;
@@ -387,7 +347,7 @@ public final class GamePanel extends JPanel {
         int rectY = centerY - rectH / 2;
 
         // Translucent black background
-        g.setColor(BANNER_BACKGROUND);   // alpha 170 ~= 2/3 opaque
+        g.setColor(GameConfig.BANNER_BACKGROUND);   // alpha 170 ~= 2/3 opaque
         g.fillRoundRect(rectX, rectY, rectW, rectH, 16, 16);
 
         // White text centered in the box

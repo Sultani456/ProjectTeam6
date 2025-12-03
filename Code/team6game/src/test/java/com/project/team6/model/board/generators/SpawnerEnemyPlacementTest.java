@@ -1,6 +1,6 @@
 package com.project.team6.model.board.generators;
 
-import com.project.team6.controller.GameController;
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
@@ -22,7 +22,7 @@ final class SpawnerEnemyPlacementTest {
     @Test
     void doesNotUseGateFrontTiles() {
         Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameController.DEFAULT_TICK_MS);
+        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
 
         sp.spawnEnemies(3, 2); // place a few enemies
 
@@ -38,7 +38,7 @@ final class SpawnerEnemyPlacementTest {
     @Test
     void keepsStartToExitReachable() {
         Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameController.DEFAULT_TICK_MS);
+        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
 
         sp.spawnEnemies(5, 2); // allow several placements
 
