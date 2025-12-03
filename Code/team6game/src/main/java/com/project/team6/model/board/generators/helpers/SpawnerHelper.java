@@ -38,6 +38,8 @@ public final class SpawnerHelper {
         Cell[][] grid = board.grid();
 
         boolean[][] visited = new boolean[rows][cols];
+        boolean[][] blockedGrid = toBlockedGrid(blocked, rows, cols);
+
         Deque<Position> q = new ArrayDeque<>();
         q.add(from);
         visited[from.row()][from.column()] = true;
@@ -47,31 +49,42 @@ public final class SpawnerHelper {
             if (p.equals(to)) return true;
 
             int column = p.column(), row = p.row();
-            tryVisit(grid, cols, rows, column + 1, row, blocked, visited, q);
-            tryVisit(grid, cols, rows, column - 1, row, blocked, visited, q);
-            tryVisit(grid, cols, rows, column, row + 1, blocked, visited, q);
-            tryVisit(grid, cols, rows, column, row - 1, blocked, visited, q);
+            tryVisit(grid, cols, rows, column + 1, row, blockedGrid, visited, q);
+            tryVisit(grid, cols, rows, column - 1, row, blockedGrid, visited, q);
+            tryVisit(grid, cols, rows, column, row + 1, blockedGrid, visited, q);
+            tryVisit(grid, cols, rows, column, row - 1, blockedGrid, visited, q);
         }
 
         return false;
     }
 
+    private static boolean[][] toBlockedGrid(Set<Position> blocked, int rows, int cols) {
+        if (blocked == null || blocked.isEmpty()) return null;
+
+        boolean[][] blockedGrid = new boolean[rows][cols];
+        for (Position p : blocked) {
+            int column = p.column();
+            int row = p.row();
+            if (column < 0 || column >= cols || row < 0 || row >= rows) continue;
+            blockedGrid[row][column] = true;
+        }
+        return blockedGrid;
+    }
+
     private static void tryVisit(Cell[][] grid, int cols, int rows,
                                  int column, int row,
-                                 Set<Position> blocked,
+                                 boolean[][] blockedGrid,
                                  boolean[][] visited,
                                  Deque<Position> q) {
 
         if (column < 0 || column >= cols || row < 0 || row >= rows) return;
         if (visited[row][column]) return;
-
-        Position p = new Position(column, row);
-        if (blocked != null && blocked.contains(p)) return;
+        if (blockedGrid != null && blockedGrid[row][column]) return;
 
         Cell c = grid[row][column];
         if (!c.isWalkableTerrain()) return;
 
         visited[row][column] = true;
-        q.addLast(p);
+        q.addLast(new Position(column, row));
     }
 }
