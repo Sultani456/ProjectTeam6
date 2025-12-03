@@ -49,20 +49,20 @@ public class GeneratorHelper {
 
         Deque<Position> q = new ArrayDeque<>();
         q.addLast(start);
-        visited[start.y()][start.x()] = true;
+        visited[start.row()][start.column()] = true;
 
         int count = 0;
         while (!q.isEmpty()) {
             Position p = q.removeFirst();
             count++;
 
-            int x = p.x();
-            int y = p.y();
+            int column = p.column();
+            int row = p.row();
 
-            tryVisit(terrain, visited, q, x + 1, y);
-            tryVisit(terrain, visited, q, x - 1, y);
-            tryVisit(terrain, visited, q, x, y + 1);
-            tryVisit(terrain, visited, q, x, y - 1);
+            tryVisit(terrain, visited, q, column + 1, row);
+            tryVisit(terrain, visited, q, column - 1, row);
+            tryVisit(terrain, visited, q, column, row + 1);
+            tryVisit(terrain, visited, q, column, row - 1);
         }
         return count;
     }
@@ -73,21 +73,21 @@ public class GeneratorHelper {
      * @param terrain terrain grid
      * @param visited visited flags
      * @param q       BFS queue
-     * @param x       column index
-     * @param y       row index
+     * @param column       column index
+     * @param row       row index
      */
     public static void tryVisit(Cell.Terrain[][] terrain,
                                  boolean[][] visited,
                                  Deque<Position> q,
-                                 int x, int y) {
+                                 int column, int row) {
         int rows = terrain.length;
         int cols = terrain[0].length;
-        if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-        if (visited[y][x]) return;
-        if (!isPassable(terrain[y][x])) return;
+        if (column < 0 || column >= cols || row < 0 || row >= rows) return;
+        if (visited[row][column]) return;
+        if (!isPassable(terrain[row][column])) return;
 
-        visited[y][x] = true;
-        q.addLast(new Position(x, y));
+        visited[row][column] = true;
+        q.addLast(new Position(column, row));
     }
 
     /**
@@ -100,9 +100,9 @@ public class GeneratorHelper {
         int rows = terrain.length;
         int cols = terrain[0].length;
         int count = 0;
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                if (isPassable(terrain[y][x])) count++;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < cols; column++) {
+                if (isPassable(terrain[row][column])) count++;
             }
         }
         return count;
@@ -117,14 +117,14 @@ public class GeneratorHelper {
     public static boolean hasIsolatedFloor(Cell.Terrain[][] terrain) {
         int rows = terrain.length;
         int cols = terrain[0].length;
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                if (!isPassable(terrain[y][x])) continue;
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < cols; column++) {
+                if (!isPassable(terrain[row][column])) continue;
                 int open = 0;
-                if (y > 0        && isPassable(terrain[y - 1][x])) open++;
-                if (y < rows - 1 && isPassable(terrain[y + 1][x])) open++;
-                if (x > 0        && isPassable(terrain[y][x - 1])) open++;
-                if (x < cols - 1 && isPassable(terrain[y][x + 1])) open++;
+                if (row > 0        && isPassable(terrain[row - 1][column])) open++;
+                if (row < rows - 1 && isPassable(terrain[row + 1][column])) open++;
+                if (column > 0        && isPassable(terrain[row][column - 1])) open++;
+                if (column < cols - 1 && isPassable(terrain[row][column + 1])) open++;
                 if (open == 0) return true;
             }
         }
@@ -159,7 +159,7 @@ public class GeneratorHelper {
         int reachable = BFSCount(terrain, start, visited);
 
         // Exit must be reachable
-        if (!visited[exit.y()][exit.x()]) {
+        if (!visited[exit.row()][exit.column()]) {
             return false;
         }
 
@@ -203,13 +203,13 @@ public class GeneratorHelper {
      */
     public static boolean[][] perimeterWalls(int rows, int cols) {
         boolean[][] walls = new boolean[rows][cols];
-        for (int y = 0; y < rows; y++) {
-            walls[y][0]        = true;
-            walls[y][cols - 1] = true;
+        for (int row = 0; row < rows; row++) {
+            walls[row][0]        = true;
+            walls[row][cols - 1] = true;
         }
-        for (int x = 0; x < cols; x++) {
-            walls[0][x]        = true;
-            walls[rows - 1][x] = true;
+        for (int column = 0; column < cols; column++) {
+            walls[0][column]        = true;
+            walls[rows - 1][column] = true;
         }
         return walls;
     }
@@ -236,8 +236,8 @@ public class GeneratorHelper {
      * @return an exit position
      */
     public static Position randomEdgeExit(int rows, int cols, Random rng) {
-        int y = 1 + rng.nextInt(rows - 2); // east edge, avoid corners
-        return new Position(cols - 1, y);
+        int row = 1 + rng.nextInt(rows - 2); // east edge, avoid corners
+        return new Position(cols - 1, row);
     }
 
     /**
@@ -258,19 +258,19 @@ public class GeneratorHelper {
                                                   Position exit) {
         Cell.Terrain[][] t = new Cell.Terrain[rows][cols];
 
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < cols; column++) {
 
-                if (start != null && start.x() == x && start.y() == y) {
-                    t[y][x] = Cell.Terrain.START;
-                } else if (exit != null && exit.x() == x && exit.y() == y) {
-                    t[y][x] = Cell.Terrain.EXIT;
-                } else if (walls[y][x]) {
-                    t[y][x] = Cell.Terrain.WALL;
-                } else if (barriers[y][x]) {
-                    t[y][x] = Cell.Terrain.BARRIER;
+                if (start != null && start.column() == column && start.row() == row) {
+                    t[row][column] = Cell.Terrain.START;
+                } else if (exit != null && exit.column() == column && exit.row() == row) {
+                    t[row][column] = Cell.Terrain.EXIT;
+                } else if (walls[row][column]) {
+                    t[row][column] = Cell.Terrain.WALL;
+                } else if (barriers[row][column]) {
+                    t[row][column] = Cell.Terrain.BARRIER;
                 } else {
-                    t[y][x] = Cell.Terrain.FLOOR;
+                    t[row][column] = Cell.Terrain.FLOOR;
                 }
             }
         }

@@ -327,8 +327,8 @@ public final class Spawner {
         Position exit  = board.exit();
 
         // Never allow the tile directly inside Start or Exit
-        Position blockStartFront = new Position(start.x() + 1, start.y());
-        Position blockExitFront  = new Position(exit.x() - 1,  exit.y());
+        Position blockStartFront = new Position(start.column() + 1, start.row());
+        Position blockExitFront  = new Position(exit.column() - 1,  exit.row());
         free.remove(blockStartFront);
         free.remove(blockExitFront);
 

@@ -39,8 +39,8 @@ final class SpawnerEnemyTest {
         Position e = board.exit();
 
         // first interior tiles just inside the gates
-        Position sFront = new Position(Math.min(s.x() + 1, cols - 1), s.y());
-        Position eFront = new Position(Math.max(e.x() - 1, 0),        e.y());
+        Position sFront = new Position(Math.min(s.column() + 1, cols - 1), s.row());
+        Position eFront = new Position(Math.max(e.column() - 1, 0),        e.row());
 
         assertFalse(board.cellAt(sFront).hasEnemy(), "Enemy on start front tile");
         assertFalse(board.cellAt(eFront).hasEnemy(), "Enemy on exit front tile");
@@ -63,21 +63,21 @@ final class SpawnerEnemyTest {
         boolean[][] seen = new boolean[b.rows()][b.cols()];
         Deque<Position> q = new ArrayDeque<>();
         q.add(from);
-        seen[from.y()][from.x()] = true;
+        seen[from.row()][from.column()] = true;
 
         while (!q.isEmpty()) {
             Position p = q.removeFirst();
             if (p.equals(to)) return true;
 
             for (Position n : p.neighbors4()) {
-                if (n.x() < 0 || n.x() >= b.cols() || n.y() < 0 || n.y() >= b.rows()) continue;
-                if (seen[n.y()][n.x()]) continue;
+                if (n.column() < 0 || n.column() >= b.cols() || n.row() < 0 || n.row() >= b.rows()) continue;
+                if (seen[n.row()][n.column()]) continue;
                 if (blocked != null && blocked.contains(n)) continue;
 
                 Cell c = b.cellAt(n);
                 if (!c.isWalkableTerrain()) continue;
 
-                seen[n.y()][n.x()] = true;
+                seen[n.row()][n.column()] = true;
                 q.addLast(n);
             }
         }

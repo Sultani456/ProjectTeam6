@@ -7,30 +7,30 @@ import java.util.*;
  * Safe to use as a key in maps and sets.
  */
 public final class Position {
-    private final int x;
-    private final int y;
+    private final int column;
+    private final int row;
 
     /**
-     * Builds a position with x and y.
+     * Builds a position with column and row.
      *
-     * @param x column index
-     * @param y row index
+     * @param column column index
+     * @param row row index
      */
-    public Position(int x, int y) { this.x = x; this.y = y; }
+    public Position(int column, int row) { this.column = column; this.row = row; }
 
     /**
-     * Returns the x value.
+     * Returns the column value.
      *
-     * @return x coordinate
+     * @return row coordinate
      */
-    public int x() { return x; }
+    public int column() { return column; }
 
     /**
-     * Returns the y value.
+     * Returns the row value.
      *
-     * @return y coordinate
+     * @return row coordinate
      */
-    public int y() { return y; }
+    public int row() { return row; }
 
     /**
      * Computes Manhattan distance to another position.
@@ -38,7 +38,7 @@ public final class Position {
      * @param other target position
      * @return |x1 - x2| + |y1 - y2|
      */
-    public int manhattanTo(Position other) { return Math.abs(x - other.x) + Math.abs(y - other.y); }
+    public int manhattanTo(Position other) { return Math.abs(column - other.column) + Math.abs(row - other.row); }
 
     /**
      * Returns a new position translated by a delta.
@@ -47,7 +47,7 @@ public final class Position {
      * @param dy change in y
      * @return new position at (x + dx, y + dy)
      */
-    public Position translate(int dx, int dy) { return new Position(x + dx, y + dy); }
+    public Position translate(int dx, int dy) { return new Position(column + dx, row + dy); }
 
     /**
      * Returns the four direct neighbors.
@@ -57,36 +57,36 @@ public final class Position {
      */
     public List<Position> neighbors4() {
         return List.of(
-                new Position(x + 1, y),
-                new Position(x - 1, y),
-                new Position(x, y + 1),
-                new Position(x, y - 1)
+                new Position(column + 1, row),
+                new Position(column - 1, row),
+                new Position(column, row + 1),
+                new Position(column, row - 1)
         );
     }
 
     /**
-     * Checks structural equality by x and y.
+     * Checks structural equality by column and row.
      *
      * @param o other object
-     * @return true if both positions have the same x and y
+     * @return true if both positions have the same column and row
      */
     @Override public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Position p)) return false;
-        return x == p.x && y == p.y;
+        return column == p.column && row == p.row;
     }
 
     /**
-     * Hash code based on x and y.
+     * Hash code based on row and column.
      *
      * @return hash value
      */
-    @Override public int hashCode() { return Objects.hash(x, y); }
+    @Override public int hashCode() { return Objects.hash(column, row); }
 
     /**
      * Returns a short string form.
      *
-     * @return string like "(x,y)"
+     * @return string like "(column,row)"
      */
-    @Override public String toString() { return "(" + x + "," + y + ")"; }
+    @Override public String toString() { return "(" + column + "," + row + ")"; }
 }

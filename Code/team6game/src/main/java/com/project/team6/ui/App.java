@@ -44,7 +44,7 @@ public final class App {
         int enemyMovePeriod = 10;
 
         // Barrier density for RANDOM barrier mode (fraction of interior cells)
-        double boardBarrierPercentage = 0.3;        
+        double boardBarrierPercentage = 0.2;
 
         SwingUtilities.invokeLater(() -> {
             /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
@@ -82,7 +82,7 @@ public final class App {
             // --- View + Window
             GamePanel panel = new GamePanel(board, scoreboard, state);
 //            panel.setRenderMode(GamePanel.RenderMode.SYMBOLS);      // comment out if want IMAGES
-
+//
             GameFrame frame = new GameFrame(panel);
             frame.setVisible(true);
 

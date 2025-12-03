@@ -54,9 +54,9 @@ public final class Board {
 
         this.grid = new Cell[rows][cols];
         Cell.Terrain[][] terrain = output.terrain();
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                grid[y][x] = new Cell(terrain[y][x]);
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < cols; column++) {
+                grid[row][column] = new Cell(terrain[row][column]);
             }
         }
 
@@ -102,7 +102,7 @@ public final class Board {
      * @return the cell reference
      */
     public Cell cellAt(Position p) {
-        return grid[p.y()][p.x()];
+        return grid[p.row()][p.column()];
     }
 
     /**
@@ -112,7 +112,7 @@ public final class Board {
      * @return true if inside, false otherwise
      */
     public boolean isInBounds(Position p) {
-        int x = p.x(), y = p.y();
+        int x = p.column(), y = p.row();
         return x >= 0 && x < cols && y >= 0 && y < rows;
     }
 
@@ -124,7 +124,7 @@ public final class Board {
      * @return max of horizontal and vertical differences
      */
     public static int chebyshev(Position a, Position b) {
-        return Math.max(Math.abs(a.x() - b.x()), Math.abs(a.y() - b.y()));
+        return Math.max(Math.abs(a.column() - b.column()), Math.abs(a.row() - b.row()));
     }
 
     // -----------------------------------------------------------------
@@ -207,7 +207,7 @@ public final class Board {
         Objects.requireNonNull(dir);
 
         Position from = who.position();
-        Position to   = new Position(from.x() + dir.dx, from.y() + dir.dy);
+        Position to   = new Position(from.column() + dir.d_column, from.row() + dir.d_row);
 
         if (!isInBounds(to)) {
             return MoveResult.BLOCKED;

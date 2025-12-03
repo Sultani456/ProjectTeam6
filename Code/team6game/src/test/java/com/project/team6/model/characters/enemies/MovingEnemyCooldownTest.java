@@ -20,13 +20,13 @@ final class MovingEnemyCooldownTest {
 
         // Put enemy two cells to the right of the player on same row.
         Position s = b.start();
-        Position e0 = new Position(Math.min(b.cols() - 1, s.x() + 2), s.y());
+        Position e0 = new Position(Math.min(b.cols() - 1, s.column() + 2), s.row());
         MovingEnemy e = new MovingEnemy(e0, 3);      // period = 3
         b.registerEnemy(e);
 
         // Tick 1: moves one step toward player.
         b.tick(b.player().position());
-        Position e1 = new Position(e0.x() - 1, e0.y());
+        Position e1 = new Position(e0.column() - 1, e0.row());
         assertEquals(e1, e.position());
 
         // Tick 2 and 3: cooldown, stays.

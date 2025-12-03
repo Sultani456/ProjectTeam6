@@ -47,7 +47,7 @@ final class BoardGeneratorTest {
             if (p.equals(to)) return true;
 
             for (Position n : p.neighbors4()) {
-                if (n.x() < 0 || n.x() >= b.cols() || n.y() < 0 || n.y() >= b.rows()) continue;
+                if (n.column() < 0 || n.column() >= b.cols() || n.row() < 0 || n.row() >= b.rows()) continue;
                 if (seen.contains(n)) continue;
                 Cell c = b.cellAt(n);
                 if (!c.isWalkableTerrain()) continue;

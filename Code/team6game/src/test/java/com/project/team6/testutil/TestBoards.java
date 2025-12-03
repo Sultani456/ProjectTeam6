@@ -28,8 +28,8 @@ public final class TestBoards {
         }
         Position start = new Position(0, 3);
         Position exit  = new Position(6, 3);
-        t[start.y()][start.x()] = Cell.Terrain.START;
-        t[exit.y()][exit.x()]   = Cell.Terrain.EXIT;
+        t[start.row()][start.column()] = Cell.Terrain.START;
+        t[exit.row()][exit.column()]   = Cell.Terrain.EXIT;
 
         BoardGenerator.Output out = new BoardGenerator.Output(rows, cols, start, exit, t);
         return new Board(out);

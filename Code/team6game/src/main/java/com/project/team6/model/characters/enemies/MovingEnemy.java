@@ -58,19 +58,19 @@ public final class MovingEnemy extends Enemy {
     @Override
     public Direction decide(Board board, Position playerPos) {
         Position me = position();
-        int dx = Integer.compare(playerPos.x(), me.x());
-        int dy = Integer.compare(playerPos.y(), me.y());
+        int d_column = Integer.compare(playerPos.column(), me.column());
+        int d_row = Integer.compare(playerPos.row(), me.row());
 
-        boolean horizFirst = Math.abs(playerPos.x() - me.x()) >= Math.abs(playerPos.y() - me.y());
-        Direction direction1 = dx > 0 ? Direction.RIGHT : (dx < 0 ? Direction.LEFT : null);
-        Direction direction2 = dy > 0 ? Direction.DOWN  : (dy < 0 ? Direction.UP   : null);
+        boolean horizFirst = Math.abs(playerPos.column() - me.column()) >= Math.abs(playerPos.row() - me.row());
+        Direction direction1 = d_column > 0 ? Direction.RIGHT : (d_column < 0 ? Direction.LEFT : null);
+        Direction direction2 = d_row > 0 ? Direction.DOWN  : (d_row < 0 ? Direction.UP   : null);
         Direction first  = horizFirst ? direction1 : direction2;
         Direction second = horizFirst ? direction2 : direction1;
 
         Direction[] order = order4(first, second);
         for (Direction d : order) {
             if (d == null) continue;
-            Position to = new Position(me.x() + d.dx, me.y() + d.dy);
+            Position to = new Position(me.column() + d.d_column, me.row() + d.d_row);
             if (board.isInBounds(to) && board.cellAt(to).isWalkableTerrain()) return d;
         }
         return null; // stuck

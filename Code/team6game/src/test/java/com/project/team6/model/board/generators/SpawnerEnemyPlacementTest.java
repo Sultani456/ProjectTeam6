@@ -28,8 +28,8 @@ final class SpawnerEnemyPlacementTest {
 
         Position s = b.start();
         Position e = b.exit();
-        Position startFront = new Position(s.x() + 1, s.y());
-        Position exitFront  = new Position(e.x() - 1, e.y());
+        Position startFront = new Position(s.column() + 1, s.row());
+        Position exitFront  = new Position(e.column() - 1, e.row());
 
         assertFalse(b.cellAt(startFront).hasEnemy(), "Enemy at start front tile");
         assertFalse(b.cellAt(exitFront).hasEnemy(),  "Enemy at exit front tile");

@@ -27,10 +27,10 @@ public final class SpawnerHelper {
         Cell[][] grid = board.grid();
 
         List<Position> free = new ArrayList<>();
-        for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                Position p = new Position(x, y);
-                Cell c = grid[y][x];
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < cols; column++) {
+                Position p = new Position(column, row);
+                Cell c = grid[row][column];
                 if (c.terrain() == Cell.Terrain.FLOOR &&
                         c.item() == null &&
                         !c.hasPlayer() &&
@@ -63,17 +63,17 @@ public final class SpawnerHelper {
         boolean[][] visited = new boolean[rows][cols];
         Deque<Position> q = new ArrayDeque<>();
         q.add(from);
-        visited[from.y()][from.x()] = true;
+        visited[from.row()][from.column()] = true;
 
         while (!q.isEmpty()) {
             Position p = q.removeFirst();
             if (p.equals(to)) return true;
 
-            int x = p.x(), y = p.y();
-            tryVisit(board, x + 1, y, blocked, visited, q);
-            tryVisit(board, x - 1, y, blocked, visited, q);
-            tryVisit(board, x, y + 1, blocked, visited, q);
-            tryVisit(board, x, y - 1, blocked, visited, q);
+            int column = p.column(), row = p.row();
+            tryVisit(board, column + 1, row, blocked, visited, q);
+            tryVisit(board, column - 1, row, blocked, visited, q);
+            tryVisit(board, column, row + 1, blocked, visited, q);
+            tryVisit(board, column, row - 1, blocked, visited, q);
         }
 
         return false;
@@ -84,13 +84,13 @@ public final class SpawnerHelper {
      * Skips out of bounds cells, visited cells, blocked cells, and walls.
      *
      * @param board   the game board
-     * @param x       column index
-     * @param y       row index
+     * @param column       column index
+     * @param row       row index
      * @param blocked set of blocked positions, may be null
      * @param visited visited flags
      * @param q       BFS queue
      */
-    public static void tryVisit(Board board, int x, int y,
+    public static void tryVisit(Board board, int column, int row,
                          Set<Position> blocked,
                          boolean[][] visited,
                          Deque<Position> q) {
@@ -99,16 +99,16 @@ public final class SpawnerHelper {
         int cols = board.cols();
         Cell[][] grid = board.grid();
 
-        if (x < 0 || x >= cols || y < 0 || y >= rows) return;
-        if (visited[y][x]) return;
+        if (column < 0 || column >= cols || row < 0 || row >= rows) return;
+        if (visited[row][column]) return;
 
-        Position p = new Position(x, y);
+        Position p = new Position(column, row);
         if (blocked != null && blocked.contains(p)) return;
 
-        Cell c = grid[y][x];
+        Cell c = grid[row][column];
         if (!c.isWalkableTerrain()) return;
 
-        visited[y][x] = true;
+        visited[row][column] = true;
         q.addLast(p);
     }
 }

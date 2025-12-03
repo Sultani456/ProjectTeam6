@@ -20,14 +20,14 @@ final class CellEnterableRulesTest {
         Position s = b.start();
 
         // Place enemy right of start if possible, otherwise left.
-        Position enemyPos = (s.x() + 1 < b.cols())
-                ? new Position(s.x() + 1, s.y())
-                : new Position(s.x() - 1, s.y());
+        Position enemyPos = (s.column() + 1 < b.cols())
+                ? new Position(s.column() + 1, s.row())
+                : new Position(s.column() - 1, s.row());
 
         MovingEnemy e = new MovingEnemy(enemyPos, 1);
         b.registerEnemy(e);
 
-        Direction towardStart = (enemyPos.x() > s.x()) ? Direction.LEFT : Direction.RIGHT;
+        Direction towardStart = (enemyPos.column() > s.column()) ? Direction.LEFT : Direction.RIGHT;
         MoveResult r = b.step(e, towardStart);
         assertEquals(MoveResult.BLOCKED, r);
         assertEquals(enemyPos, e.position());
@@ -39,14 +39,14 @@ final class CellEnterableRulesTest {
         Position ex = b.exit();
 
         // Place enemy left of exit if possible, otherwise right.
-        Position enemyPos = (ex.x() - 1 >= 0)
-                ? new Position(ex.x() - 1, ex.y())
-                : new Position(ex.x() + 1, ex.y());
+        Position enemyPos = (ex.column() - 1 >= 0)
+                ? new Position(ex.column() - 1, ex.row())
+                : new Position(ex.column() + 1, ex.row());
 
         MovingEnemy e = new MovingEnemy(enemyPos, 1);
         b.registerEnemy(e);
 
-        Direction towardExit = (enemyPos.x() < ex.x()) ? Direction.RIGHT : Direction.LEFT;
+        Direction towardExit = (enemyPos.column() < ex.column()) ? Direction.RIGHT : Direction.LEFT;
         MoveResult r = b.step(e, towardExit);
         assertEquals(MoveResult.BLOCKED, r);
         assertEquals(enemyPos, e.position());

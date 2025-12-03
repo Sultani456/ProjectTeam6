@@ -17,17 +17,17 @@ public enum Direction {
     /** Move right by one column. */
     RIGHT(1, 0);
 
-    /** Change in x for this direction. */
-    public final int dx;
+    /** Change in column for this direction. */
+    public final int d_column;
 
-    /** Change in y for this direction. */
-    public final int dy;
+    /** Change in row for this direction. */
+    public final int d_row;
 
     /**
      * Creates a direction with x and y deltas.
      *
-     * @param dx change in x
-     * @param dy change in y
+     * @param d_column change in column
+     * @param d_row change in row
      */
-    Direction(int dx, int dy) { this.dx = dx; this.dy = dy; }
+    Direction(int d_column, int d_row) { this.d_column = d_column; this.d_row = d_row; }
 }

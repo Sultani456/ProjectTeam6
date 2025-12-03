@@ -45,6 +45,6 @@ final class BoardMoveTest {
         // The player moves right onto an empty floor cell.
         MoveResult r = b.step(p, Direction.RIGHT);
         assertEquals(MoveResult.MOVED, r);
-        assertEquals(new Position(1, p.position().y()), p.position());
+        assertEquals(new Position(1, p.position().row()), p.position());
     }
 }

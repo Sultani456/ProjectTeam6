@@ -119,12 +119,12 @@ public final class BoardGenerator {
 
         if (opts.barrierPositions != null) {
             for (Position p : opts.barrierPositions) {
-                if (p.x() <= 0 || p.x() >= opts.cols - 1 ||
-                        p.y() <= 0 || p.y() >= opts.rows - 1) {
+                if (p.column() <= 0 || p.column() >= opts.cols - 1 ||
+                        p.row() <= 0 || p.row() >= opts.rows - 1) {
                     // ignore perimeter; those are already walls
                     continue;
                 }
-                barriers[p.y()][p.x()] = true;
+                barriers[p.row()][p.column()] = true;
             }
         }
 
@@ -170,15 +170,15 @@ public final class BoardGenerator {
         Position start = null;
         Position exit  = null;
 
-        for (int y = 0; y < rows; y++) {
-            String line = lines.get(y);
-            for (int x = 0; x < cols; x++) {
-                char ch = line.charAt(x);
+        for (int row = 0; row < rows; row++) {
+            String line = lines.get(row);
+            for (int column = 0; column < cols; column++) {
+                char ch = line.charAt(column);
                 switch (ch) {
-                    case 'X' -> walls[y][x] = true;
-                    case '#' -> barriers[y][x] = true;
-                    case 'S' -> start = new Position(x, y);
-                    case 'E' -> exit  = new Position(x, y);
+                    case 'X' -> walls[row][column] = true;
+                    case '#' -> barriers[row][column] = true;
+                    case 'S' -> start = new Position(column, row);
+                    case 'E' -> exit  = new Position(column, row);
                     default  -> { /* floor */ }
                 }
             }
@@ -233,12 +233,12 @@ public final class BoardGenerator {
         while (placed < targetBarriers && attempts < maxAttempts) {
             attempts++;
 
-            int x = 1 + rng.nextInt(cols - 2);
-            int y = 1 + rng.nextInt(rows - 2);
+            int column = 1 + rng.nextInt(cols - 2);
+            int row = 1 + rng.nextInt(rows - 2);
 
-            if (walls[y][x] || barriers[y][x]) continue;
+            if (walls[row][column] || barriers[row][column]) continue;
 
-            Position p = new Position(x, y);
+            Position p = new Position(column, row);
 
             // keep at least Chebyshev 2 away from start and exit
             if (Board.chebyshev(p, start) < 2 || Board.chebyshev(p, exit) < 2) {
@@ -246,10 +246,10 @@ public final class BoardGenerator {
             }
 
             // tentatively place barrier
-            barriers[y][x] = true;
+            barriers[row][column] = true;
 
             if (!GeneratorHelper.isBarrierConfigurationValid(walls, barriers, start, exit)) {
-                barriers[y][x] = false; // revert
+                barriers[row][column] = false; // revert
             } else {
                 placed++;
             }
