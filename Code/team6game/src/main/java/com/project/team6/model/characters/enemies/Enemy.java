@@ -29,7 +29,7 @@ public abstract class Enemy extends CharacterObject {
      * @param board     current board
      * @param playerPos player position
      */
-    public abstract void tick(Board board, Position playerPos) {}
+    public abstract void tick(Board board, Position playerPos);
 
     /**
      * Chooses a movement direction.

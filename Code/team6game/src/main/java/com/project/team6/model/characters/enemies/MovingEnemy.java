@@ -52,7 +52,7 @@ public final class MovingEnemy extends Enemy {
 
         MoveResult result = board.step(this, d);
 
-        
+
         cooldown = movePeriod - 1;
     }
 
