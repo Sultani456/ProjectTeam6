@@ -189,40 +189,7 @@ public final class GamePanel extends JPanel {
                         continue;
                     }
 
-                    // --- 1) Draw terrain background ---
-                    switch (cell.terrain()) {
-                        case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
-                        case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
-                        case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
-                        default -> {
-                            g.setColor(FLOOR_COLOR_IMAGES);
-                            g.fillRect(px, py, TILE, TILE);
-                        }
-                    }
-
-                    // --- 2) Draw collectibles ---
-                    var item = cell.item();
-                    if (item instanceof RegularReward) {
-                        g.drawImage(imgRegularReward, px, py, TILE, TILE, null);
-                    } else if (item instanceof BonusReward) {
-                        g.drawImage(imgBonusReward, px, py, TILE, TILE, null);
-                    } else if (item instanceof Punishment) {
-                        g.drawImage(imgPunishment, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 3) Draw enemies ---
-                    if (cell.hasEnemy()) {
-                        g.drawImage(imgEnemy, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 4) Draw player last (on top) ---
-                    if (cell.hasPlayer()) {
-                        g.drawImage(imgPlayer, px, py, TILE, TILE, null);
-                    }
-
-                    // --- 5) Draw grid outline ---
-                    g.setColor(GRID_COLOR);
-                    g.drawRect(px, py, TILE, TILE);
+                    drawCellSprites(g, cell, px, py);
                 }
             }
         } else {
@@ -381,6 +348,18 @@ public final class GamePanel extends JPanel {
      * @param py  y in pixels
      */
     private void drawCellSprites(Graphics2D g, Cell cell, int px, int py) {
+        // --- 1) Draw terrain background ---
+        switch (cell.terrain()) {
+            case WALL, BARRIER -> g.drawImage(imgWall, px, py, TILE, TILE, null);
+            case START        -> g.drawImage(imgStart, px, py, TILE, TILE, null);
+            case EXIT         -> g.drawImage(imgExit,  px, py, TILE, TILE, null);
+            default -> {
+                g.setColor(FLOOR_COLOR_IMAGES);
+                g.fillRect(px, py, TILE, TILE);
+            }
+        }
+
+        // --- 2) Draw collectibles ---
         // --- items first (under characters) ---
         var item = cell.item();
         if (item instanceof RegularReward) {
@@ -391,13 +370,19 @@ public final class GamePanel extends JPanel {
             g.drawImage(imgPunishment, px, py, TILE, TILE, null);
         }
 
-        // --- characters on top ---
+        // --- 3) Draw enemies ---
         // Enemy under Player so Player appears “in front”
         if (cell.hasEnemy()) {
             g.drawImage(imgEnemy, px, py, TILE, TILE, null);
         }
+
+        // --- 4) Draw player last (on top) ---
         if (cell.hasPlayer()) {
             g.drawImage(imgPlayer, px, py, TILE, TILE, null);
         }
+
+        // --- 5) Draw grid outline ---
+        g.setColor(GRID_COLOR);
+        g.drawRect(px, py, TILE, TILE);
     }
 }
