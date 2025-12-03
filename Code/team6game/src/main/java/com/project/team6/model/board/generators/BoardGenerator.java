@@ -12,6 +12,27 @@ import java.util.*;
  */
 public final class BoardGenerator {
 
+    /** Random source for start/exit and random barriers. */
+    private final Random rng;
+
+    /**
+     * Default constructor for production use.
+     * Uses a new Random instance.
+     */
+    public BoardGenerator() {
+        this(new Random());
+    }
+
+    /**
+     * Constructor that accepts a Random.
+     * Useful for deterministic tests.
+     *
+     * @param rng random source
+     */
+    public BoardGenerator(Random rng) {
+        this.rng = Objects.requireNonNull(rng);
+    }
+
     // --------------------------------------------------------------------
     // Output type
     // --------------------------------------------------------------------
@@ -95,7 +116,6 @@ public final class BoardGenerator {
         boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);
         boolean[][] barriers = new boolean[opts.rows][opts.cols];
 
-        Random rng = new Random();
         Position start = GeneratorHelper.randomEdgeStart(opts.rows, opts.cols, rng);
         Position exit  = GeneratorHelper.randomEdgeExit(opts.rows, opts.cols, rng);
 
@@ -128,7 +148,6 @@ public final class BoardGenerator {
             }
         }
 
-        Random rng = new Random();
         Position start = GeneratorHelper.randomEdgeStart(opts.rows, opts.cols, rng);
         Position exit  = GeneratorHelper.randomEdgeExit(opts.rows, opts.cols, rng);
 
@@ -186,7 +205,6 @@ public final class BoardGenerator {
 
         if (start == null || exit == null) {
             // fall back to random edges if not provided in file
-            Random rng = new Random();
             start = GeneratorHelper.randomEdgeStart(rows, cols, rng);
             exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);
         }
@@ -213,8 +231,6 @@ public final class BoardGenerator {
         int rows = opts.rows;
         int cols = opts.cols;
         GeneratorHelper.validateSize(rows, cols);
-
-        Random rng = new Random();
 
         boolean[][] walls    = GeneratorHelper.perimeterWalls(rows, cols);
         boolean[][] barriers = new boolean[rows][cols];
@@ -287,5 +303,15 @@ public final class BoardGenerator {
         list.add(new Position(14,8));
 
         return list;
+    }
+
+    /**
+     * Factory for tests that need deterministic layouts.
+     *
+     * @param seed random seed
+     * @return BoardGenerator with fixed Random
+     */
+    public static BoardGenerator withSeed(long seed) {
+        return new BoardGenerator(new Random(seed));
     }
 }
