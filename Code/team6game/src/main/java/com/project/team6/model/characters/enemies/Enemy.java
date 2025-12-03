@@ -9,7 +9,7 @@ import com.project.team6.model.board.Board;
 
 /**
  * Base enemy that moves at most one tile per tick.
- * Subclasses define the decision rule.
+ * Subclasses define the decision rule..
  */
 public abstract class Enemy extends CharacterObject {
 
