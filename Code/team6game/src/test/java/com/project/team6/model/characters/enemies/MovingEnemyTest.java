@@ -8,33 +8,36 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests moving enemy logic and cooldown. */
+/**
+ * Tests moving enemy logic and cooldown behavior.
+ */
 final class MovingEnemyTest {
 
     @Test
     void respectsMovePeriodCooldown() {
-        Board b = TestBoards.empty7x7();
-        Position start = new Position(2,3);
-        MovingEnemy e = new MovingEnemy(start, 3);
-        b.registerEnemy(e);
+        Board board = TestBoards.empty7x7();
+        Position start = new Position(2, 3);
+        MovingEnemy enemy = new MovingEnemy(start, 3);
+        board.registerEnemy(enemy);
 
-        b.tick(b.player().position()); // should move
-        Position after1 = e.position();
-        b.tick(b.player().position()); // wait
-        b.tick(b.player().position()); // wait
-        Position after3 = e.position();
+        board.tick(board.player().position());
+        Position afterFirst = enemy.position();
 
-        assertNotEquals(start, after1);
-        assertEquals(after1, after3);
+        board.tick(board.player().position());
+        board.tick(board.player().position());
+        Position afterThird = enemy.position();
+
+        assertNotEquals(start, afterFirst);
+        assertEquals(afterFirst, afterThird);
     }
 
     @Test
     void choosesDirectionThatReducesManhattan() {
-        Board b = TestBoards.empty7x7();
-        MovingEnemy e = new MovingEnemy(new Position(5,1), 1);
-        b.registerEnemy(e);
+        Board board = TestBoards.empty7x7();
+        MovingEnemy enemy = new MovingEnemy(new Position(5, 1), 1);
+        board.registerEnemy(enemy);
 
-        Direction d = e.decide(b, b.player().position());
+        Direction d = enemy.decide(board, board.player().position());
         assertTrue(d == Direction.LEFT || d == Direction.DOWN);
     }
 }

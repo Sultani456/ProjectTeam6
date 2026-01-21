@@ -6,11 +6,13 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests basic cell rules. */
+/**
+ * Tests basic cell behavior.
+ */
 final class CellTest {
 
     @Test
-    void walkableTerrain_flagsWork() {
+    void walkableTerrainFlagsWork() {
         assertFalse(new Cell(Cell.Terrain.WALL).isWalkableTerrain());
         assertFalse(new Cell(Cell.Terrain.BARRIER).isWalkableTerrain());
         assertTrue(new Cell(Cell.Terrain.FLOOR).isWalkableTerrain());
@@ -19,27 +21,30 @@ final class CellTest {
     }
 
     @Test
-    void enterable_onePlayer_oneEnemy() {
-        Cell c = new Cell(Cell.Terrain.FLOOR);
-        Player p = new Player(new Position(1, 1));
-        MovingEnemy e = new MovingEnemy(new Position(2, 1), 1);
+    void onePlayerAndOneEnemyCanShareCell() {
+        Cell cell = new Cell(Cell.Terrain.FLOOR);
+        Player player = new Player(new Position(1, 1));
+        MovingEnemy enemy = new MovingEnemy(new Position(2, 1), 1);
 
-        assertTrue(c.isEnterableFor(p));
-        c.addOccupant(p);
-        assertFalse(c.isEnterableFor(new Player(new Position(0,0))));
-        assertTrue(c.isEnterableFor(e));
-        c.addOccupant(e);
-        assertFalse(c.isEnterableFor(new MovingEnemy(new Position(0,0), 1)));
-        assertTrue(c.hasCollision());
+        assertTrue(player.canEnter(cell));
+        cell.addOccupant(player);
+
+        assertFalse(new Player(new Position(0, 0)).canEnter(cell));
+
+        assertTrue(enemy.canEnter(cell));
+        cell.addOccupant(enemy);
+
+        assertFalse(new MovingEnemy(new Position(0, 0), 1).canEnter(cell));
+        assertTrue(cell.hasCollision());
     }
 
     @Test
     void enemyCannotEnterStartOrExit() {
         Cell start = new Cell(Cell.Terrain.START);
-        Cell exit  = new Cell(Cell.Terrain.EXIT);
-        MovingEnemy e = new MovingEnemy(new Position(0,0), 1);
+        Cell exit = new Cell(Cell.Terrain.EXIT);
+        MovingEnemy enemy = new MovingEnemy(new Position(0, 0), 1);
 
-        assertFalse(start.isEnterableFor(e));
-        assertFalse(exit.isEnterableFor(e));
+        assertFalse(enemy.canEnter(start));
+        assertFalse(enemy.canEnter(exit));
     }
 }

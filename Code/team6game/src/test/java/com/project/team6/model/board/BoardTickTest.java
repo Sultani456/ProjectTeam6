@@ -16,28 +16,26 @@ final class BoardTickTest {
 
     @Test
     void enemyMovesAndCanCatchPlayer() {
-        Board b = TestBoards.empty7x7();
+        Board board = TestBoards.empty7x7();
 
-        // Move player off START to a floor cell (1,3).
-        b.step(b.player(), Direction.RIGHT);
+        board.step(board.player(), Direction.RIGHT);
 
-        // Put enemy at (2,3). On tick it moves left into the player.
-        MovingEnemy e = new MovingEnemy(new Position(2,3), 1);
-        b.registerEnemy(e);
+        MovingEnemy enemy = new MovingEnemy(new Position(2, 3), 1);
+        board.registerEnemy(enemy);
 
-        TickSummary t = b.tick(b.player().position());
-        assertTrue(t.playerCaught());
+        TickSummary summary = board.tick(board.player().position());
+        assertTrue(summary.playerCaught());
     }
 
     @Test
     void bonusExpiryRemovesFromCell() {
-        Board b = TestBoards.empty7x7();
+        Board board = TestBoards.empty7x7();
 
-        // Lifetime 1 means it expires on the first tick.
-        BonusReward bonus = new BonusReward(new Position(2,2), 20, 1);
-        b.registerBonusReward(bonus);
+        BonusReward bonus = new BonusReward(new Position(2, 2), 1);
+        board.registerCollectible(bonus);
 
-        b.tick(b.player().position()); // expires and is removed
-        assertNull(b.cellAt(new Position(2,2)).item());
+        board.tick(board.player().position());
+
+        assertNull(board.cellAt(new Position(2, 2)).item());
     }
 }

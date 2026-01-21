@@ -4,16 +4,26 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests time formatting and lifecycle. */
+/**
+ * Tests time formatting and penalty rules in Scoreboard.
+ */
 final class ScoreboardTest {
 
     @Test
-    void elapsedPretty_hasMmSsFormat() throws InterruptedException {
-        Scoreboard s = new Scoreboard(0, 0);
-        s.start();
-        Thread.sleep(110);
-        s.stop();
-        String pretty = s.elapsedPretty();
+    void elapsedPrettyHasMmSsFormat() throws InterruptedException {
+        Scoreboard scoreboard = new Scoreboard();
+        scoreboard.start();
+        Thread.sleep(50);
+        scoreboard.stop();
+
+        String pretty = scoreboard.elapsedPretty();
         assertTrue(pretty.matches("\\d+:\\d{2}"));
+    }
+
+    @Test
+    void penalizeRejectsPositiveValues() {
+        Scoreboard scoreboard = new Scoreboard();
+
+        assertThrows(IllegalArgumentException.class, () -> scoreboard.penalize(5));
     }
 }

@@ -1,34 +1,55 @@
 package com.project.team6.model.board.generators;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
+import com.project.team6.model.board.Cell;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.board.generators.helpers.SpawnerHelper;
+import com.project.team6.model.collectibles.Punishment;
 import com.project.team6.model.collectibles.rewards.RegularReward;
 import com.project.team6.testutil.TestBoards;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests that punishments keep paths safe. */
+/**
+ * Punishments should not break paths between start, exit, and rewards.
+ */
 final class SpawnerPunishmentPathTest {
 
     @Test
-    void startToExitAndRewardsRemainReachable() {
-        Board b = TestBoards.empty7x7();
-        b.registerRegularReward(new RegularReward(new Position(2,2), 10));
-        b.registerRegularReward(new RegularReward(new Position(4,4), 10));
+    void startExitAndRewardsRemainReachableWhenTreatingPunishmentsAsBlocked() {
+        Board board = TestBoards.empty7x7();
 
-        Spawner spawner = new Spawner(b, 100);
-        spawner.spawnPunishments(3, -5);
+        board.registerCollectible(new RegularReward(new Position(2, 2)));
+        board.registerCollectible(new RegularReward(new Position(4, 4)));
 
-        var start = b.start();
-        var exit  = b.exit();
+        GameConfig.numPunishments = 3;
 
-        assertTrue(SpawnerHelper.canReach(b, start, exit, Set.of()));
-        for (var rr : b.regularRewards()) {
-            assertTrue(SpawnerHelper.canReach(b, start, rr.position(), Set.of()));
+        Spawner spawner = Spawner.withSeed(board, 30L);
+        spawner.spawnPunishments();
+
+        Set<Position> blocked = new HashSet<>();
+        for (int row = 0; row < board.rows(); row++) {
+            for (int col = 0; col < board.cols(); col++) {
+                Position p = new Position(col, row);
+                Cell c = board.cellAt(p);
+                if (c.item() instanceof Punishment) {
+                    blocked.add(p);
+                }
+            }
+        }
+
+        Position start = board.start();
+        Position exit  = board.exit();
+
+        assertTrue(SpawnerHelper.canReach(board, start, exit, blocked));
+
+        for (var rr : board.regularRewards()) {
+            assertTrue(SpawnerHelper.canReach(board, start, rr.position(), blocked));
         }
     }
 }

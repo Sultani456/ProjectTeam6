@@ -7,30 +7,33 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests basic generator helpers. */
+/**
+ * Small tests for generator helper methods.
+ */
 final class GeneratorHelperTest {
 
     @Test
     void perimeterWallsMakeFrame() {
-        boolean[][] w = GeneratorHelper.perimeterWalls(5,7);
-        for (int y = 0; y < 5; y++) {
-            for (int x = 0; x < 7; x++) {
-                boolean border = (x==0 || x==6 || y==0 || y==4);
-                assertEquals(border, w[y][x]);
+        boolean[][] walls = GeneratorHelper.perimeterWalls(5, 7);
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 7; col++) {
+                boolean border = (col == 0 || col == 6 || row == 0 || row == 4);
+                assertEquals(border, walls[row][col]);
             }
         }
     }
 
     @Test
     void toTerrainGridSetsStartAndExit() {
-        int rows = 5, cols = 7;
+        int rows = 5;
+        int cols = 7;
         boolean[][] walls = new boolean[rows][cols];
         boolean[][] bars  = new boolean[rows][cols];
-        Position s = new Position(0,2);
-        Position e = new Position(cols-1,2);
+        Position start = new Position(0, 2);
+        Position exit  = new Position(cols - 1, 2);
 
-        Cell.Terrain[][] t = GeneratorHelper.toTerrainGrid(rows, cols, walls, bars, s, e);
-        assertEquals(Cell.Terrain.START, t[2][0]);
-        assertEquals(Cell.Terrain.EXIT,  t[2][cols-1]);
+        Cell.Terrain[][] terrain = GeneratorHelper.toTerrainGrid(rows, cols, walls, bars, start, exit);
+        assertEquals(Cell.Terrain.START, terrain[2][0]);
+        assertEquals(Cell.Terrain.EXIT,  terrain[2][cols - 1]);
     }
 }

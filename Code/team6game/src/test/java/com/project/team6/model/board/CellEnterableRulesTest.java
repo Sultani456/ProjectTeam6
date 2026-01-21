@@ -9,46 +9,45 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Enemies must not enter START or EXIT cells.
- * Uses board.start()/board.exit() so it does not assume fixed coordinates.
+ * Enemies must not enter start or exit cells.
  */
 final class CellEnterableRulesTest {
 
     @Test
     void enemyBlockedFromStart() {
-        Board b = TestBoards.empty7x7();
-        Position s = b.start();
+        Board board = TestBoards.empty7x7();
+        Position start = board.start();
 
-        // Place enemy right of start if possible, otherwise left.
-        Position enemyPos = (s.column() + 1 < b.cols())
-                ? new Position(s.column() + 1, s.row())
-                : new Position(s.column() - 1, s.row());
+        Position enemyPos = (start.column() + 1 < board.cols())
+                ? new Position(start.column() + 1, start.row())
+                : new Position(start.column() - 1, start.row());
 
-        MovingEnemy e = new MovingEnemy(enemyPos, 1);
-        b.registerEnemy(e);
+        MovingEnemy enemy = new MovingEnemy(enemyPos, 1);
+        board.registerEnemy(enemy);
 
-        Direction towardStart = (enemyPos.column() > s.column()) ? Direction.LEFT : Direction.RIGHT;
-        MoveResult r = b.step(e, towardStart);
-        assertEquals(MoveResult.BLOCKED, r);
-        assertEquals(enemyPos, e.position());
+        Direction towardStart = (enemyPos.column() > start.column()) ? Direction.LEFT : Direction.RIGHT;
+        MoveResult result = board.step(enemy, towardStart);
+
+        assertEquals(MoveResult.BLOCKED, result);
+        assertEquals(enemyPos, enemy.position());
     }
 
     @Test
     void enemyBlockedFromExit() {
-        Board b = TestBoards.empty7x7();
-        Position ex = b.exit();
+        Board board = TestBoards.empty7x7();
+        Position exit = board.exit();
 
-        // Place enemy left of exit if possible, otherwise right.
-        Position enemyPos = (ex.column() - 1 >= 0)
-                ? new Position(ex.column() - 1, ex.row())
-                : new Position(ex.column() + 1, ex.row());
+        Position enemyPos = (exit.column() - 1 >= 0)
+                ? new Position(exit.column() - 1, exit.row())
+                : new Position(exit.column() + 1, exit.row());
 
-        MovingEnemy e = new MovingEnemy(enemyPos, 1);
-        b.registerEnemy(e);
+        MovingEnemy enemy = new MovingEnemy(enemyPos, 1);
+        board.registerEnemy(enemy);
 
-        Direction towardExit = (enemyPos.column() < ex.column()) ? Direction.RIGHT : Direction.LEFT;
-        MoveResult r = b.step(e, towardExit);
-        assertEquals(MoveResult.BLOCKED, r);
-        assertEquals(enemyPos, e.position());
+        Direction towardExit = (enemyPos.column() < exit.column()) ? Direction.RIGHT : Direction.LEFT;
+        MoveResult result = board.step(enemy, towardExit);
+
+        assertEquals(MoveResult.BLOCKED, result);
+        assertEquals(enemyPos, enemy.position());
     }
 }

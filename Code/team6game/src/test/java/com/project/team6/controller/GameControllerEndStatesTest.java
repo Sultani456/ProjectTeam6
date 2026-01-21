@@ -18,12 +18,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests win and lose rules in GameController.
+ * Tests win and lose rules inside GameController.
  */
 final class GameControllerEndStatesTest {
 
     /**
-     * Holds the main objects used in these tests.
+     * Small helper object that holds the main game parts.
      */
     private record TestFixture(
             Board board,
@@ -33,23 +33,21 @@ final class GameControllerEndStatesTest {
     ) {}
 
     /**
-     * Builds a small board and controller for tests.
+     * Builds a small 5 by 5 board and controller for tests.
      */
-    private static TestFixture newFixture(int requiredCount, int initialScore) {
+    private static TestFixture newFixture(int requiredCount) {
+        GameConfig.setBoardDimensions(5, 5);
+
         BoardGenerator gen = new BoardGenerator();
-        BarrierOptions opts = new BarrierOptions(
-                5, 5,
-                BarrierMode.NONE,
-                null,
-                null
-        );
-        Output out = gen.generate(opts, 0.0);
+        BarrierOptions opts = new BarrierOptions(BarrierMode.NONE);
+        Output out = gen.generate(opts);
         Board board = new Board(out);
 
-        Scoreboard scoreboard = new Scoreboard(initialScore, requiredCount);
+        GameConfig.regularRewardCount = requiredCount;
+        Scoreboard scoreboard = new Scoreboard();
         GameState state = new GameState(board.start(), List.of(), scoreboard);
 
-        Spawner spawner = new Spawner(board, GameConfig.DEFAULT_TICK_MS);
+        Spawner spawner = new Spawner(board);
         GamePanel view = new GamePanel(board, scoreboard, state);
 
         GameController controller = new GameController(board, spawner, scoreboard, state, view);
@@ -57,7 +55,7 @@ final class GameControllerEndStatesTest {
     }
 
     /**
-     * Calls GameController.evaluateEndStates using reflection.
+     * Calls the private evaluateEndStates method using reflection.
      */
     private static void invokeEvaluateEndStates(GameController controller) throws Exception {
         Method m = GameController.class.getDeclaredMethod("evaluateEndStates");
@@ -66,17 +64,15 @@ final class GameControllerEndStatesTest {
     }
 
     /**
-     * The game is won when all required rewards are collected
-     * and the player is standing on the exit.
+     * Game is won when all required rewards are collected and
+     * the player stands on the exit tile.
      */
     @Test
     void winWhenAllRequiredCollectedAndAtExit() throws Exception {
-        TestFixture fx = newFixture(1, 0);
+        TestFixture fx = newFixture(1);
 
-        // Collect the single required reward
         fx.scoreboard.collectedRequired(10);
 
-        // Move the player to the exit tile
         Position exit = fx.board.exit();
         fx.board.player().setPosition(exit);
 
@@ -89,18 +85,16 @@ final class GameControllerEndStatesTest {
     }
 
     /**
-     * The game is lost when the score becomes negative.
-     * An explosion is placed at the player position.
+     * Game is lost when the score becomes negative and
+     * the explosion is placed at the player position.
      */
     @Test
     void loseWhenScoreBelowZeroSetsExplosionAndStatusLost() throws Exception {
-        TestFixture fx = newFixture(1, 0);
+        TestFixture fx = newFixture(1);
 
-        // Still have a required reward and not at exit, so no accidental win
         assertTrue(fx.scoreboard.requiredRemaining() > 0);
         assertNotEquals(fx.board.exit(), fx.board.player().position());
 
-        // Push score below zero
         fx.scoreboard.penalize(-5);
         assertTrue(fx.scoreboard.score() < 0);
 

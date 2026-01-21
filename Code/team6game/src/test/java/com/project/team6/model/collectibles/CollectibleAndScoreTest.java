@@ -1,5 +1,6 @@
 package com.project.team6.model.collectibles;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.model.board.Position;
 import com.project.team6.model.collectibles.rewards.BonusReward;
@@ -10,28 +11,33 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests score changes when collecting items. */
+/**
+ * Tests how different collectibles change the scoreboard.
+ */
 final class CollectibleAndScoreTest {
 
     @Test
-    void collectingAppliesToScoreboard() {
-        Board b = TestBoards.empty7x7();
+    void collectingItemsUpdatesScoreAndRequiredCount() {
+        Board board = TestBoards.empty7x7();
 
-        var req = new RegularReward(new Position(2,3), 10);
-        var opt = new BonusReward(new Position(3,3), 20, 0);
-        var pun = new Punishment(new Position(4,3), -5);
+        RegularReward required = new RegularReward(new Position(2, 3));
+        BonusReward optional = new BonusReward(new Position(3, 3), 0);
+        Punishment punishment = new Punishment(new Position(4, 3));
 
-        b.registerRegularReward(req);
-        b.registerBonusReward(opt);
-        b.registerPunishment(pun);
+        board.registerCollectible(required);
+        board.registerCollectible(optional);
+        board.registerCollectible(punishment);
 
-        Scoreboard s = new Scoreboard(0, 1);
+        GameConfig.regularRewardCount = 1;
+        Scoreboard scoreboard = new Scoreboard();
 
-        b.collectAt(req.position()).ifPresent(o -> s.collectedRequired(o.value()));
-        b.collectAt(opt.position()).ifPresent(o -> s.collectedOptional(o.value()));
-        b.collectAt(pun.position()).ifPresent(o -> s.penalize(o.value()));
+        board.collectAt(required.position()).ifPresent(o -> scoreboard.collectedRequired(o.value()));
+        board.collectAt(optional.position()).ifPresent(o -> scoreboard.collectedOptional(o.value()));
+        board.collectAt(punishment.position()).ifPresent(o -> scoreboard.penalize(o.value()));
 
-        assertEquals(25, s.score());
-        assertEquals(0, s.requiredRemaining());
+        int expectedScore = GameConfig.regularPoints + GameConfig.bonusPoints + GameConfig.punishmentPenalty;
+
+        assertEquals(expectedScore, scoreboard.score());
+        assertEquals(0, scoreboard.requiredRemaining());
     }
 }

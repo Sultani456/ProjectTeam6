@@ -14,49 +14,59 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Verifies enemy spawning does not block the gate tiles
- * and does not cut off the path from Start to Exit.
+ * Enemy spawning on the fixed 7 by 7 test board.
  */
 final class SpawnerEnemyPlacementTest {
 
+    /**
+     * Enemies must not stand right in front of the gates.
+     */
     @Test
     void doesNotUseGateFrontTiles() {
-        Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
+        Board board = TestBoards.empty7x7();
 
-        sp.spawnEnemies(3, 2); // place a few enemies
+        GameConfig.numEnemies = 3;
+        GameConfig.enemyMovePeriod = 2;
 
-        Position s = b.start();
-        Position e = b.exit();
-        Position startFront = new Position(s.column() + 1, s.row());
-        Position exitFront  = new Position(e.column() - 1, e.row());
+        Spawner spawner = Spawner.withSeed(board, 10L);
+        spawner.spawnEnemies();
 
-        assertFalse(b.cellAt(startFront).hasEnemy(), "Enemy at start front tile");
-        assertFalse(b.cellAt(exitFront).hasEnemy(),  "Enemy at exit front tile");
+        Position start = board.start();
+        Position exit  = board.exit();
+        Position startFront = new Position(start.column() + 1, start.row());
+        Position exitFront  = new Position(exit.column() - 1, exit.row());
+
+        assertFalse(board.cellAt(startFront).hasEnemy(), "Enemy at start front tile");
+        assertFalse(board.cellAt(exitFront).hasEnemy(),  "Enemy at exit front tile");
     }
 
+    /**
+     * Path from start to exit is still open after enemies are placed.
+     */
     @Test
     void keepsStartToExitReachable() {
-        Board b = TestBoards.empty7x7();
-        Spawner sp = new Spawner(b, GameConfig.DEFAULT_TICK_MS);
+        Board board = TestBoards.empty7x7();
 
-        sp.spawnEnemies(5, 2); // allow several placements
+        GameConfig.numEnemies = 5;
+        GameConfig.enemyMovePeriod = 2;
 
-        // Collect all enemy positions as blocked for path check
+        Spawner spawner = Spawner.withSeed(board, 11L);
+        spawner.spawnEnemies();
+
         Set<Position> blocked = new HashSet<>();
-        for (int y = 0; y < b.rows(); y++) {
-            for (int x = 0; x < b.cols(); x++) {
-                Cell c = b.cellAt(new Position(x, y));
+        for (int row = 0; row < board.rows(); row++) {
+            for (int col = 0; col < board.cols(); col++) {
+                Position p = new Position(col, row);
+                Cell c = board.cellAt(p);
                 if (c.hasEnemy()) {
-                    blocked.add(new Position(x, y));
+                    blocked.add(p);
                 }
             }
         }
 
-        // Path from Start to Exit must still exist
         assertTrue(
-            SpawnerHelper.canReach(b, b.start(), b.exit(), blocked),
-            "Enemies should not block the Start to Exit path"
+                SpawnerHelper.canReach(board, board.start(), board.exit(), blocked),
+                "Enemies should not block the Start to Exit path"
         );
     }
 }

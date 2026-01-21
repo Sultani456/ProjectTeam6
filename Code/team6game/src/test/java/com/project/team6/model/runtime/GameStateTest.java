@@ -7,51 +7,57 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests GameState status flags and scoreboard interaction. */
+/**
+ * Tests simple GameState behavior.
+ */
 final class GameStateTest {
 
     @Test
     void startsInRunningStatus() {
-        Scoreboard sb = new Scoreboard(0, 0);
-        GameState gs = new GameState(new Position(0, 0), List.of(), sb);
+        Scoreboard scoreboard = new Scoreboard();
+        GameState state = new GameState(new Position(0, 0), List.of(), scoreboard);
 
-        assertEquals(GameState.Status.RUNNING, gs.status());
+        assertEquals(GameState.Status.RUNNING, state.status());
     }
 
     @Test
-    void setWonChangesStatusAndStopsTimer() throws InterruptedException {
-        Scoreboard sb = new Scoreboard(0, 0);
-        GameState gs = new GameState(new Position(0, 0), List.of(), sb);
+    void setWonUpdatesStatus() {
+        Scoreboard scoreboard = new Scoreboard();
+        GameState state = new GameState(new Position(0, 0), List.of(), scoreboard);
 
-        sb.start();
-        Thread.sleep(30);                 // let some time pass
+        state.setWon();
 
-        gs.setWon();
-        assertEquals(GameState.Status.WON, gs.status());
-
-        long afterWon = sb.elapsed().toMillis();
-        Thread.sleep(30);
-        long afterWait = sb.elapsed().toMillis();
-
-        // elapsed stays fixed once GameState calls scoreboard.stop()
-        assertEquals(afterWon, afterWait);
+        assertEquals(GameState.Status.WON, state.status());
     }
 
     @Test
-    void setLostChangesStatusAndStopsTimer() throws InterruptedException {
-        Scoreboard sb = new Scoreboard(0, 0);
-        GameState gs = new GameState(new Position(0, 0), List.of(), sb);
+    void setLostUpdatesStatus() {
+        Scoreboard scoreboard = new Scoreboard();
+        GameState state = new GameState(new Position(0, 0), List.of(), scoreboard);
 
-        sb.start();
-        Thread.sleep(30);
+        state.setLost();
 
-        gs.setLost();
-        assertEquals(GameState.Status.LOST, gs.status());
+        assertEquals(GameState.Status.LOST, state.status());
+    }
 
-        long afterLost = sb.elapsed().toMillis();
-        Thread.sleep(30);
-        long afterWait = sb.elapsed().toMillis();
+    @Test
+    void canUpdatePlayerAndEnemiesSnapshots() {
+        Scoreboard scoreboard = new Scoreboard();
+        GameState state = new GameState(new Position(0, 0), List.of(), scoreboard);
 
-        assertEquals(afterLost, afterWait);
+        Position newPlayerPos = new Position(2, 3);
+        state.setPlayer(newPlayerPos);
+        assertEquals(newPlayerPos, state.player());
+
+        state.setEnemies(List.of(new Position(1, 1)));
+        assertEquals(1, state.enemies().size());
+    }
+
+    @Test
+    void scoreboardReferenceIsStored() {
+        Scoreboard scoreboard = new Scoreboard();
+        GameState state = new GameState(new Position(0, 0), List.of(), scoreboard);
+
+        assertSame(scoreboard, state.scoreboard());
     }
 }

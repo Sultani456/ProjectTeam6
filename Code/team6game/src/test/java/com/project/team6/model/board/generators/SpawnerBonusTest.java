@@ -1,27 +1,33 @@
 package com.project.team6.model.board.generators;
 
+import com.project.team6.controller.GameConfig;
 import com.project.team6.model.board.Board;
 import com.project.team6.testutil.TestBoards;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests bonus waves and timing. */
+/**
+ * Tests that bonus waves appear after some delay.
+ */
 final class SpawnerBonusTest {
 
     @Test
     void spawnsBonusBatchAfterDelay() {
         Board board = TestBoards.empty7x7();
-        Spawner spawner = new Spawner(board, 100);
 
-        spawner.spawnBonusRewards(
-                2,    // total to appear
-                20,   // points per bonus
-                1, 1, // spawn after about 1 second
-                10,10 // long lifetime
-        );
+        GameConfig.bonusRewardCount = 2;
+        GameConfig.spawnMinTicks = 2;
+        GameConfig.spawnMaxTicks = 2;
+        GameConfig.lifeMinTicks = 5;
+        GameConfig.lifeMaxTicks = 5;
+        GameConfig.lifeRange = 1;
 
-        for (int i = 0; i < 12; i++) {
+        Spawner spawner = Spawner.withSeed(board, 123L);
+        spawner.spawnBonusRewards();
+
+        for (int i = 0; i < 10 && !board.hasActiveBonusRewards(); i++) {
+            board.tick(board.player().position());
             spawner.onTick();
         }
 

@@ -8,35 +8,29 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * With period > 1 the enemy moves on the first tick,
- * then waits (period - 1) ticks before trying again.
- * The second attempt is blocked by START, so it stays put.
+ * Tests cooldown movement for moving enemies.
  */
 final class MovingEnemyCooldownTest {
 
     @Test
     void movesOnFirstTickThenWaitsAndIsBlockedByStart() {
-        Board b = TestBoards.empty7x7();             // player at START on west edge
+        Board board = TestBoards.empty7x7();
 
-        // Put enemy two cells to the right of the player on same row.
-        Position s = b.start();
-        Position e0 = new Position(Math.min(b.cols() - 1, s.column() + 2), s.row());
-        MovingEnemy e = new MovingEnemy(e0, 3);      // period = 3
-        b.registerEnemy(e);
+        Position start = board.start();
+        Position initialEnemyPos = new Position(Math.min(board.cols() - 1, start.column() + 2), start.row());
+        MovingEnemy enemy = new MovingEnemy(initialEnemyPos, 3);
+        board.registerEnemy(enemy);
 
-        // Tick 1: moves one step toward player.
-        b.tick(b.player().position());
-        Position e1 = new Position(e0.column() - 1, e0.row());
-        assertEquals(e1, e.position());
+        board.tick(board.player().position());
+        Position afterFirst = new Position(initialEnemyPos.column() - 1, initialEnemyPos.row());
+        assertEquals(afterFirst, enemy.position());
 
-        // Tick 2 and 3: cooldown, stays.
-        b.tick(b.player().position());
-        assertEquals(e1, e.position());
-        b.tick(b.player().position());
-        assertEquals(e1, e.position());
+        board.tick(board.player().position());
+        assertEquals(afterFirst, enemy.position());
+        board.tick(board.player().position());
+        assertEquals(afterFirst, enemy.position());
 
-        // Tick 4: tries to step onto START which is not enterable, so stays.
-        b.tick(b.player().position());
-        assertEquals(e1, e.position());
+        board.tick(board.player().position());
+        assertEquals(afterFirst, enemy.position());
     }
 }

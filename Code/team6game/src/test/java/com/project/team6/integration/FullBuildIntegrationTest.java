@@ -1,45 +1,65 @@
 package com.project.team6.integration;
 
-import com.project.team6.model.board.*;
-import com.project.team6.model.board.generators.*;
-import com.project.team6.model.board.generators.barrierProperties.*;
+import com.project.team6.controller.GameConfig;
+import com.project.team6.model.board.Board;
+import com.project.team6.model.board.Cell;
+import com.project.team6.model.board.Position;
+import com.project.team6.model.board.generators.BoardGenerator;
+import com.project.team6.model.board.generators.Spawner;
+import com.project.team6.model.board.generators.barrierProperties.BarrierMode;
+import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Builds a full board and spawns all item types.
- * Checks basic constraints and distances.
+ * Builds a full random board and spawns all item types and enemies.
  */
 final class FullBuildIntegrationTest {
 
     @Test
     void buildRandomBoardAndCheckConstraints() {
-        int rows = 18, cols = 26;
+        int rows = 18;
+        int cols = 26;
         double barrierDensity = 0.15;
 
+        GameConfig.setBoardDimensions(rows, cols);
+        GameConfig.boardBarrierPercentage = barrierDensity;
+
+        GameConfig.regularRewardCount = 8;
+        GameConfig.regularPoints = 10;
+
+        GameConfig.bonusRewardCount = 3;
+        GameConfig.bonusPoints = 20;
+
+        GameConfig.numPunishments = 5;
+        GameConfig.punishmentPenalty = -5;
+
+        GameConfig.numEnemies = 3;
+        GameConfig.enemyMovePeriod = 6;
+
         BoardGenerator gen = new BoardGenerator();
-        BarrierOptions opts = new BarrierOptions(rows, cols, BarrierMode.RANDOM, null, null);
-        BoardGenerator.Output out = gen.generate(opts, barrierDensity);
+        BarrierOptions opts = new BarrierOptions(BarrierMode.RANDOM);
+        BoardGenerator.Output out = gen.generate(opts);
 
         Board board = new Board(out);
-        Spawner spawner = new Spawner(board, 120);
+        Spawner spawner = Spawner.withSeed(board, 1234L);
 
-        spawner.spawnRegularRewards(8, 10);
-        spawner.spawnBonusRewards(3, 20, 1, 2, 5, 6);
-        spawner.spawnPunishments(5, -5);
-        spawner.spawnEnemies(3, 6);
+        spawner.spawnRegularRewards();
+        spawner.spawnPunishments();
+        spawner.spawnEnemies();
+        spawner.spawnBonusRewards();
 
-        // Start and Exit are not items
+        // Start and Exit should not hold items
         assertNull(board.cellAt(board.start()).item());
         assertNull(board.cellAt(board.exit()).item());
 
-        // Enemies are not too close to start or exit
-        for (int y = 0; y < board.rows(); y++) {
-            for (int x = 0; x < board.cols(); x++) {
-                Cell c = board.cellAt(new Position(x, y));
+        // Enemies should be at least 3 tiles away from start and exit
+        for (int row = 0; row < board.rows(); row++) {
+            for (int col = 0; col < board.cols(); col++) {
+                Cell c = board.cellAt(new Position(col, row));
                 if (c.hasEnemy()) {
-                    Position p = new Position(x, y);
+                    Position p = new Position(col, row);
                     assertTrue(Board.chebyshev(p, board.start()) >= 3);
                     assertTrue(Board.chebyshev(p, board.exit()) >= 3);
                 }

@@ -9,34 +9,37 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Tests movement and collision results. */
+/**
+ * Tests movement and collision results on the test board.
+ */
 final class BoardStepTest {
 
     @Test
     void moveToFloor_succeeds() {
-        Board b = TestBoards.empty7x7();
-        Player p = b.player();
+        Board board = TestBoards.empty7x7();
+        Player player = board.player();
 
-        assertEquals(MoveResult.MOVED, b.step(p, Direction.RIGHT));
-        assertEquals(new Position(1,3), p.position());
+        assertEquals(MoveResult.MOVED, board.step(player, Direction.RIGHT));
+        assertEquals(new Position(1, 3), player.position());
     }
 
     @Test
     void moveIntoWall_blocked() {
-        Board b = TestBoards.empty7x7();
-        Player p = b.player();
-        assertEquals(MoveResult.BLOCKED, b.step(p, Direction.UP));
-        assertEquals(new Position(0,3), p.position());
+        Board board = TestBoards.empty7x7();
+        Player player = board.player();
+
+        assertEquals(MoveResult.BLOCKED, board.step(player, Direction.UP));
+        assertEquals(new Position(0, 3), player.position());
     }
 
     @Test
     void moveIntoEnemy_isCollision() {
-        Board b = TestBoards.empty7x7();
-        MovingEnemy e = new MovingEnemy(new Position(1,3), 1);
-        b.registerEnemy(e);
+        Board board = TestBoards.empty7x7();
+        MovingEnemy enemy = new MovingEnemy(new Position(1, 3), 1);
+        board.registerEnemy(enemy);
 
-        Player p = b.player();
-        assertEquals(MoveResult.COLLISION, b.step(p, Direction.RIGHT));
-        assertEquals(new Position(1,3), p.position());
+        Player player = board.player();
+        assertEquals(MoveResult.COLLISION, board.step(player, Direction.RIGHT));
+        assertEquals(new Position(1, 3), player.position());
     }
 }
