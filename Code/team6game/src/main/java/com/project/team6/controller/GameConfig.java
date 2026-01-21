@@ -75,14 +75,14 @@ public class GameConfig {
     public static int lifeMaxTicks = secondsToTicks(lifeMaxSec);
     public static int lifeRange = Math.max(1, lifeMaxTicks - lifeMinTicks + 1);
 
-    public static int numPunishments = 80;
+    public static int numPunishments = 30;
     public static int punishmentPenalty = -5;
 
     public static int numEnemies = 0;
     public static int enemyMovePeriod = 10;
 
     // Barrier density for RANDOM barrier mode (fraction of interior cells)
-    public static double boardBarrierPercentage = 0.8;
+    public static double boardBarrierPercentage = 0.30;
 
     // ================================================================
     // Helper Functions
