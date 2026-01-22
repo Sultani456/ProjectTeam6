@@ -268,14 +268,14 @@ public final class BoardGenerator {
 
 <span class="fc" id="L269">            Position p = new Position(column, row);</span>
 
-<span class="fc bfc" id="L271" title="All 4 branches covered.">            if (Board.chebyshev(p, start) &lt; 2 || Board.chebyshev(p, exit) &lt; 2) {</span>
+<span class="pc bpc" id="L271" title="1 of 4 branches missed.">            if (Board.chebyshev(p, start) &lt; 2 || Board.chebyshev(p, exit) &lt; 2) {</span>
 <span class="fc" id="L272">                continue;</span>
             }
 
 <span class="fc" id="L275">            barriers[row][column] = true;</span>
 
-<span class="fc bfc" id="L277" title="All 2 branches covered.">            if (!GeneratorHelper.isBarrierConfigurationValid(walls, barriers, start, exit)) {</span>
-<span class="fc" id="L278">                barriers[row][column] = false;</span>
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">            if (!GeneratorHelper.isBarrierConfigurationValid(walls, barriers, start, exit)) {</span>
+<span class="nc" id="L278">                barriers[row][column] = false;</span>
             } else {
 <span class="fc" id="L280">                placed++;</span>
             }

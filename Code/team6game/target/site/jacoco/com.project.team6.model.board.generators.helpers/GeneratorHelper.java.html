@@ -163,8 +163,8 @@ import java.util.*;
 
         // All passable cells must be connected
 <span class="fc" id="L165">        int totalPassable = countPassable(terrain);</span>
-<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (reachable &lt; totalPassable) {</span>
-<span class="fc" id="L167">            return false;</span>
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        if (reachable &lt; totalPassable) {</span>
+<span class="nc" id="L167">            return false;</span>
         }
 
         // No isolated floor cells

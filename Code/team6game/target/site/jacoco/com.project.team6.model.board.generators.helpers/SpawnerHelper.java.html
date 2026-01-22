@@ -79,7 +79,7 @@ public final class SpawnerHelper {
                                        boolean[][] visited,
                                        ArrayDeque&lt;Integer&gt; q) {
 
-<span class="pc bpc" id="L82" title="3 of 8 branches missed.">        if (column &lt; 0 || column &gt;= cols || row &lt; 0 || row &gt;= rows) return;</span>
+<span class="pc bpc" id="L82" title="2 of 8 branches missed.">        if (column &lt; 0 || column &gt;= cols || row &lt; 0 || row &gt;= rows) return;</span>
 <span class="fc bfc" id="L83" title="All 2 branches covered.">        if (visited[row][column]) return;</span>
 <span class="pc bpc" id="L84" title="1 of 4 branches missed.">        if (blockedGrid != null &amp;&amp; blockedGrid[row][column]) return;</span>
 
