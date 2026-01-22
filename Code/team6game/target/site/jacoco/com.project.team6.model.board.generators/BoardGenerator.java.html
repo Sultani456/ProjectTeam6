@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators</a> &gt; <span class="el_source">BoardGenerator.java</span></div><h1>BoardGenerator.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators; 
+
+import com.project.team6.controller.GameConfig;
+import com.project.team6.model.board.*;
+import com.project.team6.model.board.generators.barrierProperties.BarrierOptions;
+import com.project.team6.model.board.generators.helpers.GeneratorHelper;
+
+import java.util.*;
+
+/**
+ * Builds the first terrain for a board.
+ * It does not place rewards, punishments, or enemies. Spawner handles that.
+ */
+public final class BoardGenerator {
+
+    /** Random source for start/exit and random barriers. */
+    private final Random rng;
+
+    /** Policy for choosing start and exit positions. */
+    private final StartExitSelector startExitSelector;
+
+    /**
+     * Selects start and exit positions for a given board size.
+     * This is intentionally small so policies can be swapped in tests or future modes.
+     */
+    public interface StartExitSelector {
+        StartExit select(int rows, int cols);
+    }
+
+    private static final class StartExit {
+        private final Position start;
+        private final Position exit;
+
+<span class="fc" id="L34">        private StartExit(Position start, Position exit) {</span>
+<span class="fc" id="L35">            this.start = start;</span>
+<span class="fc" id="L36">            this.exit = exit;</span>
+<span class="fc" id="L37">        }</span>
+    }
+
+    private static final class RandomEdgeStartExitSelector implements StartExitSelector {
+        private final Random rng;
+
+<span class="fc" id="L43">        private RandomEdgeStartExitSelector(Random rng) {</span>
+<span class="fc" id="L44">            this.rng = rng;</span>
+<span class="fc" id="L45">        }</span>
+
+        @Override
+        public StartExit select(int rows, int cols) {
+<span class="fc" id="L49">            Position start = GeneratorHelper.randomEdgeStart(rows, cols, rng);</span>
+<span class="fc" id="L50">            Position exit  = GeneratorHelper.randomEdgeExit(rows, cols, rng);</span>
+<span class="fc" id="L51">            return new StartExit(start, exit);</span>
+        }
+    }
+
+    /**
+     * Default constructor for production use.
+     * Uses a new Random instance and the default random edge policy.
+     */
+    public BoardGenerator() {
+<span class="fc" id="L60">        this(new Random());</span>
+<span class="fc" id="L61">    }</span>
+
+    /**
+     * Constructor that accepts a Random.
+     * Uses the default random edge policy with that Random.
+     *
+     * @param rng random source
+     */
+    public BoardGenerator(Random rng) {
+<span class="fc" id="L70">        this(rng, new RandomEdgeStartExitSelector(Objects.requireNonNull(rng)));</span>
+<span class="fc" id="L71">    }</span>
+
+    /**
+     * Constructor that accepts both a Random and a start/exit policy.
+     * This keeps the generator deterministic and also decouples the policy.
+     *
+     * @param rng random source used for random barriers
+     * @param startExitSelector policy for choosing start and exit
+     */
+<span class="fc" id="L80">    public BoardGenerator(Random rng, StartExitSelector startExitSelector) {</span>
+<span class="fc" id="L81">        this.rng = Objects.requireNonNull(rng);</span>
+<span class="fc" id="L82">        this.startExitSelector = Objects.requireNonNull(startExitSelector);</span>
+<span class="fc" id="L83">    }</span>
+
+    // --------------------------------------------------------------------
+    // Output type
+    // --------------------------------------------------------------------
+
+    public static final class Output {
+        private final int rows;
+        private final int cols;
+        private final Position start;
+        private final Position exit;
+        private final Cell.Terrain[][] terrain;
+
+        public Output(int rows, int cols,
+                      Position start, Position exit,
+<span class="fc" id="L98">                      Cell.Terrain[][] terrain) {</span>
+<span class="fc" id="L99">            this.rows = rows;</span>
+<span class="fc" id="L100">            this.cols = cols;</span>
+<span class="fc" id="L101">            this.start = start;</span>
+<span class="fc" id="L102">            this.exit = exit;</span>
+<span class="fc" id="L103">            this.terrain = terrain;</span>
+<span class="fc" id="L104">        }</span>
+
+<span class="fc" id="L106">        public int rows() {return rows;}</span>
+<span class="fc" id="L107">        public int cols() {return cols;}</span>
+<span class="fc" id="L108">        public Position start() {return start;}</span>
+<span class="fc" id="L109">        public Position exit() {return exit;}</span>
+<span class="fc" id="L110">        public Cell.Terrain[][] terrain() {return terrain;}</span>
+    }
+
+    // --------------------------------------------------------------------
+    // Public API
+    // --------------------------------------------------------------------
+
+
+    /**
+     * Generates a terrain layout based on options.
+     *
+     * @param opts options for barriers and size
+     * @return generated output
+     * @throws NullPointerException if opts is null
+     */
+    public Output generate(BarrierOptions opts) {
+<span class="fc" id="L126">        Objects.requireNonNull(opts);</span>
+
+<span class="pc bpc" id="L128" title="2 of 4 branches missed.">        return switch (opts.barrierMode) {</span>
+<span class="fc" id="L129">            case NONE      -&gt; generateNone(opts);</span>
+<span class="nc" id="L130">            case PROVIDED  -&gt; generateProvided(opts);</span>
+<span class="nc" id="L131">            case TEXT      -&gt; generateFromText(opts);</span>
+<span class="fc" id="L132">            case RANDOM    -&gt; generateRandomWithConstraints(opts);</span>
+        };
+    }
+
+    private StartExit chooseStartExit(int rows, int cols) {
+<span class="fc" id="L137">        return startExitSelector.select(rows, cols);</span>
+    }
+
+    // --------------------------------------------------------------------
+    // NONE
+    // --------------------------------------------------------------------
+
+    private Output generateNone(BarrierOptions opts) {
+<span class="fc" id="L145">        GeneratorHelper.validateSize(opts.rows, opts.cols);</span>
+<span class="fc" id="L146">        boolean[][] walls = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);</span>
+<span class="fc" id="L147">        boolean[][] barriers = new boolean[opts.rows][opts.cols];</span>
+
+<span class="fc" id="L149">        StartExit startExit = chooseStartExit(opts.rows, opts.cols);</span>
+
+<span class="fc" id="L151">        Cell.Terrain[][] terrain =</span>
+<span class="fc" id="L152">                GeneratorHelper.toTerrainGrid(</span>
+                        opts.rows, opts.cols, walls, barriers, startExit.start, startExit.exit
+                );
+<span class="fc" id="L155">        return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);</span>
+    }
+
+    // --------------------------------------------------------------------
+    // PROVIDED
+    // --------------------------------------------------------------------
+
+    private Output generateProvided(BarrierOptions opts) {
+<span class="nc" id="L163">        GeneratorHelper.validateSize(opts.rows, opts.cols);</span>
+<span class="nc" id="L164">        boolean[][] walls    = GeneratorHelper.perimeterWalls(opts.rows, opts.cols);</span>
+<span class="nc" id="L165">        boolean[][] barriers = new boolean[opts.rows][opts.cols];</span>
+
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        if (opts.barrierPositions != null) {</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            for (Position p : opts.barrierPositions) {</span>
+<span class="nc bnc" id="L169" title="All 4 branches missed.">                if (p.column() &lt;= 0 || p.column() &gt;= opts.cols - 1 ||</span>
+<span class="nc bnc" id="L170" title="All 4 branches missed.">                        p.row() &lt;= 0 || p.row() &gt;= opts.rows - 1) {</span>
+<span class="nc" id="L171">                    continue;</span>
+                }
+<span class="nc" id="L173">                barriers[p.row()][p.column()] = true;</span>
+<span class="nc" id="L174">            }</span>
+        }
+
+<span class="nc" id="L177">        StartExit startExit = chooseStartExit(opts.rows, opts.cols);</span>
+
+<span class="nc" id="L179">        Cell.Terrain[][] terrain =</span>
+<span class="nc" id="L180">                GeneratorHelper.toTerrainGrid(</span>
+                        opts.rows, opts.cols, walls, barriers, startExit.start, startExit.exit
+                );
+<span class="nc" id="L183">        return new Output(opts.rows, opts.cols, startExit.start, startExit.exit, terrain);</span>
+    }
+
+    // --------------------------------------------------------------------
+    // TEXT
+    // --------------------------------------------------------------------
+
+    private Output generateFromText(BarrierOptions opts) {
+<span class="nc" id="L191">        Objects.requireNonNull(opts.mapResource,</span>
+                &quot;TEXT mode requires a mapResource (e.g., \&quot;maps/level1.txt\&quot;)&quot;);
+
+<span class="nc" id="L194">        List&lt;String&gt; lines = GeneratorHelper.readLinesFromResource(opts.mapResource);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (lines.isEmpty()) {</span>
+<span class="nc" id="L196">            throw new IllegalArgumentException(&quot;Empty map resource: &quot; + opts.mapResource);</span>
+        }
+
+<span class="nc" id="L199">        int rows = lines.size();</span>
+<span class="nc" id="L200">        int cols = lines.get(0).length();</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        for (String line : lines) {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">            if (line.length() != cols) {</span>
+<span class="nc" id="L203">                throw new IllegalArgumentException(&quot;Inconsistent line length in map file.&quot;);</span>
+            }
+<span class="nc" id="L205">        }</span>
+
+<span class="nc" id="L207">        boolean[][] walls    = new boolean[rows][cols];</span>
+<span class="nc" id="L208">        boolean[][] barriers = new boolean[rows][cols];</span>
+<span class="nc" id="L209">        Position start = null;</span>
+<span class="nc" id="L210">        Position exit  = null;</span>
+
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        for (int row = 0; row &lt; rows; row++) {</span>
+<span class="nc" id="L213">            String line = lines.get(row);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            for (int column = 0; column &lt; cols; column++) {</span>
+<span class="nc" id="L215">                char ch = line.charAt(column);</span>
+<span class="nc bnc" id="L216" title="All 5 branches missed.">                switch (ch) {</span>
+<span class="nc" id="L217">                    case 'X' -&gt; walls[row][column] = true;</span>
+<span class="nc" id="L218">                    case '#' -&gt; barriers[row][column] = true;</span>
+<span class="nc" id="L219">                    case 'S' -&gt; start = new Position(column, row);</span>
+<span class="nc" id="L220">                    case 'E' -&gt; exit  = new Position(column, row);</span>
+                    default  -&gt; { /* floor */ }
+                }
+            }
+        }
+
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        if (start == null || exit == null) {</span>
+<span class="nc" id="L227">            StartExit startExit = chooseStartExit(rows, cols);</span>
+<span class="nc" id="L228">            start = startExit.start;</span>
+<span class="nc" id="L229">            exit  = startExit.exit;</span>
+        }
+
+<span class="nc" id="L232">        Cell.Terrain[][] terrain =</span>
+<span class="nc" id="L233">                GeneratorHelper.toTerrainGrid(rows, cols, walls, barriers, start, exit);</span>
+<span class="nc" id="L234">        return new Output(rows, cols, start, exit, terrain);</span>
+    }
+
+    // --------------------------------------------------------------------
+    // RANDOM
+    // --------------------------------------------------------------------
+
+    private Output generateRandomWithConstraints(BarrierOptions opts) {
+<span class="fc" id="L242">        int rows = opts.rows;</span>
+<span class="fc" id="L243">        int cols = opts.cols;</span>
+<span class="fc" id="L244">        GeneratorHelper.validateSize(rows, cols);</span>
+
+<span class="fc" id="L246">        boolean[][] walls    = GeneratorHelper.perimeterWalls(rows, cols);</span>
+<span class="fc" id="L247">        boolean[][] barriers = new boolean[rows][cols];</span>
+
+<span class="fc" id="L249">        StartExit startExit = chooseStartExit(rows, cols);</span>
+<span class="fc" id="L250">        Position start = startExit.start;</span>
+<span class="fc" id="L251">        Position exit  = startExit.exit;</span>
+
+<span class="fc" id="L253">        int interior = (rows - 2) * (cols - 2);</span>
+<span class="fc" id="L254">        int targetBarriers = Math.max(0,</span>
+<span class="fc" id="L255">                (int) Math.round(interior * GameConfig.boardBarrierPercentage));</span>
+
+<span class="fc" id="L257">        int placed = 0;</span>
+<span class="fc" id="L258">        int attempts = 0;</span>
+<span class="fc" id="L259">        int maxAttempts = targetBarriers * 20 + 100;</span>
+
+<span class="pc bpc" id="L261" title="1 of 4 branches missed.">        while (placed &lt; targetBarriers &amp;&amp; attempts &lt; maxAttempts) {</span>
+<span class="fc" id="L262">            attempts++;</span>
+
+<span class="fc" id="L264">            int column = 1 + rng.nextInt(cols - 2);</span>
+<span class="fc" id="L265">            int row = 1 + rng.nextInt(rows - 2);</span>
+
+<span class="pc bpc" id="L267" title="1 of 4 branches missed.">            if (walls[row][column] || barriers[row][column]) continue;</span>
+
+<span class="fc" id="L269">            Position p = new Position(column, row);</span>
+
+<span class="fc bfc" id="L271" title="All 4 branches covered.">            if (Board.chebyshev(p, start) &lt; 2 || Board.chebyshev(p, exit) &lt; 2) {</span>
+<span class="fc" id="L272">                continue;</span>
+            }
+
+<span class="fc" id="L275">            barriers[row][column] = true;</span>
+
+<span class="fc bfc" id="L277" title="All 2 branches covered.">            if (!GeneratorHelper.isBarrierConfigurationValid(walls, barriers, start, exit)) {</span>
+<span class="fc" id="L278">                barriers[row][column] = false;</span>
+            } else {
+<span class="fc" id="L280">                placed++;</span>
+            }
+<span class="fc" id="L282">        }</span>
+
+<span class="fc" id="L284">        Cell.Terrain[][] terrain =</span>
+<span class="fc" id="L285">                GeneratorHelper.toTerrainGrid(rows, cols, walls, barriers, start, exit);</span>
+<span class="fc" id="L286">        return new Output(rows, cols, start, exit, terrain);</span>
+    }
+
+    /**
+     * Factory for tests that need deterministic layouts.
+     *
+     * @param seed random seed
+     * @return BoardGenerator with fixed Random
+     */
+    public static BoardGenerator withSeed(long seed) {
+<span class="nc" id="L296">        return new BoardGenerator(new Random(seed));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

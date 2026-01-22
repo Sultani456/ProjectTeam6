@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Direction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.utilities</a> &gt; <span class="el_source">Direction.java</span></div><h1>Direction.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.utilities;
+
+/**
+ * Four way grid directions with integer deltas.
+ * Used to move one cell at a time.
+ */
+<span class="fc" id="L7">public enum Direction {</span>
+    /** Move up by one row. */
+<span class="fc" id="L9">    UP(0, -1),</span>
+
+    /** Move down by one row. */
+<span class="fc" id="L12">    DOWN(0, 1),</span>
+
+    /** Move left by one column. */
+<span class="fc" id="L15">    LEFT(-1, 0),</span>
+
+    /** Move right by one column. */
+<span class="fc" id="L18">    RIGHT(1, 0);</span>
+
+    /** Change in column for this direction. */
+    public final int d_column;
+
+    /** Change in row for this direction. */
+    public final int d_row;
+
+    /**
+     * Creates a direction with x and y deltas.
+     *
+     * @param d_column change in column
+     * @param d_row change in row
+     */
+<span class="fc" id="L32">    Direction(int d_column, int d_row) { this.d_column = d_column; this.d_row = d_row; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Spawner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators</a> &gt; <span class="el_source">Spawner.java</span></div><h1>Spawner.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators;
+
+import com.project.team6.controller.GameConfig;
+import com.project.team6.model.board.Board;
+import com.project.team6.model.board.Position;
+import com.project.team6.model.board.generators.helpers.SpawnerHelper;
+import com.project.team6.model.characters.enemies.MovingEnemy;
+import com.project.team6.model.collectibles.Punishment;
+import com.project.team6.model.collectibles.rewards.BonusReward;
+import com.project.team6.model.collectibles.rewards.RegularReward;
+
+import java.util.*;
+
+/**
+ * Spawns collectibles and enemies onto a board.
+ * One Spawner is used for one Board.
+ */
+public final class Spawner {
+
+    /** The board that receives spawns. */
+    private final Board board;
+
+
+    /** Random source for placement and timing. */
+    private final Random random;
+
+    /** Shared reachability logic. */
+    private final Reachability reachability;
+
+    /** Spawning responsibilities split by feature. */
+    private final BonusWaveSpawner bonusWaveSpawner;
+    private final RegularRewardSpawner regularRewardSpawner;
+    private final PunishmentSpawner punishmentSpawner;
+    private final EnemySpawner enemySpawner;
+
+
+
+    /**
+     * Creates a spawner for a board.
+     * Uses a new Random for production.
+     *
+     * @param board the target board
+     * @throws NullPointerException if board is null
+     */
+    // ================================================================
+    // Constructor
+    // ================================================================
+    public Spawner(Board board) {
+<span class="fc" id="L49">        this(board, new Random());</span>
+<span class="fc" id="L50">    }</span>
+
+    /**
+     * Creates a spawner with an injected Random.
+     * This helps deterministic tests.
+     *
+     * @param board the target board
+     * @param random random source
+     * @throws NullPointerException if board or random is null
+     */
+<span class="fc" id="L60">    public Spawner(Board board, Random random) {</span>
+
+<span class="fc" id="L62">        this.board = Objects.requireNonNull(board);</span>
+<span class="fc" id="L63">        this.random = Objects.requireNonNull(random);</span>
+
+<span class="fc" id="L65">        this.reachability = new Reachability(this.board);</span>
+<span class="fc" id="L66">        this.bonusWaveSpawner = new BonusWaveSpawner(this.board, this.random);</span>
+<span class="fc" id="L67">        this.regularRewardSpawner = new RegularRewardSpawner(this.board, this.random);</span>
+<span class="fc" id="L68">        this.punishmentSpawner = new PunishmentSpawner(this.board, this.random, this.reachability);</span>
+<span class="fc" id="L69">        this.enemySpawner = new EnemySpawner(this.board, this.random, this.reachability);</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * Creates a deterministic spawner for tests.
+     *
+     * @param board the target board
+     * @param seed random seed
+     * @return a spawner with a fixed Random
+     */
+    public static Spawner withSeed(Board board, long seed) {
+<span class="fc" id="L80">        return new Spawner(board, new Random(seed));</span>
+    }
+
+    // ================================================================
+    // Public API (unchanged signatures)
+    // ================================================================
+
+    /**
+     * Configures timed bonus rewards.
+     * Quota decreases when bonuses are collected.
+     */
+    public void spawnBonusRewards() {
+<span class="fc" id="L92">        bonusWaveSpawner.spawnBonusRewards();</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * Runs once per controller tick.
+     * Call this after the board tick.
+     */
+    public void onTick() {
+<span class="fc" id="L100">        bonusWaveSpawner.onTick();</span>
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * Notifies the spawner that a bonus was collected.
+     * Kept for compatibility.
+     */
+    public void notifyBonusCollected() {
+<span class="nc" id="L108">        bonusWaveSpawner.notifyBonusCollected();</span>
+<span class="nc" id="L109">    }</span>
+
+    /**
+     * Spawns regular rewards onto free floor cells.
+     */
+    public void spawnRegularRewards() {
+<span class="fc" id="L115">        regularRewardSpawner.spawnRegularRewards();</span>
+<span class="fc" id="L116">    }</span>
+
+    /**
+     * Spawns punishments while keeping paths safe.
+     *
+     */
+    public void spawnPunishments() {
+<span class="fc" id="L123">        punishmentSpawner.spawnPunishments();</span>
+<span class="fc" id="L124">    }</span>
+
+    /**
+     * Spawns moving enemies while keeping start-to-exit reachable.
+     *
+     */
+    public void spawnEnemies() {
+<span class="fc" id="L131">        enemySpawner.spawnEnemies();</span>
+<span class="fc" id="L132">    }</span>
+
+    /**
+     * Partially shuffles a list so the first K elements are random.
+     *
+     * @param list list to shuffle in place
+     * @param count how many random elements are needed
+     * @param random random source
+     */
+    private static void chooseFirstKRandomInPlace(List&lt;Position&gt; list, int count, Random random) {
+<span class="fc" id="L142">        int n = list.size();</span>
+<span class="fc" id="L143">        int k = Math.min(count, n);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        for (int i = 0; i &lt; k; i++) {</span>
+<span class="fc" id="L145">            int j = i + random.nextInt(n - i);</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            if (i != j) Collections.swap(list, i, j);</span>
+        }
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Centralizes reachability checks.
+     * This removes duplicated validation logic.
+     */
+    private static final class Reachability {
+        private final Board board;
+
+<span class="fc" id="L157">        private Reachability(Board board) {</span>
+<span class="fc" id="L158">            this.board = board;</span>
+<span class="fc" id="L159">        }</span>
+
+        private boolean canReach(Position from, Position to, Set&lt;Position&gt; blocked) {
+<span class="fc" id="L162">            return SpawnerHelper.canReach(board, from, to, blocked);</span>
+        }
+
+        private boolean canReachStartToExit(Position start, Position exit, Set&lt;Position&gt; blocked) {
+<span class="fc" id="L166">            return canReach(start, exit, blocked);</span>
+        }
+
+        private boolean canReachAllRegularRewards(Position start, Set&lt;Position&gt; blocked) {
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            for (RegularReward rr : board.regularRewards()) {</span>
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">                if (!canReach(start, rr.position(), blocked)) {</span>
+<span class="nc" id="L172">                    return false;</span>
+                }
+<span class="fc" id="L174">            }</span>
+<span class="fc" id="L175">            return true;</span>
+        }
+    }
+
+    // ================================================================
+    // Component: Bonus wave spawning
+    // ================================================================
+    /**
+     * Handles timed bonus waves.
+     * It runs onTick only when enabled.
+     */
+    private static final class BonusWaveSpawner {
+        private final Board board;
+        private final Random random;
+
+        /** True when bonus waves are enabled. */
+<span class="fc" id="L191">        private boolean bonusEnabled = false;</span>
+
+        /** Number of bonus items that still need to appear. */
+<span class="fc" id="L194">        private int bonusRemaining = 0;</span>
+
+<span class="fc" id="L196">        private int ticksUntilNextSpawn = -1;</span>
+
+<span class="fc" id="L198">        private BonusWaveSpawner(Board board, Random random) {</span>
+<span class="fc" id="L199">            this.board = board;</span>
+<span class="fc" id="L200">            this.random = random;</span>
+<span class="fc" id="L201">        }</span>
+
+        private int secondsToTicks(int seconds) {
+<span class="nc bnc" id="L204" title="All 2 branches missed.">            if (seconds &lt;= 0) return 0;</span>
+<span class="nc" id="L205">            double ticks = (seconds * 1000.0) / GameConfig.DEFAULT_TICK_MS;</span>
+<span class="nc" id="L206">            return Math.max(1, (int) Math.round(ticks));</span>
+        }
+
+        private List&lt;Position&gt; freeFloorCells() {
+<span class="fc" id="L210">            return SpawnerHelper.freeFloorCells(board);</span>
+        }
+
+        private void scheduleNextBonusSpawn() {
+<span class="pc bpc" id="L214" title="2 of 4 branches missed.">            if (!bonusEnabled || bonusRemaining &lt;= 0) {</span>
+<span class="nc" id="L215">                ticksUntilNextSpawn = -1;</span>
+<span class="nc" id="L216">                return;</span>
+            }
+<span class="fc" id="L218">            int range = Math.max(0, GameConfig.spawnMaxTicks - GameConfig.spawnMinTicks);</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">            ticksUntilNextSpawn = GameConfig.spawnMinTicks + (range == 0 ? 0 : random.nextInt(range + 1));</span>
+<span class="fc" id="L220">        }</span>
+
+        private void disableBonuses() {
+<span class="fc" id="L223">            bonusEnabled = false;</span>
+<span class="fc" id="L224">            ticksUntilNextSpawn = -1;</span>
+<span class="fc" id="L225">        }</span>
+
+
+        public void spawnBonusRewards() {
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            if (GameConfig.bonusRewardCount &lt;= 0) {</span>
+<span class="fc" id="L230">                disableBonuses();</span>
+<span class="fc" id="L231">                bonusRemaining = 0;</span>
+<span class="fc" id="L232">                return;</span>
+            }
+
+<span class="fc" id="L235">            int freeCells = freeFloorCells().size();</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">            if (GameConfig.bonusRewardCount &gt; freeCells) {</span>
+<span class="fc" id="L237">                throw new IllegalArgumentException(</span>
+                        &quot;GameConfig.bonusRewardCount (&quot; + GameConfig.bonusRewardCount +
+                                &quot;) is larger than free floor cells (&quot; + freeCells + &quot;)&quot;);
+            }
+
+<span class="fc" id="L242">            this.bonusEnabled = true;</span>
+<span class="fc" id="L243">            this.bonusRemaining = GameConfig.bonusRewardCount;</span>
+
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">            if (GameConfig.spawnMaxTicks &lt; GameConfig.spawnMinTicks) GameConfig.spawnMaxTicks = GameConfig.spawnMinTicks;</span>
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">            if (GameConfig.lifeMaxTicks &lt; GameConfig.lifeMinTicks) GameConfig.lifeMaxTicks = GameConfig.lifeMinTicks;</span>
+
+<span class="fc" id="L248">            scheduleNextBonusSpawn();</span>
+<span class="fc" id="L249">        }</span>
+
+        public void onTick() {
+<span class="pc bpc" id="L252" title="1 of 4 branches missed.">            if (!bonusEnabled || bonusRemaining &lt;= 0) return;</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            if (board.hasActiveBonusRewards()) return;</span>
+
+<span class="fc bfc" id="L255" title="All 2 branches covered.">            if (ticksUntilNextSpawn &gt; 0) {</span>
+<span class="fc" id="L256">                ticksUntilNextSpawn--;</span>
+<span class="fc" id="L257">                return;</span>
+            }
+
+<span class="fc" id="L260">            List&lt;Position&gt; free = freeFloorCells();</span>
+<span class="pc bpc" id="L261" title="1 of 2 branches missed.">            if (free.isEmpty()) {</span>
+<span class="nc" id="L262">                scheduleNextBonusSpawn();</span>
+<span class="nc" id="L263">                return;</span>
+            }
+
+<span class="fc" id="L266">            int toSpawn = Math.min(bonusRemaining, free.size());</span>
+<span class="fc" id="L267">            chooseFirstKRandomInPlace(free, toSpawn, random);</span>
+
+<span class="fc bfc" id="L269" title="All 2 branches covered.">            for (int i = 0; i &lt; toSpawn; i++) {</span>
+<span class="fc" id="L270">                Position pos = free.get(i);</span>
+<span class="fc" id="L271">                int lifeTicks = GameConfig.lifeMinTicks + random.nextInt(GameConfig.lifeRange);</span>
+<span class="fc" id="L272">                BonusReward bonus = new BonusReward(pos, lifeTicks);</span>
+<span class="fc" id="L273">                board.registerCollectible(bonus);</span>
+            }
+
+<span class="fc" id="L276">            scheduleNextBonusSpawn();</span>
+<span class="fc" id="L277">        }</span>
+
+        public void notifyBonusCollected() {
+<span class="nc bnc" id="L280" title="All 4 branches missed.">            if (!bonusEnabled || bonusRemaining &lt;= 0) return;</span>
+
+<span class="nc" id="L282">            bonusRemaining--;</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">            if (bonusRemaining &lt;= 0) {</span>
+<span class="nc" id="L284">                disableBonuses();</span>
+            }
+<span class="nc" id="L286">        }</span>
+    }
+
+    // ================================================================
+    // Component: Regular rewards
+    // ================================================================
+
+    /**
+     * Handles spawning regular rewards.
+     */
+    private static final class RegularRewardSpawner {
+        private final Board board;
+        private final Random random;
+
+<span class="fc" id="L300">        private RegularRewardSpawner(Board board, Random random) {</span>
+<span class="fc" id="L301">            this.board = board;</span>
+<span class="fc" id="L302">            this.random = random;</span>
+<span class="fc" id="L303">        }</span>
+
+        private List&lt;Position&gt; freeFloorCells() {
+<span class="fc" id="L306">            return SpawnerHelper.freeFloorCells(board);</span>
+        }
+
+        public void spawnRegularRewards() {
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">            if (GameConfig.regularRewardCount &lt;= 0) return;</span>
+
+<span class="fc" id="L312">            List&lt;Position&gt; free = freeFloorCells();</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">            if (free.size() &lt; GameConfig.regularRewardCount) {</span>
+<span class="fc" id="L314">                throw new IllegalStateException(</span>
+                        &quot;Not enough free cells to place &quot; + GameConfig.regularRewardCount + &quot; regular rewards.&quot;);
+            }
+
+<span class="fc" id="L318">            chooseFirstKRandomInPlace(free, GameConfig.regularRewardCount ,random);</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">            for (int i = 0; i &lt; GameConfig.regularRewardCount; i++) {</span>
+<span class="fc" id="L320">                Position p = free.get(i);</span>
+<span class="fc" id="L321">                RegularReward r = new RegularReward(p);</span>
+<span class="fc" id="L322">                board.registerCollectible(r);</span>
+            }
+<span class="fc" id="L324">        }</span>
+    }
+
+    // ================================================================
+    // Component: Punishments
+    // ================================================================
+
+    /**
+     * Handles spawning punishments while preserving paths.
+     */
+    private static final class PunishmentSpawner {
+        private final Board board;
+        private final Random random;
+        private final Reachability reachability;
+
+<span class="fc" id="L339">        private PunishmentSpawner(Board board, Random random, Reachability reachability) {</span>
+<span class="fc" id="L340">            this.board = board;</span>
+<span class="fc" id="L341">            this.random = random;</span>
+<span class="fc" id="L342">            this.reachability = reachability;</span>
+<span class="fc" id="L343">        }</span>
+
+        private List&lt;Position&gt; freeFloorCells() {
+<span class="fc" id="L346">            return SpawnerHelper.freeFloorCells(board);</span>
+        }
+
+        public void spawnPunishments() {
+<span class="pc bpc" id="L350" title="1 of 2 branches missed.">            if (GameConfig.numPunishments &lt;= 0) return;</span>
+
+<span class="fc" id="L352">            List&lt;Position&gt; free = freeFloorCells();</span>
+<span class="fc" id="L353">            Position start = board.start();</span>
+<span class="fc" id="L354">            Position exit = board.exit();</span>
+
+<span class="fc" id="L356">            free.remove(start);</span>
+<span class="fc" id="L357">            free.remove(exit);</span>
+
+<span class="pc bpc" id="L359" title="1 of 2 branches missed.">            if (free.isEmpty()) return;</span>
+
+<span class="fc" id="L361">            Collections.shuffle(free, random);</span>
+
+<span class="fc" id="L363">            List&lt;Position&gt; placed = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L364">            Set&lt;Position&gt; blocked = new HashSet&lt;&gt;();</span>
+
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">            for (Position candidate : free) {</span>
+<span class="fc" id="L367">                blocked.clear();</span>
+<span class="fc" id="L368">                blocked.addAll(placed);</span>
+<span class="fc" id="L369">                blocked.add(candidate);</span>
+
+<span class="pc bpc" id="L371" title="1 of 2 branches missed.">                if (!reachability.canReachStartToExit(start, exit, blocked)) continue;</span>
+<span class="pc bpc" id="L372" title="1 of 2 branches missed.">                if (!reachability.canReachAllRegularRewards(start, blocked)) continue;</span>
+
+<span class="fc" id="L374">                Punishment p = new Punishment(candidate);</span>
+<span class="fc" id="L375">                board.registerCollectible(p);</span>
+<span class="fc" id="L376">                placed.add(candidate);</span>
+
+<span class="fc bfc" id="L378" title="All 2 branches covered.">                if (placed.size() &gt;= GameConfig.numPunishments) break;</span>
+<span class="fc" id="L379">            }</span>
+<span class="fc" id="L380">        }</span>
+    }
+
+    // ================================================================
+    // Component: Enemies
+    // ================================================================
+
+    /**
+     * Handles spawning enemies while preserving the start-to-exit path.
+     */
+    private static final class EnemySpawner {
+        private final Board board;
+        private final Random random;
+        private final Reachability reachability;
+
+<span class="fc" id="L395">        private EnemySpawner(Board board, Random random, Reachability reachability) {</span>
+<span class="fc" id="L396">            this.board = board;</span>
+<span class="fc" id="L397">            this.random = random;</span>
+<span class="fc" id="L398">            this.reachability = reachability;</span>
+<span class="fc" id="L399">        }</span>
+
+        private List&lt;Position&gt; freeFloorCells() {
+<span class="fc" id="L402">            return SpawnerHelper.freeFloorCells(board);</span>
+        }
+
+        public void spawnEnemies() {
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">            if (GameConfig.numEnemies &lt;= 0) return;</span>
+
+<span class="fc" id="L408">            List&lt;Position&gt; free = freeFloorCells();</span>
+<span class="fc" id="L409">            Position start = board.start();</span>
+<span class="fc" id="L410">            Position exit = board.exit();</span>
+
+<span class="fc" id="L412">            Position blockStartFront = new Position(start.column() + 1, start.row());</span>
+<span class="fc" id="L413">            Position blockExitFront = new Position(exit.column() - 1, exit.row());</span>
+<span class="fc" id="L414">            free.remove(blockStartFront);</span>
+<span class="fc" id="L415">            free.remove(blockExitFront);</span>
+
+<span class="pc bpc" id="L417" title="1 of 2 branches missed.">            if (free.isEmpty()) return;</span>
+
+<span class="fc" id="L419">            Collections.shuffle(free, random);</span>
+
+<span class="fc" id="L421">            Set&lt;Position&gt; placedEnemies = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L422">            Set&lt;Position&gt; blocked = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L424">            int placed = 0;</span>
+<span class="pc bpc" id="L425" title="1 of 2 branches missed.">            for (Position pos : free) {</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">                if (placed &gt;= GameConfig.numEnemies) break;</span>
+
+<span class="fc" id="L428">                blocked.clear();</span>
+<span class="fc" id="L429">                blocked.addAll(placedEnemies);</span>
+<span class="fc" id="L430">                blocked.add(pos);</span>
+
+<span class="pc bpc" id="L432" title="1 of 2 branches missed.">                if (!reachability.canReachStartToExit(start, exit, blocked)) continue;</span>
+
+<span class="fc" id="L434">                MovingEnemy e = new MovingEnemy(pos, GameConfig.enemyMovePeriod);</span>
+<span class="fc" id="L435">                board.registerEnemy(e);</span>
+<span class="fc" id="L436">                placedEnemies.add(pos);</span>
+<span class="fc" id="L437">                placed++;</span>
+<span class="fc" id="L438">            }</span>
+<span class="fc" id="L439">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

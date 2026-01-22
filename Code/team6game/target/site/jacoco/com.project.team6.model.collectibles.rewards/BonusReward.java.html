@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BonusReward.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.collectibles.rewards</a> &gt; <span class="el_source">BonusReward.java</span></div><h1>BonusReward.java</h1><pre class="source lang-java linenums">package com.project.team6.model.collectibles.rewards;
+
+import com.project.team6.controller.GameConfig;
+import com.project.team6.model.board.Position;
+
+/**
+ * Optional reward with a higher value than regular rewards.
+ * It can be temporary based on its lifetime in ticks.
+ */
+public final class BonusReward extends Reward {
+
+    /** Remaining lifetime in ticks. A value of 0 or less means it does not expire. */
+    private int lifetimeTicks;
+
+    /**
+     * Creates a bonus reward.
+     *
+     * @param position       board position of the bonus
+     * @param lifetimeTicks  ticks to live. 0 or less means persistent
+     */
+    public BonusReward(Position position, int lifetimeTicks) {
+<span class="fc" id="L22">        super(position, GameConfig.bonusPoints, /*requiredToWin=*/false);</span>
+<span class="fc" id="L23">        this.lifetimeTicks = lifetimeTicks;</span>
+<span class="fc" id="L24">    }</span>
+
+    /**
+     * Updates the lifetime and reports if the bonus should remain.
+     * Call this once per game tick while the bonus is on the board.
+     *
+     * @return true if still alive, false if it has expired
+     */
+    public boolean onTickAndAlive() {
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">        if (lifetimeTicks &gt; 0) {</span>
+<span class="fc" id="L34">            lifetimeTicks--;</span>
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">            return lifetimeTicks &gt; 0;</span>
+        }
+        // lifetime &lt;= 0 means no expiry
+<span class="nc" id="L38">        return true;</span>
+    }
+
+    /**
+     * Returns the ASCII symbol used for this bonus.
+     *
+     * @return 'o'
+     */
+    @Override
+    public char symbol() {
+<span class="nc" id="L48">        return 'o';</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.controller</a> &gt; <span class="el_source">GameController.java</span></div><h1>GameController.java</h1><pre class="source lang-java linenums">package com.project.team6.controller;
+
+import com.project.team6.model.board.*;
+import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.utilities.Direction;
+import com.project.team6.model.board.utilities.MoveResult;
+import com.project.team6.model.board.utilities.TickSummary;
+import com.project.team6.model.characters.*;
+import com.project.team6.model.collectibles.*;
+import com.project.team6.model.collectibles.rewards.*;
+import com.project.team6.model.runtime.*;
+import com.project.team6.ui.GamePanel;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.util.Objects;
+
+/**
+ * Runs input and the game loop.
+ * Reads keys, moves the player, and advances the world on each tick.
+ * Repaints the view after actions.
+ */
+public final class GameController {
+
+    private final Board board;
+    private final Spawner spawner;
+    private final Scoreboard scoreboard;
+    private final GameState state;
+    private final GamePanel view;
+    private final Player player;
+    private final Timer timer;
+
+    public GameController(Board board,
+                          Spawner spawner,
+                          Scoreboard scoreboard,
+                          GameState state,
+<span class="fc" id="L37">                          GamePanel view) {</span>
+<span class="fc" id="L38">        this.board = Objects.requireNonNull(board);</span>
+<span class="fc" id="L39">        this.spawner = Objects.requireNonNull(spawner);</span>
+<span class="fc" id="L40">        this.scoreboard = Objects.requireNonNull(scoreboard);</span>
+<span class="fc" id="L41">        this.state = Objects.requireNonNull(state);</span>
+<span class="fc" id="L42">        this.view = Objects.requireNonNull(view);</span>
+
+<span class="fc" id="L44">        this.player = board.player();</span>
+
+<span class="fc" id="L46">        installKeyBindings();</span>
+<span class="fc" id="L47">        this.timer = new Timer(GameConfig.DEFAULT_TICK_MS, this::onTick);</span>
+<span class="fc" id="L48">    }</span>
+
+    public void start() {
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) {</span>
+<span class="nc" id="L52">            state.setRunning();</span>
+        }
+<span class="nc" id="L54">        scoreboard.start();</span>
+<span class="nc" id="L55">        timer.start();</span>
+<span class="nc" id="L56">        view.repaint();</span>
+<span class="nc" id="L57">    }</span>
+
+    /**
+     * Stops the game loop timer.
+     * Scoreboard is stopped by GameState on win/lose.
+     */
+    public void stop() {
+<span class="fc" id="L64">        timer.stop();</span>
+        // scoreboard.stop(); // removed to avoid double-stop on win/lose
+<span class="fc" id="L66">    }</span>
+
+    // ---------------------------------------------------------------
+    // Input
+    // ---------------------------------------------------------------
+
+    private void installKeyBindings() {
+<span class="pc" id="L73">        bind(&quot;UP&quot;,    KeyStroke.getKeyStroke(&quot;UP&quot;),    () -&gt; tryPlayerMove(Direction.UP));</span>
+<span class="pc" id="L74">        bind(&quot;DOWN&quot;,  KeyStroke.getKeyStroke(&quot;DOWN&quot;),  () -&gt; tryPlayerMove(Direction.DOWN));</span>
+<span class="pc" id="L75">        bind(&quot;LEFT&quot;,  KeyStroke.getKeyStroke(&quot;LEFT&quot;),  () -&gt; tryPlayerMove(Direction.LEFT));</span>
+<span class="pc" id="L76">        bind(&quot;RIGHT&quot;, KeyStroke.getKeyStroke(&quot;RIGHT&quot;), () -&gt; tryPlayerMove(Direction.RIGHT));</span>
+
+<span class="pc" id="L78">        bind(&quot;W&quot;, KeyStroke.getKeyStroke('w'), () -&gt; tryPlayerMove(Direction.UP));</span>
+<span class="pc" id="L79">        bind(&quot;S&quot;, KeyStroke.getKeyStroke('s'), () -&gt; tryPlayerMove(Direction.DOWN));</span>
+<span class="pc" id="L80">        bind(&quot;A&quot;, KeyStroke.getKeyStroke('a'), () -&gt; tryPlayerMove(Direction.LEFT));</span>
+<span class="pc" id="L81">        bind(&quot;D&quot;, KeyStroke.getKeyStroke('d'), () -&gt; tryPlayerMove(Direction.RIGHT));</span>
+<span class="fc" id="L82">    }</span>
+
+    private void bind(String name, KeyStroke key, Runnable action) {
+<span class="fc" id="L85">        InputMap inputMap = view.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);</span>
+<span class="fc" id="L86">        ActionMap actionMap = view.getActionMap();</span>
+
+<span class="fc" id="L88">        inputMap.put(key, name);</span>
+<span class="fc" id="L89">        actionMap.put(name, new AbstractAction() {</span>
+            @Override public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L91">                action.run();</span>
+<span class="nc" id="L92">            }</span>
+        });
+<span class="fc" id="L94">    }</span>
+
+    // ---------------------------------------------------------------
+    // Movement
+    // ---------------------------------------------------------------
+
+    private void tryPlayerMove(Direction direction) {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) return;</span>
+
+<span class="nc" id="L103">        MoveResult result = board.step(player, direction);</span>
+
+<span class="nc bnc" id="L105" title="All 3 branches missed.">        switch (result) {</span>
+            case MOVED -&gt; {
+<span class="nc" id="L107">                board.collectAt(player.position())</span>
+<span class="nc" id="L108">                        .ifPresent(this::applyCollectible);</span>
+<span class="nc" id="L109">                evaluateEndStates();</span>
+<span class="nc" id="L110">                view.repaint();</span>
+<span class="nc" id="L111">            }</span>
+<span class="nc" id="L112">            case COLLISION -&gt; lose(&quot;You were caught!&quot;);</span>
+            // BLOCKED moves: do nothing (no separate branch needed)
+        }
+<span class="nc" id="L115">    }</span>
+
+    // ---------------------------------------------------------------
+    // Collectibles
+    // ---------------------------------------------------------------
+
+    private void applyCollectible(CollectibleObject obj) {
+<span class="nc" id="L122">        updateScoreForCollectible(obj);</span>
+<span class="nc" id="L123">        handleCollectibleEvents(obj);</span>
+<span class="nc" id="L124">    }</span>
+
+    /** Handles only score and required-count changes. */
+    private void updateScoreForCollectible(CollectibleObject obj) {
+<span class="nc" id="L128">        int val = obj.value();</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (obj.isRequiredToWin()) {</span>
+<span class="nc" id="L131">            scoreboard.collectedRequired(val);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        } else if (val &gt; 0) {</span>
+<span class="nc" id="L133">            scoreboard.collectedOptional(val);</span>
+        } else {
+<span class="nc" id="L135">            scoreboard.penalize(val);</span>
+        }
+<span class="nc" id="L137">    }</span>
+
+    /** Handles non-score side effects (spawner + UI). */
+    private void handleCollectibleEvents(CollectibleObject obj) {
+<span class="nc" id="L141">        notifyBonusIfNeeded(obj);</span>
+<span class="nc" id="L142">        view.onCollected(obj);</span>
+<span class="nc" id="L143">    }</span>
+
+    /** Small helper for bonus-specific spawning logic. */
+    private void notifyBonusIfNeeded(CollectibleObject obj) {
+<span class="nc bnc" id="L147" title="All 2 branches missed.">        if (obj instanceof BonusReward) {</span>
+<span class="nc" id="L148">            spawner.notifyBonusCollected();</span>
+        }
+<span class="nc" id="L150">    }</span>
+
+    // ---------------------------------------------------------------
+    // Tick loop
+    // ---------------------------------------------------------------
+
+    private void onTick(ActionEvent e) {
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) return;</span>
+
+<span class="nc" id="L159">        Position playerPos = player.position();</span>
+<span class="nc" id="L160">        TickSummary summary = board.tick(playerPos);</span>
+
+<span class="nc" id="L162">        spawner.onTick();</span>
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (summary.playerCaught()) {</span>
+<span class="nc" id="L165">            lose(&quot;You were caught!&quot;);</span>
+        } else {
+<span class="nc" id="L167">            evaluateEndStates();</span>
+        }
+
+<span class="nc" id="L170">        view.repaint();</span>
+<span class="nc" id="L171">    }</span>
+
+    // ---------------------------------------------------------------
+    // Win / lose logic
+    // ---------------------------------------------------------------
+
+    private void evaluateEndStates() {
+<span class="pc bpc" id="L178" title="1 of 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) return;</span>
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        boolean allRequiredCollected = scoreboard.requiredRemaining() == 0;</span>
+<span class="fc" id="L181">        boolean atExit = player.position().equals(board.exit());</span>
+
+<span class="pc bpc" id="L183" title="1 of 4 branches missed.">        if (allRequiredCollected &amp;&amp; atExit) {</span>
+<span class="fc" id="L184">            win(&quot;You win! Time &quot; + scoreboard.elapsedPretty()</span>
+<span class="fc" id="L185">                    + &quot;   Score &quot; + scoreboard.score());</span>
+        }
+
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        if (scoreboard.score() &lt; 0) {</span>
+<span class="fc" id="L189">            lose(&quot;Score below zero!&quot;);</span>
+        }
+<span class="fc" id="L191">    }</span>
+
+    private void win(String msg) {
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) return;</span>
+<span class="fc" id="L195">        state.setWon();</span>
+<span class="fc" id="L196">        stop();</span>
+<span class="fc" id="L197">        view.onGameOver(msg);</span>
+<span class="fc" id="L198">    }</span>
+
+    private void lose(String msg) {
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (state.status() != GameState.Status.RUNNING) return;</span>
+<span class="fc" id="L202">        state.setLost();</span>
+<span class="fc" id="L203">        stop();</span>
+<span class="fc" id="L204">        board.setExplosion(player.position());</span>
+<span class="fc" id="L205">        view.onGameOver(msg);</span>
+<span class="fc" id="L206">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

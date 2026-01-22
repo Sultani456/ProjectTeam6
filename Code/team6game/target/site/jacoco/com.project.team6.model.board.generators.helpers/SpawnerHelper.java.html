@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpawnerHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators.helpers</a> &gt; <span class="el_source">SpawnerHelper.java</span></div><h1>SpawnerHelper.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators.helpers;
+
+import com.project.team6.model.board.*;
+
+import java.util.*;
+
+public final class SpawnerHelper {
+
+    private SpawnerHelper() { }
+
+    public static List&lt;Position&gt; freeFloorCells(Board board) {
+<span class="fc" id="L12">        int rows = board.rows();</span>
+<span class="fc" id="L13">        int cols = board.cols();</span>
+<span class="fc" id="L14">        Cell[][] grid = board.grid();</span>
+
+<span class="fc" id="L16">        List&lt;Position&gt; free = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        for (int row = 0; row &lt; rows; row++) {</span>
+<span class="fc bfc" id="L18" title="All 2 branches covered.">            for (int column = 0; column &lt; cols; column++) {</span>
+<span class="fc" id="L19">                Cell c = grid[row][column];</span>
+<span class="fc bfc" id="L20" title="All 2 branches covered.">                if (c.terrain() == Cell.Terrain.FLOOR &amp;&amp;</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">                        c.item() == null &amp;&amp;</span>
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">                        !c.hasPlayer() &amp;&amp;</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">                        !c.hasEnemy()) {</span>
+<span class="fc" id="L24">                    free.add(new Position(column, row));</span>
+                }
+            }
+        }
+<span class="fc" id="L28">        return free;</span>
+    }
+
+    public static boolean canReach(Board board, Position from,
+                                   Position to,
+                                   Set&lt;Position&gt; blocked) {
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">        if (from.equals(to)) return true;</span>
+
+<span class="fc" id="L36">        int rows = board.rows();</span>
+<span class="fc" id="L37">        int cols = board.cols();</span>
+<span class="fc" id="L38">        Cell[][] grid = board.grid();</span>
+
+<span class="fc" id="L40">        boolean[][] visited = new boolean[rows][cols];</span>
+<span class="fc" id="L41">        boolean[][] blockedGrid = toBlockedGrid(blocked, rows, cols);</span>
+
+<span class="fc" id="L43">        ArrayDeque&lt;Integer&gt; q = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L44">        q.addLast(pack(from.column(), from.row(), cols));</span>
+<span class="fc" id="L45">        visited[from.row()][from.column()] = true;</span>
+
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        while (!q.isEmpty()) {</span>
+<span class="fc" id="L48">            int packed = q.removeFirst();</span>
+<span class="fc" id="L49">            int column = unpackColumn(packed, cols);</span>
+<span class="fc" id="L50">            int row = unpackRow(packed, cols);</span>
+
+<span class="fc bfc" id="L52" title="All 4 branches covered.">            if (column == to.column() &amp;&amp; row == to.row()) return true;</span>
+
+<span class="fc" id="L54">            tryVisitPacked(grid, cols, rows, column + 1, row, blockedGrid, visited, q);</span>
+<span class="fc" id="L55">            tryVisitPacked(grid, cols, rows, column - 1, row, blockedGrid, visited, q);</span>
+<span class="fc" id="L56">            tryVisitPacked(grid, cols, rows, column, row + 1, blockedGrid, visited, q);</span>
+<span class="fc" id="L57">            tryVisitPacked(grid, cols, rows, column, row - 1, blockedGrid, visited, q);</span>
+<span class="fc" id="L58">        }</span>
+
+<span class="nc" id="L60">        return false;</span>
+    }
+
+    private static boolean[][] toBlockedGrid(Set&lt;Position&gt; blocked, int rows, int cols) {
+<span class="pc bpc" id="L64" title="2 of 4 branches missed.">        if (blocked == null || blocked.isEmpty()) return null;</span>
+
+<span class="fc" id="L66">        boolean[][] blockedGrid = new boolean[rows][cols];</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (Position p : blocked) {</span>
+<span class="fc" id="L68">            int column = p.column();</span>
+<span class="fc" id="L69">            int row = p.row();</span>
+<span class="pc bpc" id="L70" title="4 of 8 branches missed.">            if (column &lt; 0 || column &gt;= cols || row &lt; 0 || row &gt;= rows) continue;</span>
+<span class="fc" id="L71">            blockedGrid[row][column] = true;</span>
+<span class="fc" id="L72">        }</span>
+<span class="fc" id="L73">        return blockedGrid;</span>
+    }
+
+    private static void tryVisitPacked(Cell[][] grid, int cols, int rows,
+                                       int column, int row,
+                                       boolean[][] blockedGrid,
+                                       boolean[][] visited,
+                                       ArrayDeque&lt;Integer&gt; q) {
+
+<span class="pc bpc" id="L82" title="3 of 8 branches missed.">        if (column &lt; 0 || column &gt;= cols || row &lt; 0 || row &gt;= rows) return;</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (visited[row][column]) return;</span>
+<span class="pc bpc" id="L84" title="1 of 4 branches missed.">        if (blockedGrid != null &amp;&amp; blockedGrid[row][column]) return;</span>
+
+<span class="fc" id="L86">        Cell c = grid[row][column];</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (!c.isWalkableTerrain()) return;</span>
+
+<span class="fc" id="L89">        visited[row][column] = true;</span>
+<span class="fc" id="L90">        q.addLast(pack(column, row, cols));</span>
+<span class="fc" id="L91">    }</span>
+
+    private static int pack(int column, int row, int cols) {
+<span class="fc" id="L94">        return row * cols + column;</span>
+    }
+
+    private static int unpackColumn(int packed, int cols) {
+<span class="fc" id="L98">        return packed % cols;</span>
+    }
+
+    private static int unpackRow(int packed, int cols) {
+<span class="fc" id="L102">        return packed / cols;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

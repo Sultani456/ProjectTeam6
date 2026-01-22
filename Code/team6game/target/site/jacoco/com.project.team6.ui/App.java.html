@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.ui</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package com.project.team6.ui;
+
+import com.project.team6.controller.*;
+import com.project.team6.model.board.*;
+import com.project.team6.model.board.generators.*;
+import com.project.team6.model.board.generators.barrierProperties.*;
+import com.project.team6.model.runtime.*;
+
+import javax.swing.*;
+import java.util.*;
+
+/**
+ * Sets up and runs the game.
+ * Builds the board, spawns items and enemies, and opens the window.
+ */
+<span class="nc" id="L16">public final class App {</span>
+
+    /**
+     * Entry point.
+     * Creates models, view, and controller, then starts the game.
+     *
+     * @param args command line arguments (not used)
+     */
+    public static void main(String[] args) {
+<span class="nc" id="L25">        SwingUtilities.invokeLater(() -&gt; {</span>
+            /** –––––––––––––––––––– BOARD GENERATION –––––––––––––––––––– */
+<span class="nc" id="L27">            BoardGenerator gen = new BoardGenerator();</span>
+
+            /** Option A: NONE – No barriers, with given rows/cols from client*/
+//            BarrierOptions opts = new BarrierOptions(BarrierMode.NONE);
+
+            /** Option B: PROVIDED – populate barriers from given barrierList, with given rows/cols from client */
+//            GameConfig.addToBarrierList();
+//            BarrierOptions opts = new BarrierOptions(BarrierMode.PROVIDED);
+
+            /** Option C: TEXT – populate barriers from textfile, with given rows/cols from textfile */
+//            GameConfig.setBoardDimensions(0,0);
+//            GameConfig.setMapResource(&quot;maps/level1.txt&quot;);
+//            BarrierOptions opts = new BarrierOptions(BarrierMode.TEXT);
+
+            /** Option D: RANDOM – randomly put barriers, with given rows/cols from client */
+<span class="nc" id="L42">            BarrierOptions opts = new BarrierOptions(BarrierMode.RANDOM);</span>
+
+<span class="nc" id="L44">            BoardGenerator.Output output = gen.generate(opts);</span>
+<span class="nc" id="L45">            Board board = new Board(output);</span>
+
+            /** –––––––––––––––––––– SPAWNING –––––––––––––––––––– */
+<span class="nc" id="L48">            Spawner spawner = new Spawner(board);</span>
+
+<span class="nc" id="L50">            spawner.spawnRegularRewards();</span>
+<span class="nc" id="L51">            spawner.spawnPunishments();</span>
+<span class="nc" id="L52">            spawner.spawnEnemies();</span>
+<span class="nc" id="L53">            spawner.spawnBonusRewards();</span>
+
+            /** –––––––––––––––––––– GAME PANEL RENDERING –––––––––––––––––––– */
+            // Score/time model
+<span class="nc" id="L57">            Scoreboard scoreboard = new Scoreboard();</span>
+<span class="nc" id="L58">            GameState state = new GameState(board.start(), List.of(), scoreboard);</span>
+
+            // --- View + Window
+<span class="nc" id="L61">            GamePanel panel = new GamePanel(board, scoreboard, state);</span>
+//            panel.setRenderMode(GamePanel.RenderMode.SYMBOLS);      // comment out if want IMAGES
+//
+<span class="nc" id="L64">            GameFrame frame = new GameFrame(panel);</span>
+<span class="nc" id="L65">            frame.setVisible(true);</span>
+
+            /** –––––––––––––––––––– GAMEPLAY CONTROLLER –––––––––––––––––––– */
+            // --- Controller
+<span class="nc" id="L69">            GameController controller = new GameController(board, spawner, scoreboard, state, panel);</span>
+<span class="nc" id="L70">            controller.start();</span>
+<span class="nc" id="L71">        });</span>
+<span class="nc" id="L72">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

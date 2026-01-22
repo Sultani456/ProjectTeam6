@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Cell.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board</a> &gt; <span class="el_source">Cell.java</span></div><h1>Cell.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board;
+
+import com.project.team6.model.characters.CharacterObject;
+import com.project.team6.model.characters.enemies.Enemy;
+import com.project.team6.model.characters.Player;
+import com.project.team6.model.collectibles.CollectibleObject;
+
+import java.util.Objects;
+
+/**
+ * Represents one tile on the board.
+ * A cell can hold one player and one enemy at most.
+ * It can also hold one item.
+ */
+public final class Cell {
+
+    /**
+     * Types of terrain a cell can have.
+     * WALL and BARRIER are not walkable.
+     */
+<span class="fc" id="L21">    public static enum Terrain { FLOOR, WALL, BARRIER, START, EXIT }</span>
+
+    private final Terrain terrain;
+    private CollectibleObject item; // optional
+    private Player playerOcc;       // null if none
+    private Enemy  enemyOcc;        // null if none
+
+    /**
+     * Creates a cell with a terrain type.
+     *
+     * @param terrain the terrain of this cell
+     * @throws NullPointerException if terrain is null
+     */
+<span class="fc" id="L34">    public Cell(Terrain terrain) { this.terrain = Objects.requireNonNull(terrain); }</span>
+
+    // --- Accessors
+
+    /**
+     * Gets the terrain type.
+     *
+     * @return terrain enum
+     */
+<span class="fc" id="L43">    public Terrain terrain()                 { return terrain; }</span>
+
+    /**
+     * Gets the item in this cell.
+     *
+     * @return item or null
+     */
+<span class="fc" id="L50">    public CollectibleObject item()          { return item; }</span>
+
+    /**
+     * Sets the item in this cell.
+     *
+     * @param i item to place, or null to clear
+     */
+<span class="fc" id="L57">    public void setItem(CollectibleObject i) { this.item = i; }</span>
+
+    /**
+     * Gets the player occupant.
+     *
+     * @return player or null
+     */
+<span class="fc" id="L64">    public Player player()      { return playerOcc; }</span>
+
+    /**
+     * Gets the enemy occupant.
+     *
+     * @return enemy or null
+     */
+<span class="fc" id="L71">    public Enemy  enemy()       { return enemyOcc; }</span>
+
+    /**
+     * Checks if a player is present.
+     *
+     * @return true if a player is here
+     */
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    public boolean hasPlayer()  { return playerOcc != null; }</span>
+
+    /**
+     * Checks if an enemy is present.
+     *
+     * @return true if an enemy is here
+     */
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    public boolean hasEnemy()   { return enemyOcc  != null; }</span>
+
+    /**
+     * Checks if both a player and an enemy are here.
+     *
+     * @return true if both are present
+     */
+<span class="pc bpc" id="L92" title="2 of 4 branches missed.">    public boolean hasCollision(){ return hasPlayer() &amp;&amp; hasEnemy(); }</span>
+
+    // --- Terrain
+
+    /**
+     * Checks if the terrain can be walked on.
+     *
+     * @return true for floor, start, or exit
+     */
+    public boolean isWalkableTerrain() {
+<span class="fc bfc" id="L102" title="All 4 branches covered.">        return terrain != Terrain.WALL &amp;&amp; terrain != Terrain.BARRIER;</span>
+    }
+
+    // --- Occupancy management
+
+    /**
+     * Adds a character as an occupant of this cell.
+     * Enforces one player and one enemy at most.
+     *
+     * @param obj character to add
+     * @throws IllegalStateException if the slot is already taken
+     * @throws IllegalArgumentException if type is not supported
+     */
+    public void addOccupant(CharacterObject obj) {
+<span class="fc" id="L116">        Objects.requireNonNull(obj);</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (obj instanceof Player p) {</span>
+<span class="pc bpc" id="L118" title="3 of 4 branches missed.">            if (playerOcc != null &amp;&amp; playerOcc != p) throw new IllegalStateException(&quot;Cell already has a Player.&quot;);</span>
+<span class="fc" id="L119">            playerOcc = p;</span>
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        } else if (obj instanceof Enemy e) {</span>
+<span class="pc bpc" id="L121" title="3 of 4 branches missed.">            if (enemyOcc != null &amp;&amp; enemyOcc != e)   throw new IllegalStateException(&quot;Cell already has an Enemy.&quot;);</span>
+<span class="fc" id="L122">            enemyOcc = e;</span>
+        } else {
+<span class="nc" id="L124">            throw new IllegalArgumentException(&quot;Unsupported occupant type: &quot; + obj.getClass());</span>
+        }
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * Removes a character from this cell if it is present.
+     *
+     * @param obj character to remove
+     */
+    public void removeOccupant(CharacterObject obj) {
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">        if (obj instanceof Player p) { if (playerOcc == p) playerOcc = null; }</span>
+<span class="pc bpc" id="L135" title="2 of 4 branches missed.">        else if (obj instanceof Enemy e) { if (enemyOcc == e) enemyOcc = null; }</span>
+<span class="fc" id="L136">    }</span>
+
+    /**
+     * Clears both player and enemy from this cell.
+     */
+<span class="nc" id="L141">    public void clearOccupants() { playerOcc = null; enemyOcc = null; }</span>
+
+    // --- ASCII symbol (GUI may ignore and draw sprites instead)
+
+    /**
+     * Returns an ASCII symbol for debugging or text views.
+     * Characters take priority over items and terrain.
+     *
+     * @return symbol representing the current state
+     */
+    public char symbol() {
+        // NEW PRIORITY: show characters first
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        if (hasCollision()) return 'C';</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (hasPlayer())    return 'P';</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (hasEnemy())     return 'B';</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (item != null)   return item.symbol();</span>
+
+        // Terrain last (so S/E show when empty)
+<span class="nc bnc" id="L159" title="All 5 branches missed.">        return switch (terrain) {</span>
+<span class="nc" id="L160">            case WALL    -&gt; 'X';</span>
+<span class="nc" id="L161">            case BARRIER -&gt; '#';</span>
+<span class="nc" id="L162">            case START   -&gt; 'S';</span>
+<span class="nc" id="L163">            case EXIT    -&gt; 'E';</span>
+<span class="nc" id="L164">            default      -&gt; ' ';</span>
+        };
+
+    }
+
+    /**
+     * Returns a brief string with terrain and occupancy flags.
+     *
+     * @return text summary of the cell
+     */
+    @Override public String toString() {
+<span class="nc bnc" id="L175" title="All 6 branches missed.">        return &quot;Cell{&quot; + terrain + &quot;,P=&quot; + (playerOcc!=null) + &quot;,E=&quot; + (enemyOcc!=null) + &quot;,item=&quot; + (item!=null) + &quot;}&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

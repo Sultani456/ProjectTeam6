@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovingEnemy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.characters.enemies</a> &gt; <span class="el_source">MovingEnemy.java</span></div><h1>MovingEnemy.java</h1><pre class="source lang-java linenums">package com.project.team6.model.characters.enemies;
+
+import com.project.team6.model.board.Board;
+import com.project.team6.model.board.utilities.Direction;
+
+import com.project.team6.model.board.Position;
+
+import com.project.team6.model.board.utilities.MoveResult;
+
+import java.util.Collections;
+
+/**
+ * Enemy that chases the player using Manhattan distance.
+ * Tries to step closer every time it moves.
+ * Prefers the axis that reduces distance the most.
+ */
+public final class MovingEnemy extends Enemy {
+
+    /** Number of ticks between moves. Always &gt;= 1. */
+    private final int movePeriod;
+
+    /** Internal counter until the next move. */
+<span class="fc" id="L23">    private int cooldown = 0;</span>
+
+    /**
+     * Creates a moving enemy.
+     *
+     * @param position   starting position
+     * @param movePeriod ticks between moves, must be &gt;= 1
+     * @throws IllegalArgumentException if movePeriod &lt; 1
+     */
+    public MovingEnemy(Position position, int movePeriod) {
+<span class="fc" id="L33">        super(position);</span>
+
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">        if (movePeriod &lt; 1) {</span>
+<span class="nc" id="L36">            throw new IllegalArgumentException(&quot;movePeriod must be &gt;= 1&quot;);</span>
+        }
+
+<span class="fc" id="L39">        this.movePeriod = movePeriod;</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    public void tick(Board board, Position playerPos) {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (cooldown &gt; 0) {</span>
+<span class="fc" id="L45">            cooldown--;</span>
+<span class="fc" id="L46">            return;</span>
+        }
+
+<span class="fc" id="L49">        Direction d = decide(board, playerPos);</span>
+<span class="pc bpc" id="L50" title="1 of 2 branches missed.">        if (d == null) {</span>
+<span class="nc" id="L51">            return; // Stays still this tick</span>
+        }
+
+<span class="fc" id="L54">        MoveResult result = board.step(this, d);</span>
+
+
+<span class="fc" id="L57">        cooldown = movePeriod - 1;</span>
+<span class="fc" id="L58">    }</span>
+
+    @Override
+    public Direction decide(Board board, Position playerPos) {
+        // renamed from &quot;me&quot; to clearer name
+<span class="fc" id="L63">        Position currentPos = position();</span>
+
+<span class="fc" id="L65">        int dColumn = Integer.compare(playerPos.column(), currentPos.column());</span>
+<span class="fc" id="L66">        int dRow    = Integer.compare(playerPos.row(),    currentPos.row());</span>
+
+<span class="fc" id="L68">        boolean horizFirst =</span>
+<span class="fc" id="L69">                Math.abs(playerPos.column() - currentPos.column()) &gt;=</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">                Math.abs(playerPos.row() - currentPos.row());</span>
+
+        Direction first =
+<span class="pc bpc" id="L73" title="2 of 4 branches missed.">                horizFirst ? (dColumn &gt; 0 ? Direction.RIGHT :</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">                             dColumn &lt; 0 ? Direction.LEFT : null)</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">                           : (dRow &gt; 0 ? Direction.DOWN :</span>
+<span class="pc bnc" id="L76" title="All 2 branches missed.">                             dRow &lt; 0 ? Direction.UP   : null);</span>
+
+        Direction second =
+<span class="pc bpc" id="L79" title="1 of 4 branches missed.">                horizFirst ? (dRow &gt; 0 ? Direction.DOWN :</span>
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">                             dRow &lt; 0 ? Direction.UP   : null)</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">                           : (dColumn &gt; 0 ? Direction.RIGHT :</span>
+<span class="pc bnc" id="L82" title="All 2 branches missed.">                             dColumn &lt; 0 ? Direction.LEFT : null);</span>
+
+<span class="fc" id="L84">        Direction[] order = order4(first, second);</span>
+
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        for (Direction d : order) {</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">            if (d == null) continue;</span>
+<span class="fc" id="L88">            Position to = new Position(</span>
+<span class="fc" id="L89">                    currentPos.column() + d.d_column,</span>
+<span class="fc" id="L90">                    currentPos.row()    + d.d_row</span>
+            );
+<span class="pc bpc" id="L92" title="2 of 4 branches missed.">            if (board.isInBounds(to) &amp;&amp; board.cellAt(to).isWalkableTerrain()) {</span>
+<span class="fc" id="L93">                return d;</span>
+            }
+        }
+<span class="nc" id="L96">        return null;</span>
+    }
+
+    private static Direction[] order4(Direction a, Direction b) {
+<span class="fc" id="L100">        Direction[] all = { Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT };</span>
+<span class="fc" id="L101">        java.util.LinkedHashSet&lt;Direction&gt; set = new java.util.LinkedHashSet&lt;&gt;();</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (a != null) set.add(a);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (b != null) set.add(b);</span>
+<span class="fc" id="L104">        Collections.addAll(set, all);</span>
+<span class="fc" id="L105">        return set.toArray(new Direction[0]);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

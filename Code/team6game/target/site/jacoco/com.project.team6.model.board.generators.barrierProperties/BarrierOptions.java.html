@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BarrierOptions.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">team6game</a> &gt; <a href="index.source.html" class="el_package">com.project.team6.model.board.generators.barrierProperties</a> &gt; <span class="el_source">BarrierOptions.java</span></div><h1>BarrierOptions.java</h1><pre class="source lang-java linenums">package com.project.team6.model.board.generators.barrierProperties;
+
+import com.project.team6.controller.GameConfig;
+import com.project.team6.model.board.Position;
+
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Options for barrier generation.
+ * For TEXT mode, rows and cols are ignored because the file defines size.
+ * This object is immutable.
+ */
+public final class BarrierOptions {
+
+    /** Number of board rows. */
+<span class="fc" id="L17">    public final int rows = GameConfig.rows;</span>
+
+    /** Number of board columns. */
+<span class="fc" id="L20">    public final int cols =  GameConfig.cols;</span>
+
+    /** Mode that controls how barriers are created. */
+    public final BarrierMode barrierMode;
+
+    /** Positions of internal barriers. Used only in PROVIDED mode. */
+<span class="fc" id="L26">    public final List&lt;Position&gt; barrierPositions = GameConfig.barrierList;</span>
+
+    /** Classpath resource for the map. Used only in TEXT mode. */
+<span class="fc" id="L29">    public final String mapResource = GameConfig.mapResource;</span>
+
+    /**
+     * Builds a set of options for generation.
+     *
+     * @param barrierMode    barrier generation mode
+     * @throws NullPointerException if {@code barrierMode} is null
+     */
+<span class="fc" id="L37">    public BarrierOptions(BarrierMode barrierMode) {</span>
+<span class="fc" id="L38">        this.barrierMode = Objects.requireNonNull(barrierMode);</span>
+<span class="fc" id="L39">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
